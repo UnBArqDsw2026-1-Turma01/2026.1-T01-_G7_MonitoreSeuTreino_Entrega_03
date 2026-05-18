@@ -1,0 +1,73 @@
+name: monitore-seu-treino
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: monitore_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-monitore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-monitore}
+      POSTGRES_DB: ${POSTGRES_DB:-monitore_seu_treino}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-monitore}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: monitore_api
+    restart: unless-stopped
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-monitore}:${POSTGRES_PASSWORD:-monitore}@db:5432/${POSTGRES_DB:-monitore_seu_treino}?schema=public
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend/apps/web
+      dockerfile: Dockerfile.dev
+    container_name: monitore_web
+    restart: unless-stopped
+    env_file:
+      - path: ./frontend/apps/web/.env
+        required: false
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/apps/web/src:/app/src
+      - ./frontend/apps/web/public:/app/public
+    depends_on:
+      - api
+
+  docs:
+    build:
+      context: ./docs
+      dockerfile: Dockerfile
+    container_name: monitore_docs
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docs:/docs
+
+volumes:
+  postgres_data:

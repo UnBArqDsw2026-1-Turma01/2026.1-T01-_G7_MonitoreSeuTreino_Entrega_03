@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Backend ────────────────────────────────────────────────────────────────
+  backend:
+    name: Backend — build & lint
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: monitore
+          POSTGRES_PASSWORD: monitore
+          POSTGRES_DB: monitore_seu_treino
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://monitore:monitore@localhost:5432/monitore_seu_treino?schema=public
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://monitore:monitore@localhost:5432/monitore_seu_treino?schema=public
+
+      - name: Run tests
+        run: npm run test
+        env:
+          DATABASE_URL: postgresql://monitore:monitore@localhost:5432/monitore_seu_treino?schema=public
+
+  # ── Frontend ───────────────────────────────────────────────────────────────
+  frontend:
+    name: Frontend — build, lint & test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend/apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store path
+        id: pnpm-cache
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/apps/web/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check & build
+        run: pnpm build
+        env:
+          VITE_API_URL: http://localhost:3000/api
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test
+
+  # ── Docs ───────────────────────────────────────────────────────────────────
+  docs:
+    name: Docs — build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Install MkDocs Material
+        run: pip install mkdocs-material
+
+      - name: Build docs
+        run: mkdocs build -f docs/mkdocs.yml --strict
+
+  # ── Docker ─────────────────────────────────────────────────────────────────
+  docker:
+    name: Docker — validate compose
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate docker-compose.yml
+        run: docker compose config --quiet
+
+      - name: Validate docker-compose.prod.yml
+        run: docker compose -f docker-compose.prod.yml config --quiet
+        env:
+          POSTGRES_USER: monitore
+          POSTGRES_PASSWORD: monitore
+          POSTGRES_DB: monitore_seu_treino

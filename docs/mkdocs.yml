@@ -1,0 +1,44 @@
+site_name: G7 - MonitoreSeuTreino
+site_description: Documentação de Padrões de Projeto GoF
+
+docs_dir: content
+site_dir: ../site
+
+theme:
+  name: material
+  language: pt-BR
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - toc.integrate
+
+nav:
+  - Início: index.md
+
+  - Projeto:
+      - Visão Geral: projeto/visao-geral.md
+      - Metodologia: projeto/metodologia.md
+
+  - Arquitetura:
+      - Visão Geral: arquitetura/visao-geral.md
+      - Stack: arquitetura/stack.md
+      - Rastreabilidade dos GoFs: arquitetura/rastreabilidade-gofs.md
+
+  - Padrões de Projeto:
+      - 3. Padrões de Projeto: padroes-de-projeto/3-padroes-de-projeto.md
+      - 3.1 GoFs Criacionais: padroes-de-projeto/3-1-gofs-criacionais.md
+      - 3.2 GoFs Estruturais: padroes-de-projeto/3-2-gofs-estruturais.md
+      - 3.3 GoFs Comportamentais: padroes-de-projeto/3-3-gofs-comportamentais.md
+      - 3.4 Participações: padroes-de-projeto/3-4-participacoes-padroes.md
+      - 3.5 Iniciativas Extras: padroes-de-projeto/3-5-iniciativas-extras.md
+
+  - Evidências:
+      - Execução: evidencias/execucao.md
+      - Commits: evidencias/commits.md
+      - Vídeos: evidencias/videos.md
+      - Links: evidencias/links.md
+
+  - Referências:
+      - Bibliografia: referencias/bibliografia.md
