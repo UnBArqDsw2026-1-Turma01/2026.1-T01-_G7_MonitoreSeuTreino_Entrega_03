@@ -171,14 +171,16 @@ Page → Component → Hook → Service → API Client → Backend
 
 ## CI
 
-O pipeline roda automaticamente em push e PRs para `main`:
+O pipeline roda automaticamente em push e PRs para `dev` e `main`. Apenas os jobs relativos ao que foi alterado são executados:
 
-| Job        | Checks                                                    |
-| ---------- | --------------------------------------------------------- |
-| `backend`  | type check → lint → migrations → testes (PostgreSQL real) |
-| `frontend` | build → lint → testes                                     |
-| `docs`     | build `--strict`                                          |
-| `docker`   | validação dos dois composes                               |
+| Job        | Gatilho                   | Checks                                                    |
+| ---------- | ------------------------- | --------------------------------------------------------- |
+| `backend`  | mudanças em `backend/**`  | type check → lint → migrations → testes (PostgreSQL real) |
+| `frontend` | mudanças em `frontend/**` | lint → build → testes                                     |
+| `docs`     | mudanças em `docs/**`     | build `--strict`                                          |
+| `docker`   | mudanças nos Dockerfiles  | validação dos dois composes                               |
+
+O check obrigatório é **`CI passed`** — ele agrega todos os resultados. PRs para `main` só são aceitos a partir de `dev`.
 
 ---
 
@@ -188,3 +190,5 @@ O pipeline roda automaticamente em push e PRs para `main`:
 make docs
 # acesse http://localhost:8000
 ```
+
+Consulte [CONTRIBUTING.md](./CONTRIBUTING.md) para o fluxo de branches, convenção de commits e como abrir PRs.
