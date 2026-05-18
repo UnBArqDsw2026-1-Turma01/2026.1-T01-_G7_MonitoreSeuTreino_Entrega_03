@@ -1,7 +1,15 @@
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-EXPOSE 3000
-CMD ["npm", "run", "start:dev"]
+FROM node:20-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    bash \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/* && \
+    npm install -g @nestjs/cli
+
+USER node
+
+WORKDIR /home/node/app
+
+CMD ["bash", "/home/node/app/.docker/start.sh"]
