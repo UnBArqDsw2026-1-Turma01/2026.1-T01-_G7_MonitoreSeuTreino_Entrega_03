@@ -1,5 +1,5 @@
+import { AppLogger } from '@application/logger/logger.interface';
 import { LoggerService } from '@nestjs/common';
-import { AppLogger } from '../../application/logger/logger.interface';
 
 export class WinstonAppLogger implements AppLogger {
   constructor(private readonly logger: LoggerService) {}

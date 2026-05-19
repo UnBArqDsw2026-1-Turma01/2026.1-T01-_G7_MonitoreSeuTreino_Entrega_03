@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../../domain/entities/user.entity';
+import { User } from '@domain/entities/user.entity';
 import {
   PaginatedResult,
   UserRepository,
-} from '../../domain/repositories/user.repository';
-import { Email } from '../../domain/value-objects/email.vo';
-import { HashedPassword } from '../../domain/value-objects/hashed-password.vo';
-import { Page } from '../../domain/value-objects/page.vo';
-import { PersonName } from '../../domain/value-objects/person-name.vo';
-import { Timestamp } from '../../domain/value-objects/timestamp.vo';
+} from '@domain/repositories/user.repository';
+import { Email } from '@domain/value-objects/email.vo';
+import { HashedPassword } from '@domain/value-objects/hashed-password.vo';
+import { Page } from '@domain/value-objects/page.vo';
+import { PersonName } from '@domain/value-objects/person-name.vo';
+import { Timestamp } from '@domain/value-objects/timestamp.vo';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { InfrastructureException } from '../exceptions/infrastructure-exceptions';
 import { UserOrmEntity } from './user.orm-entity';
 

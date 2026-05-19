@@ -6,7 +6,7 @@ import {
 import { Page } from '@domain/value-objects/page.vo';
 import { getCorrelationId } from '@infrastructure/context/request-context';
 import { LoggerService } from '@nestjs/common';
-import { BaseException } from '../../../shared/exceptions/base.exception';
+import { BaseException } from '@shared/exceptions/base.exception';
 
 export class LoggingUserRepository implements UserRepository {
   constructor(

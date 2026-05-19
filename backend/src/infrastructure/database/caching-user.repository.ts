@@ -1,9 +1,9 @@
-import { User } from '../../domain/entities/user.entity';
+import { User } from '@domain/entities/user.entity';
 import {
   PaginatedResult,
   UserRepository,
-} from '../../domain/repositories/user.repository';
-import { Page } from '../../domain/value-objects/page.vo';
+} from '@domain/repositories/user.repository';
+import { Page } from '@domain/value-objects/page.vo';
 
 export class CachingUserRepository implements UserRepository {
   private readonly idCache = new Map<string, User>();

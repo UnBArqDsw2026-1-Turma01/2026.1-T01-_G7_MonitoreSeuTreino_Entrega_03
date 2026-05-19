@@ -1,15 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
-import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import {
   DomainException,
   UnauthorizedException,
-} from '../../domain/exceptions/domain-exceptions';
-import { TokenService } from '../../domain/services/token.service';
-import { AccessToken } from '../../domain/value-objects/access-token.vo';
-import { OpaqueToken } from '../../domain/value-objects/opaque-token.vo';
-import { TokenPayload } from '../../domain/value-objects/token-payload.vo';
-import { TtlDuration } from '../../domain/value-objects/ttl-duration.vo';
+} from '@domain/exceptions/domain-exceptions';
+import { TokenService } from '@domain/services/token.service';
+import { AccessToken } from '@domain/value-objects/access-token.vo';
+import { OpaqueToken } from '@domain/value-objects/opaque-token.vo';
+import { TokenPayload } from '@domain/value-objects/token-payload.vo';
+import { TtlDuration } from '@domain/value-objects/ttl-duration.vo';
+import { Injectable } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken';
+import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
 @Injectable()
 export class JwtTokenService implements TokenService {

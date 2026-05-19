@@ -1,4 +1,4 @@
-import { TokenPayload } from '../../domain/value-objects/token-payload.vo';
+import { TokenPayload } from '@domain/value-objects/token-payload.vo';
 
 declare global {
   namespace Express {
