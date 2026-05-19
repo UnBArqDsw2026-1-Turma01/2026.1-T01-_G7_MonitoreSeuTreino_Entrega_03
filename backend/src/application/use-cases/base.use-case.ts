@@ -1,4 +1,4 @@
-import { AggregateRoot } from '../../domain/entities/aggregate-root';
+import { AggregateRoot } from '@domain/entities/aggregate-root';
 import { DomainEventBus } from '../events/domain-event-bus';
 
 export abstract class UseCase<TInput, TOutput> {

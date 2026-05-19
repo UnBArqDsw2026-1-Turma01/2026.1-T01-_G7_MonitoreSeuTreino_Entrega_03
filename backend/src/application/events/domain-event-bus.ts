@@ -1,4 +1,4 @@
-import { DomainEvent } from '../../domain/events/domain-event';
+import { DomainEvent } from '@domain/events/domain-event';
 import { AppLogger } from '../logger/logger.interface';
 
 type EventHandler = (event: DomainEvent) => Promise<void>;

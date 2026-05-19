@@ -1,16 +1,16 @@
-import { RefreshToken } from '../../../domain/entities/refresh-token.entity';
-import { User } from '../../../domain/entities/user.entity';
-import { UnauthorizedException } from '../../../domain/exceptions/domain-exceptions';
-import { RefreshTokenRepository } from '../../../domain/repositories/refresh-token.repository';
-import { UserRepository } from '../../../domain/repositories/user.repository';
-import { HashService } from '../../../domain/services/hash.service';
-import { TokenService } from '../../../domain/services/token.service';
-import { AccessToken } from '../../../domain/value-objects/access-token.vo';
-import { Email } from '../../../domain/value-objects/email.vo';
-import { OpaqueToken } from '../../../domain/value-objects/opaque-token.vo';
-import { TokenHash } from '../../../domain/value-objects/token-hash.vo';
-import { TokenPayload } from '../../../domain/value-objects/token-payload.vo';
-import { DomainEventBus } from '../../events/domain-event-bus';
+import { DomainEventBus } from '@application/events/domain-event-bus';
+import { RefreshToken } from '@domain/entities/refresh-token.entity';
+import { User } from '@domain/entities/user.entity';
+import { UnauthorizedException } from '@domain/exceptions/domain-exceptions';
+import { RefreshTokenRepository } from '@domain/repositories/refresh-token.repository';
+import { UserRepository } from '@domain/repositories/user.repository';
+import { HashService } from '@domain/services/hash.service';
+import { TokenService } from '@domain/services/token.service';
+import { AccessToken } from '@domain/value-objects/access-token.vo';
+import { Email } from '@domain/value-objects/email.vo';
+import { OpaqueToken } from '@domain/value-objects/opaque-token.vo';
+import { TokenHash } from '@domain/value-objects/token-hash.vo';
+import { TokenPayload } from '@domain/value-objects/token-payload.vo';
 import { UseCase } from '../base.use-case';
 
 export interface AuthenticateUserCommand {

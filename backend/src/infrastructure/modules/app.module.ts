@@ -1,0 +1,36 @@
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { WinstonModule } from 'nest-winston';
+import { CorrelationIdMiddleware } from '../../presentation/middleware/correlation-id.middleware';
+import { RefreshTokenOrmEntity } from '../database/refresh-token.orm-entity';
+import { UserOrmEntity } from '../database/user.orm-entity';
+import { winstonConfig } from '../logger/winston.config';
+import { AuthModule } from './auth.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    WinstonModule.forRoot(winstonConfig),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.getOrThrow<string>('DB_HOST'),
+        port: config.getOrThrow<number>('DB_PORT'),
+        username: config.getOrThrow<string>('DB_USER'),
+        password: config.getOrThrow<string>('DB_PASS'),
+        database: config.getOrThrow<string>('DB_NAME'),
+        entities: [UserOrmEntity, RefreshTokenOrmEntity],
+        synchronize: config.get('NODE_ENV') === 'development',
+      }),
+    }),
+    AuthModule,
+  ],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}
