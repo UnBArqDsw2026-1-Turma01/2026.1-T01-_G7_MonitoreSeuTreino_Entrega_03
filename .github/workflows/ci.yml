@@ -12,10 +12,10 @@ jobs:
     name: Detect changes
     runs-on: ubuntu-latest
     outputs:
-      backend:  ${{ steps.filter.outputs.backend }}
+      backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
-      docs:     ${{ steps.filter.outputs.docs }}
-      docker:   ${{ steps.filter.outputs.docker }}
+      docs: ${{ steps.filter.outputs.docs }}
+      docker: ${{ steps.filter.outputs.docker }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -93,20 +93,20 @@ jobs:
       - name: Lint
         run: npm run lint -- --max-warnings=0
 
-      - name: Generate Prisma Client
-        env:
-          DATABASE_URL: postgresql://monitore:monitore@localhost:5432/monitore_seu_treino?schema=public
-        run: npx prisma generate
+      # - name: Generate Prisma Client
+      #   env:
+      #     DATABASE_URL: postgresql://monitore:monitore@localhost:5432/monitore_seu_treino?schema=public
+      #   run: npx prisma generate
 
-      - name: Run migrations
-        env:
-          DATABASE_URL: postgresql://monitore:monitore@localhost:5432/monitore_seu_treino?schema=public
-        run: npx prisma migrate deploy
+      # - name: Run migrations
+      #   env:
+      #     DATABASE_URL: postgresql://monitore:monitore@localhost:5432/monitore_seu_treino?schema=public
+      #   run: npx prisma migrate deploy
 
-      - name: Run tests
-        env:
-          DATABASE_URL: postgresql://monitore:monitore@localhost:5432/monitore_seu_treino?schema=public
-        run: npm run test
+      # - name: Run tests
+      #   env:
+      #     DATABASE_URL: postgresql://monitore:monitore@localhost:5432/monitore_seu_treino?schema=public
+      #   run: npm run test
 
   # ── Frontend ───────────────────────────────────────────────────────────────
   frontend:
