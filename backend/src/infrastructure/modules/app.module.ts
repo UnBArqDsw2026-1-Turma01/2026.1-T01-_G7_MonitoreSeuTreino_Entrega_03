@@ -1,4 +1,3 @@
-import { AuthModule } from '@infrastructure/infrastructure/modules/auth.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,6 +6,7 @@ import { CorrelationIdMiddleware } from '../../presentation/middleware/correlati
 import { RefreshTokenOrmEntity } from '../database/refresh-token.orm-entity';
 import { UserOrmEntity } from '../database/user.orm-entity';
 import { winstonConfig } from '../logger/winston.config';
+import { AuthModule } from './auth.module';
 
 @Module({
   imports: [

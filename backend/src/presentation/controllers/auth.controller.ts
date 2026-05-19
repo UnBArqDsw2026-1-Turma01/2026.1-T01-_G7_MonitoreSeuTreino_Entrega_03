@@ -81,7 +81,6 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Tokens rotated successfully' })
   @ApiResponse({ status: 401, description: 'Invalid or missing refresh token' })
   async rotateToken(@Req() req: Request) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const token = req.cookies?.refresh_token as string | undefined;
     if (!token) throw new UnauthorizedException('Refresh token not provided');
 
@@ -103,7 +102,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const userId = req.user?.userId;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     const refreshToken = req.cookies?.refresh_token as string | undefined;
 
     if (typeof userId === 'string') {

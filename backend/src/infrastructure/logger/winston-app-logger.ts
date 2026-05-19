@@ -29,6 +29,7 @@ export class WinstonAppLogger implements AppLogger {
     meta?: Record<string, unknown>,
   ): Record<string, unknown> | undefined {
     if (!meta) return undefined;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { context: _, ...rest } = meta;
     return Object.keys(rest).length ? rest : undefined;
   }

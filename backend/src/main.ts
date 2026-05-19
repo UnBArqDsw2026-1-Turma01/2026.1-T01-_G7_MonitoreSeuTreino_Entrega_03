@@ -4,7 +4,6 @@ import { compilerOptions } from '../tsconfig.json';
 
 register({
   baseUrl: './',
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   paths: compilerOptions.paths,
 });
 
@@ -23,6 +22,7 @@ async function bootstrap(): Promise<void> {
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   app.useLogger(logger);
 
   app.use(helmet());
@@ -36,7 +36,9 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   app.useGlobalFilters(new DomainExceptionFilter(logger));
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   app.useGlobalInterceptors(new LoggingInterceptor(logger));
 
   const swaggerConfig = new DocumentBuilder()

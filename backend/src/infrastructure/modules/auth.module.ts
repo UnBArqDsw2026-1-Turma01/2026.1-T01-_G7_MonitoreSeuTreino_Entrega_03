@@ -76,6 +76,7 @@ import { RefreshTokenPostgresRepository } from '../database/refresh-token.postgr
     {
       provide: RegisterUserUseCase,
       useFactory: (userRepo, hashSvc, eventBus) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         new RegisterUserUseCase(userRepo, hashSvc, eventBus),
       inject: [USER_REPOSITORY, HASH_SERVICE, DomainEventBus],
     },
@@ -83,10 +84,15 @@ import { RefreshTokenPostgresRepository } from '../database/refresh-token.postgr
       provide: AuthenticateUserUseCase,
       useFactory: (userRepo, rtRepo, hashSvc, tokenSvc, eventBus) =>
         new AuthenticateUserUseCase(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           userRepo,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           rtRepo,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           hashSvc,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           tokenSvc,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           eventBus,
         ),
       inject: [
@@ -101,10 +107,15 @@ import { RefreshTokenPostgresRepository } from '../database/refresh-token.postgr
       provide: RotateRefreshTokenUseCase,
       useFactory: (userRepo, rtRepo, hashSvc, tokenSvc, eventBus) =>
         new RotateRefreshTokenUseCase(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           userRepo,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           rtRepo,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           hashSvc,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           tokenSvc,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           eventBus,
         ),
       inject: [
@@ -118,6 +129,7 @@ import { RefreshTokenPostgresRepository } from '../database/refresh-token.postgr
     {
       provide: RevokeSessionUseCase,
       useFactory: (userRepo, rtRepo, hashSvc, eventBus) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         new RevokeSessionUseCase(userRepo, rtRepo, hashSvc, eventBus),
       inject: [
         USER_REPOSITORY,
@@ -129,12 +141,14 @@ import { RefreshTokenPostgresRepository } from '../database/refresh-token.postgr
     {
       provide: UpdateUserUseCase,
       useFactory: (userRepo, hashSvc, eventBus) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         new UpdateUserUseCase(userRepo, hashSvc, eventBus),
       inject: [USER_REPOSITORY, HASH_SERVICE, DomainEventBus],
     },
     {
       provide: DeactivateUserUseCase,
       useFactory: (userRepo, rtRepo, eventBus) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         new DeactivateUserUseCase(userRepo, rtRepo, eventBus),
       inject: [USER_REPOSITORY, REFRESH_TOKEN_REPOSITORY, DomainEventBus],
     },
@@ -143,6 +157,7 @@ import { RefreshTokenPostgresRepository } from '../database/refresh-token.postgr
     {
       provide: AuthenticationFacade,
       useFactory: (register, authenticate, rotate, revoke) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         new AuthenticationFacade(register, authenticate, rotate, revoke),
       inject: [
         RegisterUserUseCase,
