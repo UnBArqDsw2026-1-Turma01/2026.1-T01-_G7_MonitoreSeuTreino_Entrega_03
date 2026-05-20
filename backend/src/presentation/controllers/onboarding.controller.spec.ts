@@ -9,18 +9,18 @@ import { Sex } from '@domain/onboarding/enums/sex.enum';
 import { TechniqueLevel } from '@domain/onboarding/enums/technique-level.enum';
 import { TrainingGoal } from '@domain/onboarding/enums/training-goal.enum';
 import { TrainingProfile } from '@domain/onboarding/entities/training-profile.entity';
-import {
-  TRAINING_PROFILE_REPOSITORY,
-} from '@domain/onboarding/repositories/training-profile.repository';
-import {
-  ONBOARDING_HISTORY_REPOSITORY,
-} from '@domain/onboarding/repositories/onboarding-history.repository';
+import { TRAINING_PROFILE_REPOSITORY } from '@domain/onboarding/repositories/training-profile.repository';
+import { ONBOARDING_HISTORY_REPOSITORY } from '@domain/onboarding/repositories/onboarding-history.repository';
 import { TOKEN_SERVICE } from '@domain/services/token.service';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { Server } from 'http';
 import request from 'supertest';
 import { OnboardingController } from './onboarding.controller';
 import { DomainExceptionFilter } from '../filters/domain-exception.filter';
+
+type OnboardingStatusBody = { completed: boolean; profile: unknown };
+type OnboardingResultBody = { classification: string; score: number };
 
 const validPayload = {
   sex: Sex.MALE,
@@ -43,9 +43,13 @@ function makeMockProfile(): TrainingProfile {
 
 describe('OnboardingController (integração)', () => {
   let app: INestApplication;
+  let httpServer: Server;
   let mockProfileRepo: { findByUserId: jest.Mock; save: jest.Mock };
   let mockHistoryRepo: { save: jest.Mock; findByUserId: jest.Mock };
-  let mockTokenService: { verifyAccessToken: jest.Mock; getRefreshTokenTtl: jest.Mock };
+  let mockTokenService: {
+    verifyAccessToken: jest.Mock;
+    getRefreshTokenTtl: jest.Mock;
+  };
 
   beforeEach(async () => {
     mockProfileRepo = {
@@ -63,13 +67,17 @@ describe('OnboardingController (integração)', () => {
       getRefreshTokenTtl: jest.fn(),
     };
 
-    const getMyOnboarding = new GetMyOnboardingUseCase(mockProfileRepo as any);
-    const submitOnboarding = new SubmitOnboardingUseCase(mockProfileRepo as any);
+    const getMyOnboarding = new GetMyOnboardingUseCase(mockProfileRepo);
+    const submitOnboarding = new SubmitOnboardingUseCase(mockProfileRepo);
     const redoOnboarding = new RedoOnboardingUseCase(
-      mockProfileRepo as any,
-      mockHistoryRepo as any,
+      mockProfileRepo,
+      mockHistoryRepo,
     );
-    const facade = new OnboardingFacade(getMyOnboarding, submitOnboarding, redoOnboarding);
+    const facade = new OnboardingFacade(
+      getMyOnboarding,
+      submitOnboarding,
+      redoOnboarding,
+    );
 
     const moduleRef = await Test.createTestingModule({
       controllers: [OnboardingController],
@@ -84,8 +92,9 @@ describe('OnboardingController (integração)', () => {
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     const mockLogger = { error: jest.fn(), log: jest.fn(), warn: jest.fn() };
-    app.useGlobalFilters(new DomainExceptionFilter(mockLogger as any));
+    app.useGlobalFilters(new DomainExceptionFilter(mockLogger));
     await app.init();
+    httpServer = app.getHttpServer() as Server;
   });
 
   afterEach(async () => {
@@ -96,25 +105,27 @@ describe('OnboardingController (integração)', () => {
     it('retorna completed=false quando onboarding não existe', async () => {
       mockProfileRepo.findByUserId.mockResolvedValue(null);
 
-      const res = await request(app.getHttpServer())
+      const res = await request(httpServer)
         .get('/v1/onboarding/me')
         .set('Authorization', 'Bearer valid-token');
 
+      const body = res.body as OnboardingStatusBody;
       expect(res.status).toBe(HttpStatus.OK);
-      expect(res.body.completed).toBe(false);
-      expect(res.body.profile).toBeNull();
+      expect(body.completed).toBe(false);
+      expect(body.profile).toBeNull();
     });
 
     it('retorna completed=true com perfil quando onboarding existe', async () => {
       mockProfileRepo.findByUserId.mockResolvedValue(makeMockProfile());
 
-      const res = await request(app.getHttpServer())
+      const res = await request(httpServer)
         .get('/v1/onboarding/me')
         .set('Authorization', 'Bearer valid-token');
 
+      const body = res.body as OnboardingStatusBody;
       expect(res.status).toBe(HttpStatus.OK);
-      expect(res.body.completed).toBe(true);
-      expect(res.body.profile).not.toBeNull();
+      expect(body.completed).toBe(true);
+      expect(body.profile).not.toBeNull();
     });
 
     it('retorna 401 para usuário não autenticado', async () => {
@@ -122,7 +133,7 @@ describe('OnboardingController (integração)', () => {
         throw new Error('invalid token');
       });
 
-      const res = await request(app.getHttpServer()).get('/v1/onboarding/me');
+      const res = await request(httpServer).get('/v1/onboarding/me');
 
       expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
     });
@@ -132,20 +143,21 @@ describe('OnboardingController (integração)', () => {
     it('cria perfil com sucesso', async () => {
       mockProfileRepo.findByUserId.mockResolvedValue(null);
 
-      const res = await request(app.getHttpServer())
+      const res = await request(httpServer)
         .post('/v1/onboarding')
         .set('Authorization', 'Bearer valid-token')
         .send(validPayload);
 
+      const body = res.body as OnboardingResultBody;
       expect(res.status).toBe(HttpStatus.CREATED);
-      expect(res.body.classification).toBeDefined();
-      expect(res.body.score).toBeDefined();
+      expect(body.classification).toBeDefined();
+      expect(body.score).toBeDefined();
     });
 
     it('retorna 409 quando onboarding já foi feito', async () => {
       mockProfileRepo.findByUserId.mockResolvedValue(makeMockProfile());
 
-      const res = await request(app.getHttpServer())
+      const res = await request(httpServer)
         .post('/v1/onboarding')
         .set('Authorization', 'Bearer valid-token')
         .send(validPayload);
@@ -158,7 +170,7 @@ describe('OnboardingController (integração)', () => {
         throw new Error('invalid token');
       });
 
-      const res = await request(app.getHttpServer())
+      const res = await request(httpServer)
         .post('/v1/onboarding')
         .send(validPayload);
 
@@ -171,7 +183,7 @@ describe('OnboardingController (integração)', () => {
       const existing = makeMockProfile();
       mockProfileRepo.findByUserId.mockResolvedValue(existing);
 
-      const res = await request(app.getHttpServer())
+      const res = await request(httpServer)
         .put('/v1/onboarding')
         .set('Authorization', 'Bearer valid-token')
         .send(validPayload);
@@ -183,7 +195,7 @@ describe('OnboardingController (integração)', () => {
     it('retorna 404 quando não há onboarding anterior', async () => {
       mockProfileRepo.findByUserId.mockResolvedValue(null);
 
-      const res = await request(app.getHttpServer())
+      const res = await request(httpServer)
         .put('/v1/onboarding')
         .set('Authorization', 'Bearer valid-token')
         .send(validPayload);
