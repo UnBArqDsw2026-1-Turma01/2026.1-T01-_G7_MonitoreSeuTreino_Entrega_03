@@ -22,6 +22,7 @@ function EyeIcon({ visible }: { visible: boolean }) {
   );
 }
 
+
 export function RegisterPage() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
