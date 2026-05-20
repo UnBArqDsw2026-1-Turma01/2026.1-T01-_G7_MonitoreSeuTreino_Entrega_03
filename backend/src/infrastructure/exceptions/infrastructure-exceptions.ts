@@ -2,7 +2,7 @@ import {
   BaseException,
   ExceptionContext,
   SystemLayer,
-} from '../../shared/exceptions/base.exception';
+} from '@shared/exceptions/base.exception';
 
 export class InfrastructureException extends BaseException {
   constructor(

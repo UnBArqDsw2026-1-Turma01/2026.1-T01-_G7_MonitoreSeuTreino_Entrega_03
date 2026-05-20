@@ -1,16 +1,16 @@
-import { User } from '../../../domain/entities/user.entity';
+import { User } from '@domain/entities/user.entity';
 import {
   ConflictException,
   NotFoundException,
   ValidationException,
-} from '../../../domain/exceptions/domain-exceptions';
-import { UserRepository } from '../../../domain/repositories/user.repository';
-import { HashService } from '../../../domain/services/hash.service';
-import { Email } from '../../../domain/value-objects/email.vo';
-import { HashedPassword } from '../../../domain/value-objects/hashed-password.vo';
-import { PersonName } from '../../../domain/value-objects/person-name.vo';
-import { PlainPassword } from '../../../domain/value-objects/plain-password.vo';
-import { DomainEventBus } from '../../events/domain-event-bus';
+} from '@domain/exceptions/domain-exceptions';
+import { UserRepository } from '@domain/repositories/user.repository';
+import { HashService } from '@domain/services/hash.service';
+import { Email } from '@domain/value-objects/email.vo';
+import { HashedPassword } from '@domain/value-objects/hashed-password.vo';
+import { PersonName } from '@domain/value-objects/person-name.vo';
+import { PlainPassword } from '@domain/value-objects/plain-password.vo';
+import { DomainEventBus } from '@application/events/domain-event-bus';
 import { UseCase } from '../base.use-case';
 
 export interface UpdateUserCommand {

@@ -1,7 +1,7 @@
-import { NotFoundException } from '../../../domain/exceptions/domain-exceptions';
-import { RefreshTokenRepository } from '../../../domain/repositories/refresh-token.repository';
-import { UserRepository } from '../../../domain/repositories/user.repository';
-import { DomainEventBus } from '../../events/domain-event-bus';
+import { DomainEventBus } from '@application/events/domain-event-bus';
+import { NotFoundException } from '@domain/exceptions/domain-exceptions';
+import { RefreshTokenRepository } from '@domain/repositories/refresh-token.repository';
+import { UserRepository } from '@domain/repositories/user.repository';
 import { UseCase } from '../base.use-case';
 
 export class DeactivateUserUseCase extends UseCase<string, void> {

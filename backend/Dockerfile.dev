@@ -10,6 +10,12 @@ RUN apt-get update && \
 
 USER node
 
-WORKDIR /home/node/app
+WORKDIR /app
 
-CMD ["bash", "/home/node/app/.docker/start.sh"]
+COPY --chown=node:node package*.json tsconfig.json tsconfig.build.json nest-cli.json ./
+
+RUN npm install
+
+COPY --chown=node:node .docker /app/.docker
+
+CMD ["bash", "/app/.docker/start.sh"]
