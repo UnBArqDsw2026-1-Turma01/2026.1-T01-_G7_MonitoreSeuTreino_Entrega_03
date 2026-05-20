@@ -3,7 +3,7 @@ import { RoutineId } from '../value-objects/routine-id.vo';
 import { RoutineName } from '../value-objects/routine-name.vo';
 import { UserId } from '../value-objects/user-id.vo';
 import { Timestamp } from '../value-objects/timestamp.vo';
-import { RoutineCreatedEvent, RoutineClonedEvent } from '../events/routine-events';
+import { RoutineCreatedEvent, RoutineClonedEvent, RoutineActivatedEvent } from '../events/routine-events';
 
 export interface ExerciseParam {
   exerciseId: string;
@@ -87,5 +87,29 @@ export class Routine extends AggregateRoot {
     );
 
     return clonedRoutine;
+  }
+
+  // ─── GOF Comportamental: MEDIATOR (RF21) ─────────────────────────
+
+  // Ativa a rotina atual e emite o evento para o EventBus
+  activate(): Routine {
+    const now = Timestamp.now();
+
+    const activatedRoutine = new Routine(
+      this.id,
+      this.userId,
+      this.name,
+      this.divisions,
+      true,
+      this.createdAt,
+      now,
+      this.deletedAt,
+    );
+
+    activatedRoutine.pushEvent(
+      new RoutineActivatedEvent(this.id.toString(), this.userId.toString(), now.toDate())
+    );
+
+    return activatedRoutine;
   }
 }

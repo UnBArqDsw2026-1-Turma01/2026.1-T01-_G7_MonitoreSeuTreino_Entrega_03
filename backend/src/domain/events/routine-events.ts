@@ -19,3 +19,12 @@ export class RoutineClonedEvent implements DomainEvent {
     public readonly occurredAt: Date = new Date(),
   ) {}
 }
+
+// Evento disparado pelo Mediator quando uma rotina é definida como ativa
+export class RoutineActivatedEvent implements DomainEvent {
+  constructor(
+    public readonly routineId: string,
+    public readonly userId: string,
+    public readonly occurredAt: Date = new Date(),
+  ) {}
+}
