@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { AuthGuard } from '../../features/auth/guards/auth-guard';
+import { RoutinesPage } from '../../features/routines/pages/routines-page';
 
 export const appRouter = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ export const appRouter = createBrowserRouter([
           const { OnboardingResultPage } = await import('../../features/onboarding/pages/onboarding-result-page');
           return { Component: OnboardingResultPage };
         },
+      },
+      {
+        path: '/routines',
+        element: <RoutinesPage />,
       },
     ],
   },
