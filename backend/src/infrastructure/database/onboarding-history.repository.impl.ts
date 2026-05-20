@@ -8,7 +8,9 @@ import { InfrastructureException } from '@infrastructure/exceptions/infrastructu
 import { OnboardingHistoryOrmEntity } from './onboarding-history.orm-entity';
 
 @Injectable()
-export class OnboardingHistoryRepositoryImpl implements OnboardingHistoryRepository {
+export class OnboardingHistoryRepositoryImpl
+  implements OnboardingHistoryRepository
+{
   constructor(
     @InjectRepository(OnboardingHistoryOrmEntity)
     private readonly repository: Repository<OnboardingHistoryOrmEntity>,

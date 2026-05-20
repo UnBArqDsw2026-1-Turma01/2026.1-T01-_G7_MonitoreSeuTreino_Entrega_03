@@ -27,9 +27,7 @@ export class OnboardingViewModel {
   static toStatusResponse(status: OnboardingStatus) {
     return {
       completed: status.completed,
-      profile: status.profile
-        ? OnboardingViewModel.toResponse(status.profile)
-        : null,
+      profile: status.profile ? OnboardingViewModel.toResponse(status.profile) : null,
     };
   }
 }

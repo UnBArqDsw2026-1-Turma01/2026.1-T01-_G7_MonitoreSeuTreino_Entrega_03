@@ -8,9 +8,7 @@ import { FemaleProfileClassifier } from './female-profile-classifier';
 import { MaleProfileClassifier } from './male-profile-classifier';
 import { StrengthOnboardingFlow } from './strength-onboarding-flow';
 
-const makeAnswers = (
-  overrides: Partial<Parameters<typeof OnboardingAnswers.create>[0]> = {},
-) =>
+const makeAnswers = (overrides: Partial<Parameters<typeof OnboardingAnswers.create>[0]> = {}) =>
   OnboardingAnswers.create({
     sex: Sex.MALE,
     age: 25,

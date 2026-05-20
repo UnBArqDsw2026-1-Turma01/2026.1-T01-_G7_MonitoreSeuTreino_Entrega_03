@@ -95,10 +95,7 @@ export class TrainingProfile {
     );
   }
 
-  update(
-    answers: OnboardingAnswers,
-    result: ClassificationResult,
-  ): TrainingProfile {
+  update(answers: OnboardingAnswers, result: ClassificationResult): TrainingProfile {
     const now = new Date();
     return new TrainingProfile(
       this.id,
