@@ -1,5 +1,7 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { UseCase } from '../base.use-case';
-import { RoutineRepository } from '../../../domain/repositories/routine.repository';
+import type {RoutineRepository} from '../../../domain/repositories/routine.repository';
+import { ROUTINE_REPOSITORY_TOKEN } from '../../../domain/repositories/routine.repository';
 import { RoutineName } from '../../../domain/value-objects/routine-name.vo';
 import { ValidationException } from '../../../domain/exceptions/domain-exceptions';
 import { DomainEventBus } from '../../events/domain-event-bus';
@@ -10,8 +12,10 @@ interface UpdateRoutineInput {
   newName: string;
 }
 
+@Injectable()
 export class UpdateRoutineUseCase extends UseCase<UpdateRoutineInput, void> {
   constructor(
+    @Inject(ROUTINE_REPOSITORY_TOKEN) // O Decorator garante que o Proxy seja injetado
     private readonly routineRepository: RoutineRepository,
     eventBus: DomainEventBus,
   ) {
@@ -31,7 +35,6 @@ export class UpdateRoutineUseCase extends UseCase<UpdateRoutineInput, void> {
 
     const updatedRoutine = routine.clone(RoutineName.create(input.newName));
 
-    // PROXY estoura a exceção
     await this.routineRepository.save(updatedRoutine);
 
     this.registerAggregate(updatedRoutine);
