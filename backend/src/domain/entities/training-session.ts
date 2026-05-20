@@ -1,5 +1,8 @@
 import { AggregateRoot } from './aggregate-root';
 import { WorkoutComponent } from './workout-component';
+import { TrainingSetIterator } from '../iterators/training-set.iterator';
+import { TrainingSet } from './training-set';
+import { Iterator } from '../iterators/iterator.interface';
 
 export enum SessionState {
   DRAFT = 'DRAFT',
@@ -38,5 +41,9 @@ export class TrainingSession extends AggregateRoot {
 
   public getSessionTotalVolume(): number {
     return this.components.reduce((total, comp) => total + comp.getVolume(), 0);
+  }
+
+  public createSetIterator(): Iterator<TrainingSet> {
+    return new TrainingSetIterator(this.components);
   }
 }
