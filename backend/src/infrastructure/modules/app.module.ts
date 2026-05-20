@@ -5,8 +5,11 @@ import { WinstonModule } from 'nest-winston';
 import { CorrelationIdMiddleware } from '../../presentation/middleware/correlation-id.middleware';
 import { RefreshTokenOrmEntity } from '../database/refresh-token.orm-entity';
 import { UserOrmEntity } from '../database/user.orm-entity';
+import { OnboardingHistoryOrmEntity } from '../database/onboarding-history.orm-entity';
+import { TrainingProfileOrmEntity } from '../database/training-profile.orm-entity';
 import { winstonConfig } from '../logger/winston.config';
 import { AuthModule } from './auth.module';
+import { OnboardingModule } from './onboarding.module';
 
 @Module({
   imports: [
@@ -22,11 +25,17 @@ import { AuthModule } from './auth.module';
         username: config.getOrThrow<string>('DB_USER'),
         password: config.getOrThrow<string>('DB_PASS'),
         database: config.getOrThrow<string>('DB_NAME'),
-        entities: [UserOrmEntity, RefreshTokenOrmEntity],
+        entities: [
+          UserOrmEntity,
+          RefreshTokenOrmEntity,
+          TrainingProfileOrmEntity,
+          OnboardingHistoryOrmEntity,
+        ],
         synchronize: config.get('NODE_ENV') === 'development',
       }),
     }),
     AuthModule,
+    OnboardingModule,
   ],
 })
 export class AppModule implements NestModule {
