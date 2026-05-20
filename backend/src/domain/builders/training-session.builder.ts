@@ -45,7 +45,7 @@ export class TrainingSessionBuilder {
     const exerciseNode = this.exerciseNodes.get(nodeId);
     
     if (!exerciseNode) {
-      throw new Error(`Exercise node with id ${nodeId} not found in builder.`);
+      throw new Error(`Exercicio com ID ${nodeId} não encontrado no buider.`);
     }
 
     const setId = randomUUID();
@@ -54,5 +54,25 @@ export class TrainingSessionBuilder {
     exerciseNode.add(trainingSet);
 
     return this;
+  }
+
+  public build(): TrainingSession {
+    if (this.exerciseNodes.size === 0) {
+      throw new Error('Uma sessão de treino deve ter pelo menos um exercício.');
+    }
+
+    const session = new TrainingSession(
+      this.id,
+      this.userId,
+      this.date,
+      SessionState.COMPLETED,
+      this.routineId,
+    );
+
+    for (const [_, exerciseNode] of this.exerciseNodes) {
+      session.addWorkoutComponent(exerciseNode);
+    }
+
+    return session;
   }
 }
