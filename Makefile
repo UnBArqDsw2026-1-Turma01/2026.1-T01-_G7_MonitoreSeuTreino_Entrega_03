@@ -1,7 +1,7 @@
 .PHONY: help up down restart logs build \
         api api-logs api-build api-shell \
         web web-logs web-build web-shell web-install web-test web-lint \
-        db db-migrate db-migrate-prod db-generate db-studio db-reset db-seed \
+        db db-console db-reset \
         docs docs-build docs-logs \
         install lint test test-cov \
         prod-up prod-down prod-build
@@ -12,6 +12,7 @@ COMPOSE      = docker compose
 COMPOSE_PROD = docker compose -f docker-compose.prod.yml
 API          = $(COMPOSE) exec api
 WEB          = $(COMPOSE) exec web
+DB           = $(COMPOSE) exec db
 
 # ── Default ───────────────────────────────────────────────────────────────────
 
@@ -64,8 +65,8 @@ web-build: ## Reconstrói a imagem do frontend
 web-shell: ## Abre um shell no container do frontend
 	$(WEB) sh
 
-web-install: ## Instala dependências do frontend
-	cd frontend/apps/web && pnpm install
+web-install: ## Instala dependências do frontend no container
+	$(WEB) pnpm install
 
 web-test: ## Executa os testes do frontend
 	$(WEB) pnpm test
@@ -78,23 +79,12 @@ web-lint: ## Executa o linter no frontend
 db: ## Sobe apenas o banco de dados
 	$(COMPOSE) up -d db
 
-db-migrate: ## Executa as migrations (dev)
-	$(API) npx prisma migrate dev
+db-console: ## Abre o console psql no banco de dados
+	$(DB) psql -U $${POSTGRES_USER:-monitore} $${POSTGRES_DB:-monitore_seu_treino}
 
-db-migrate-prod: ## Executa as migrations (prod)
-	$(API) npx prisma migrate deploy
-
-db-generate: ## Gera o Prisma Client
-	$(API) npx prisma generate
-
-db-studio: ## Abre o Prisma Studio
-	$(API) npx prisma studio
-
-db-reset: ## Reseta o banco de dados (⚠️ apaga todos os dados)
-	$(API) npx prisma migrate reset --force
-
-db-seed: ## Executa o seed do banco
-	$(API) npx prisma db seed
+db-reset: ## Apaga o volume do banco e reinicia (⚠️ perde todos os dados)
+	$(COMPOSE) down -v
+	$(COMPOSE) up -d db
 
 # ── Documentação ──────────────────────────────────────────────────────────────
 
@@ -109,17 +99,16 @@ docs-build: ## Gera o build estático da documentação
 
 # ── Qualidade ────────────────────────────────────────────────────────────────
 
-install: ## Instala dependências (backend + frontend)
-	cd backend && npm ci
-	cd frontend/apps/web && pnpm install
+install: ## Instala dependências (backend + frontend) nos containers
+	$(API) npm install
+	$(WEB) pnpm install
 
 lint: ## Executa linter em todos os projetos
 	$(API) npm run lint
 	$(WEB) pnpm lint
 
-test: ## Executa testes em todos os projetos
+test: ## Executa testes do backend
 	$(API) npm run test
-	$(WEB) pnpm test
 
 test-cov: ## Executa testes com cobertura (backend)
 	$(API) npm run test:cov
