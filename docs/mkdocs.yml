@@ -40,7 +40,6 @@ nav:
       - Visão Geral: arquitetura/visao-geral.md
       - Stack: arquitetura/stack.md
       - Rastreabilidade dos GoFs: arquitetura/rastreabilidade-gofs.md
-      - Padrões GoF — Onboarding: arquitetura/padroes-gof.md
 
   - Padrões de Projeto:
       - 3. Padrões de Projeto: padroes-de-projeto/3-padroes-de-projeto.md
