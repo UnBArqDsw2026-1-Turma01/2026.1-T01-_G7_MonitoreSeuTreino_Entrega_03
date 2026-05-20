@@ -1,0 +1,233 @@
+### ─────────────────────────────────────────────
+### Auth API — REST Client
+### Extensão: REST Client (humao.rest-client)
+### ─────────────────────────────────────────────
+
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### Variáveis preenchidas após login
+@accessToken =
+@refreshToken =
+
+
+# ──────────────────────────────────────────────
+# 1. SIGNUP — Criar conta
+# ──────────────────────────────────────────────
+
+### 1.1 Sucesso
+POST {{baseUrl}}/v1/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "P@ssw0rd!"
+}
+
+### 1.2 Erro — email duplicado
+POST {{baseUrl}}/v1/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "P@ssw0rd!"
+}
+
+### 1.3 Erro — senha fraca (sem especial)
+POST {{baseUrl}}/v1/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "email": "weak@example.com",
+  "password": "password123"
+}
+
+### 1.4 Erro — email inválido
+POST {{baseUrl}}/v1/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "email": "not-an-email",
+  "password": "P@ssw0rd!"
+}
+
+### 1.5 Erro — nome muito curto
+POST {{baseUrl}}/v1/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "name": "J",
+  "email": "short@example.com",
+  "password": "P@ssw0rd!"
+}
+
+### 1.6 Erro — campos ausentes
+POST {{baseUrl}}/v1/auth/signup
+Content-Type: {{contentType}}
+
+{}
+
+
+# ──────────────────────────────────────────────
+# 2. LOGIN — Autenticar
+# ──────────────────────────────────────────────
+
+### 2.1 Sucesso
+# Copie o accessToken da resposta e cole em @accessToken acima
+POST {{baseUrl}}/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john@example.com",
+  "password": "P@ssw0rd!"
+}
+
+### 2.2 Erro — senha errada
+POST {{baseUrl}}/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john@example.com",
+  "password": "WrongPass1!"
+}
+
+### 2.3 Erro — usuário inexistente
+POST {{baseUrl}}/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "nobody@example.com",
+  "password": "P@ssw0rd!"
+}
+
+### 2.4 Erro — body vazio
+POST {{baseUrl}}/v1/auth/login
+Content-Type: {{contentType}}
+
+{}
+
+
+# ──────────────────────────────────────────────
+# 3. REFRESH — Rotacionar token
+# Obs: o refresh_token é enviado via cookie httpOnly
+# pelo browser automaticamente. Para testar via
+# REST Client, passe o valor manualmente no header.
+# ──────────────────────────────────────────────
+
+### 3.1 Sucesso (substitua pelo valor real do cookie)
+POST {{baseUrl}}/v1/auth/refresh
+Cookie: refresh_token={{refreshToken}}
+
+### 3.2 Erro — sem cookie
+POST {{baseUrl}}/v1/auth/refresh
+
+### 3.3 Erro — token inválido
+POST {{baseUrl}}/v1/auth/refresh
+Cookie: refresh_token=tokeninvalidoqualquer
+
+### 3.4 Erro — token já rotacionado (replay attack)
+# Rode 3.1 duas vezes seguidas com o mesmo token
+POST {{baseUrl}}/v1/auth/refresh
+Cookie: refresh_token={{refreshToken}}
+
+
+# ──────────────────────────────────────────────
+# 4. LOGOUT — Encerrar sessão atual
+# ──────────────────────────────────────────────
+
+### 4.1 Sucesso
+POST {{baseUrl}}/v1/auth/logout
+Authorization: Bearer {{accessToken}}
+Cookie: refresh_token={{refreshToken}}
+
+### 4.2 Erro — sem token de acesso
+POST {{baseUrl}}/v1/auth/logout
+
+### 4.3 Erro — token de acesso inválido
+POST {{baseUrl}}/v1/auth/logout
+Authorization: Bearer tokeninvalido
+
+### 4.4 Idempotência — logout duas vezes
+# Primeiro logout
+POST {{baseUrl}}/v1/auth/logout
+Authorization: Bearer {{accessToken}}
+Cookie: refresh_token={{refreshToken}}
+
+# Segundo logout (deve retornar 204 também)
+POST {{baseUrl}}/v1/auth/logout
+Authorization: Bearer {{accessToken}}
+Cookie: refresh_token={{refreshToken}}
+
+
+# ──────────────────────────────────────────────
+# 5. LOGOUT-ALL — Encerrar todas as sessões
+# ──────────────────────────────────────────────
+
+### 5.1 Setup — criar segunda sessão (login em outro dispositivo)
+POST {{baseUrl}}/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john@example.com",
+  "password": "P@ssw0rd!"
+}
+
+### 5.2 Sucesso — encerra todas as sessões
+POST {{baseUrl}}/v1/auth/logout-all
+Authorization: Bearer {{accessToken}}
+
+### 5.3 Verificar — refresh da sessão 1 deve falhar após logout-all
+POST {{baseUrl}}/v1/auth/refresh
+Cookie: refresh_token={{refreshToken}}
+
+### 5.4 Erro — sem token de acesso
+POST {{baseUrl}}/v1/auth/logout-all
+
+
+# ──────────────────────────────────────────────
+# 6. SWAGGER
+# ──────────────────────────────────────────────
+
+### 6.1 Documentação
+GET {{baseUrl}}/api/docs
+
+
+# ──────────────────────────────────────────────
+# 7. FLUXO COMPLETO — copie e rode em sequência
+# ──────────────────────────────────────────────
+
+### 7.1 Criar conta
+POST {{baseUrl}}/v1/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "T3st@Pass!"
+}
+
+### 7.2 Login
+POST {{baseUrl}}/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "T3st@Pass!"
+}
+
+### 7.3 Refresh
+POST {{baseUrl}}/v1/auth/refresh
+Cookie: refresh_token={{refreshToken}}
+
+### 7.4 Logout
+POST {{baseUrl}}/v1/auth/logout
+Authorization: Bearer {{accessToken}}
+Cookie: refresh_token={{refreshToken}}
+
+### 7.5 Refresh após logout (deve falhar com 401)
+POST {{baseUrl}}/v1/auth/refresh
+Cookie: refresh_token={{refreshToken}}

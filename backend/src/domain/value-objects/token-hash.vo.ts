@@ -8,8 +8,8 @@ export class TokenHash {
   }
 
   static from(hash: string): TokenHash {
-    if (!hash || !/^[0-9a-f]+$/i.test(hash)) {
-      throw new ValidationException('Invalid token hash format');
+    if (!hash || hash.trim().length === 0) {
+      throw new ValidationException('Token hash cannot be empty');
     }
     return new TokenHash(hash);
   }

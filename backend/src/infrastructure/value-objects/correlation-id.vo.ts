@@ -1,5 +1,5 @@
+import { AggregateId } from '@domain/value-objects/entity-id.vo';
 import * as crypto from 'node:crypto';
-import { AggregateId } from '../../domain/value-objects/entity-id.vo';
 
 export class CorrelationId {
   private readonly value: string;

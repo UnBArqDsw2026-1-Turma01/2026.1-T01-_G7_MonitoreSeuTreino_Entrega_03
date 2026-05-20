@@ -1,13 +1,13 @@
-import { AllSessionsRevokedEvent } from '../../../domain/events/refresh-token-events';
+import { DomainEventBus } from '@application/events/domain-event-bus';
+import { AllSessionsRevokedEvent } from '@domain/events/refresh-token-events';
 import {
   NotFoundException,
   UnauthorizedException,
-} from '../../../domain/exceptions/domain-exceptions';
-import { RefreshTokenRepository } from '../../../domain/repositories/refresh-token.repository';
-import { UserRepository } from '../../../domain/repositories/user.repository';
-import { HashService } from '../../../domain/services/hash.service';
-import { TokenHash } from '../../../domain/value-objects/token-hash.vo';
-import { DomainEventBus } from '../../events/domain-event-bus';
+} from '@domain/exceptions/domain-exceptions';
+import { RefreshTokenRepository } from '@domain/repositories/refresh-token.repository';
+import { UserRepository } from '@domain/repositories/user.repository';
+import { HashService } from '@domain/services/hash.service';
+import { TokenHash } from '@domain/value-objects/token-hash.vo';
 import { UseCase } from '../base.use-case';
 
 export interface RevokeSessionCommand {
