@@ -624,7 +624,6 @@ export class RotateRefreshTokenUseCase extends UseCase<
 ##### Referências (Template Method)
 
 - GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Template Method, p. 325–330.
-- MARTIN, R. C. _Agile Software Development, Principles, Patterns, and Practices_. Prentice Hall, 2002. Cap. 14 — Template Method and Strategy Patterns.
 
 ---
 

@@ -37,7 +37,7 @@ O frontend organiza o código por funcionalidade, não por tipo de arquivo:
 ```
 app/ (router, providers, layouts)
 features/
-  auth/     (login, cadastro, guards)
+  auth/       (login, cadastro, guards)
   onboarding/ (formulário, resultado)
   dashboard/  (tela principal)
 shared/     (components, hooks, lib, utils)
