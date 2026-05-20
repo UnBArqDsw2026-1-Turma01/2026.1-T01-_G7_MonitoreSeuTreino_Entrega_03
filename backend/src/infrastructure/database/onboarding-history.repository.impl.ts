@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OnboardingHistoryRepository } from '@domain/onboarding/repositories/onboarding-history.repository';
 import { OnboardingMemento } from '@domain/onboarding/value-objects/onboarding-memento.vo';
+import { OnboardingAnswersProps } from '@domain/onboarding/value-objects/onboarding-answers.vo';
 import { InfrastructureException } from '@infrastructure/exceptions/infrastructure-exceptions';
 import { OnboardingHistoryOrmEntity } from './onboarding-history.orm-entity';
 
@@ -44,7 +45,7 @@ export class OnboardingHistoryRepositoryImpl
           new OnboardingMemento(
             row.trainingProfileId,
             row.userId,
-            row.answersSnapshot as any,
+            row.answersSnapshot as OnboardingAnswersProps,
             row.classification,
             row.score,
           ),
