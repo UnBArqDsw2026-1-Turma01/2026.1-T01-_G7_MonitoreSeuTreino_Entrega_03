@@ -1,5 +1,6 @@
 site_name: G7 - MonitoreSeuTreino
 site_description: Documentação de Padrões de Projeto GoF
+site_url: https://unbarqdsw2025-1-turma01.github.io/2026.1-T01-_G7_MonitoreSeuTreino_Entrega_03/
 
 docs_dir: content
 site_dir: ../site
@@ -14,17 +15,32 @@ theme:
     - content.code.copy
     - toc.integrate
 
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - tables
+
 nav:
   - Início: index.md
 
   - Projeto:
       - Visão Geral: projeto/visao-geral.md
       - Metodologia: projeto/metodologia.md
+      - Onboarding: projeto/onboarding.md
 
   - Arquitetura:
       - Visão Geral: arquitetura/visao-geral.md
       - Stack: arquitetura/stack.md
       - Rastreabilidade dos GoFs: arquitetura/rastreabilidade-gofs.md
+      - Padrões GoF — Onboarding: arquitetura/padroes-gof.md
 
   - Padrões de Projeto:
       - 3. Padrões de Projeto: padroes-de-projeto/3-padroes-de-projeto.md
