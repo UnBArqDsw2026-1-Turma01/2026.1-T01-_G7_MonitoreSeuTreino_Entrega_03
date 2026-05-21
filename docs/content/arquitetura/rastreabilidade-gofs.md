@@ -105,6 +105,6 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/v1/history/session
 
 | Versão | Data       | Descrição                                                                                | Autor         |
 |--------|------------|------------------------------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Matriz de rastreabilidade com os 5 padrões GoF do módulo de onboarding e elos entre eles | Lucas Antunes |
-| 1.1    | 20/05/2026 | Inclusão de Multiton, Proxy e Observer do módulo de histórico (RF26/RF27)               | Giovanni Dornelas Ferreira |
-| 1.1    | 20/05/2026 | Matriz de rastreabilidade expandida com os 3 padrões GoF do módulo de Exercises | Daniel Teles|
+| 1.0    | 19/05/2026 | Matriz de rastreabilidade com os 5 padrões GoF do módulo de onboarding e elos entre eles | Lucas Antunes              |
+| 1.1    | 20/05/2026 | Matriz expandida com os 3 padrões GoF do módulo de Exercises                              | Daniel Teles               |
+| 1.2    | 20/05/2026 | Inclusão de Multiton, Proxy e Observer do módulo de histórico (RF26/RF27)               | Giovanni Dornelas Ferreira |

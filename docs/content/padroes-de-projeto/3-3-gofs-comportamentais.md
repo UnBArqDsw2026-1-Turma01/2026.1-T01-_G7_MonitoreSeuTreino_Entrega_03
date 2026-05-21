@@ -682,9 +682,6 @@ docker compose exec api npx jest search-chain
 | Versão | Data       | Descrição                                                                              | Autor                      |
 |--------|------------|----------------------------------------------------------------------------------------|----------------------------|
 | 1.0    | 19/05/2026 | Documentação dos padrões Memento e Template Method do módulo de onboarding             | Lucas Antunes              |
-| 1.1    | 20/05/2026 | Documentação do padrão Observer do módulo de histórico de sessões                      | Giovanni Dornelas Ferreira |
-| Versão | Data       | Descrição                                                                              | Autor         |
-|--------|------------|----------------------------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Documentação dos padrões Memento e Template Method do módulo de onboarding             | Lucas Antunes |
-| 1.1    | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de exercícios               | Daniel Teles       |
+| 1.1    | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de exercícios               | Daniel Teles               |
+| 1.2    | 20/05/2026 | Documentação do padrão Observer do módulo de histórico de sessões                      | Giovanni Dornelas Ferreira |
 

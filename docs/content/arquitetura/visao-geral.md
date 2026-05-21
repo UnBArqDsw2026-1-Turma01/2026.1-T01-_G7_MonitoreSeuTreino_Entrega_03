@@ -118,6 +118,6 @@ Os padrões foram aplicados dentro dos módulos de **Onboarding** e **Exercício
 
 | Versão | Data       | Descrição                                                                          | Autor         |
 |--------|------------|------------------------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Visão geral da arquitetura com localização dos padrões GoF do módulo de onboarding | Lucas Antunes |
-| 1.1    | 20/05/2026 | Inclusão dos módulos Sessões e Histórico com padrões Multiton, Proxy e Observer   | Giovanni Dornelas Ferreira |
-| 1.1    | 21/05/2026 | Adição do módulo de exercícios à lista de módulos e GoFs                           | Daniel Teles        |
+| 1.0    | 19/05/2026 | Visão geral da arquitetura com localização dos padrões GoF do módulo de onboarding | Lucas Antunes              |
+| 1.1    | 21/05/2026 | Adição do módulo de exercícios à lista de módulos e GoFs                           | Daniel Teles               |
+| 1.2    | 20/05/2026 | Inclusão do módulo de Histórico com padrões Multiton, Proxy e Observer   | Giovanni Dornelas Ferreira |

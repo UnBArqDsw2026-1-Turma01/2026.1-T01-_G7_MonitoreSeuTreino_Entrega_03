@@ -649,9 +649,6 @@ docker compose logs api
 | Versão | Data       | Descrição                                                             | Autor                      |
 |--------|------------|-----------------------------------------------------------------------|----------------------------|
 | 1.0    | 19/05/2026 | Documentação dos padrões Bridge e Facade do módulo de onboarding      | Lucas Antunes              |
-| 1.1    | 20/05/2026 | Documentação do padrão Proxy do módulo de histórico de sessões         | Giovanni Dornelas Ferreira |
-| Versão | Data       | Descrição                                                             | Autor         |
-|--------|------------|-----------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Documentação dos padrões Bridge e Facade do módulo de onboarding      | Lucas Antunes |
-| 1.1    | 20/05/2026 | Documentação do padrão Decorator para repositório de Exercises       | Daniel Teles|
+| 1.1    | 21/05/2026 | Documentação do padrão Decorator para repositório de Exercises       | Daniel Teles               |
+| 1.2    | 20/05/2026 | Documentação do padrão Proxy do módulo de histórico de sessões         | Giovanni Dornelas Ferreira |
 

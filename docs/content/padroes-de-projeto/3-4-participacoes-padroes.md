@@ -97,11 +97,8 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 
 ## Histórico de versões
 
-| Versão | Data       | Descrição                                                                                                                    | Autor         |
-|--------|------------|------------------------------------------------------------------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Registro de participações nos padrões GoF do módulo de onboarding (Singleton, Bridge, Facade, Memento, Template Method)      | Lucas Antunes |
-| 1.1    | 20/05/2026 | Participações no módulo de histórico (Multiton, Proxy, Observer) — RF26/RF27                                                | Giovanni Dornelas Ferreira |
-| Versão | Data       | Descrição | Autor |
-|--------|------------|-----------|-------|
-| 1.0    | 19/05/2026 | Registro de participações nos padrões GoF do módulo de onboarding | Lucas Antunes |
-| 1.1    | 20/05/2026 | Adição de participações de Exercises | Daniel Teles |
+| Versão | Data       | Descrição                                                                                                                    | Autor                      |
+|--------|------------|------------------------------------------------------------------------------------------------------------------------------|----------------------------|
+| 1.0    | 19/05/2026 | Registro de participações nos padrões GoF do módulo de onboarding (Singleton, Bridge, Facade, Memento, Template Method)      | Lucas Antunes              |
+| 1.1    | 20/05/2026 | Adição de participações do módulo de Exercises                                                                               | Daniel Teles               |
+| 1.2    | 20/05/2026 | Participações no módulo de histórico (Multiton, Proxy, Observer) — RF26/RF27                                                | Giovanni Dornelas Ferreira |
