@@ -9,6 +9,7 @@ import {
   cloneRoutine
 } from '../services/routine-api';
 import type { Routine } from '../services/routine-api';
+import { BottomNavigation } from '../../../shared/components/bottom-navigation';
 
 export function RoutinesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -157,6 +158,8 @@ export function RoutinesPage() {
         onClose={() => setIsModalOpen(false)}
         initialData={selectedRoutine}
       />
+
+    <BottomNavigation />
     </div>
   );
 }
