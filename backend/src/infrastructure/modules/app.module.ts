@@ -12,11 +12,13 @@ import { RoutineOrmEntity } from '../database/routine.orm-entity';
 import { TrainingSessionOrmEntity } from '../database/session.orm-entity';
 import { ExerciseNodeOrmEntity } from '../database/exercise-node.orm-entity';
 import { TrainingSetOrmEntity } from '../database/training-set.orm-entity';
+import { PasswordResetTokenOrmEntity } from '../database/password-reset-token.orm-entity';
 import { winstonConfig } from '../logger/winston.config';
 import { AuthModule } from './auth.module';
 import { ExerciseModule } from './exercise.module';
 import { OnboardingModule } from './onboarding.module';
 import { RoutineModule } from '../../routine.module';
+import { UserModule } from './user.module';
 import { SessionModule } from './session.module';
 import { HistoryModule } from './history.module';
 
@@ -44,6 +46,7 @@ import { HistoryModule } from './history.module';
           TrainingSessionOrmEntity,
           ExerciseNodeOrmEntity,
           TrainingSetOrmEntity,
+          PasswordResetTokenOrmEntity,
         ],
         synchronize: config.get('NODE_ENV') === 'development',
       }),
@@ -52,6 +55,7 @@ import { HistoryModule } from './history.module';
     ExerciseModule,
     OnboardingModule,
     RoutineModule,
+    UserModule,
     SessionModule,
     HistoryModule,
   ],

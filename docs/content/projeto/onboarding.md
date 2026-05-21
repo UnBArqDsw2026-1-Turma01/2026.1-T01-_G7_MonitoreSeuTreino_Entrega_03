@@ -28,18 +28,18 @@ Ao se registrar no MonitoreSeuTreino, o usuário passa por um questionário inic
 
 ## Questionário
 
-| Campo                     | Tipo                                                              |
-| ------------------------- | ----------------------------------------------------------------- |
-| Sexo                      | MALE \| FEMALE                                                    |
-| Idade                     | Número inteiro (10–120)                                           |
-| Meses de experiência      | Número inteiro (≥ 0)                                              |
-| Frequência semanal        | Número inteiro (1–7)                                              |
-| Objetivo principal        | HYPERTROPHY \| STRENGTH \| ENDURANCE \| WEIGHT_LOSS \| FITNESS   |
-| Seguiu plano estruturado? | Booleano                                                          |
-| Nível de técnica          | LOW \| MEDIUM \| HIGH                                             |
-| Usa progressão de carga?  | Booleano                                                          |
-| Consistência recente      | LOW \| MEDIUM \| HIGH                                             |
-| Possui limitação física?  | Booleano                                                          |
+| Campo                     | Tipo                                                           |
+| ------------------------- | -------------------------------------------------------------- |
+| Sexo                      | MALE \| FEMALE                                                 |
+| Idade                     | Número inteiro (10–120)                                        |
+| Meses de experiência      | Número inteiro (≥ 0)                                           |
+| Frequência semanal        | Número inteiro (1–7)                                           |
+| Objetivo principal        | HYPERTROPHY \| STRENGTH \| ENDURANCE \| WEIGHT_LOSS \| FITNESS |
+| Seguiu plano estruturado? | Booleano                                                       |
+| Nível de técnica          | LOW \| MEDIUM \| HIGH                                          |
+| Usa progressão de carga?  | Booleano                                                       |
+| Consistência recente      | LOW \| MEDIUM \| HIGH                                          |
+| Possui limitação física?  | Booleano                                                       |
 
 ---
 
@@ -47,32 +47,32 @@ Ao se registrar no MonitoreSeuTreino, o usuário passa por um questionário inic
 
 ### Pontuação base
 
-| Critério            | Resposta     | Pontos |
-| ------------------- | ------------ | -----: |
-| Experiência         | < 6 meses    |      0 |
-| Experiência         | 6–18 meses   |      1 |
-| Experiência         | > 18 meses   |      2 |
-| Frequência          | 1–2x/semana  |      0 |
-| Frequência          | 3–4x/semana  |      1 |
-| Frequência          | 5x+/semana   |      2 |
-| Treino estruturado  | não          |      0 |
-| Treino estruturado  | sim          |      1 |
-| Técnica             | baixa        |      0 |
-| Técnica             | média        |      1 |
-| Técnica             | alta         |      2 |
-| Progressão de carga | não          |      0 |
-| Progressão de carga | sim          |      1 |
-| Consistência        | baixa        |      0 |
-| Consistência        | média        |      1 |
-| Consistência        | alta         |      2 |
+| Critério            | Resposta    | Pontos |
+| ------------------- | ----------- | -----: |
+| Experiência         | < 6 meses   |      0 |
+| Experiência         | 6–18 meses  |      1 |
+| Experiência         | > 18 meses  |      2 |
+| Frequência          | 1–2x/semana |      0 |
+| Frequência          | 3–4x/semana |      1 |
+| Frequência          | 5x+/semana  |      2 |
+| Treino estruturado  | não         |      0 |
+| Treino estruturado  | sim         |      1 |
+| Técnica             | baixa       |      0 |
+| Técnica             | média       |      1 |
+| Técnica             | alta        |      2 |
+| Progressão de carga | não         |      0 |
+| Progressão de carga | sim         |      1 |
+| Consistência        | baixa       |      0 |
+| Consistência        | média       |      1 |
+| Consistência        | alta        |      2 |
 
 ### Resultado
 
-| Pontuação | Classificação  |
-| --------: | -------------- |
-|       0–4 | Iniciante      |
-|       5–8 | Intermediário  |
-|      9–10 | Avançado       |
+| Pontuação | Classificação |
+| --------: | ------------- |
+|       0–4 | Iniciante     |
+|       5–8 | Intermediário |
+|      9–10 | Avançado      |
 
 ---
 

@@ -13,6 +13,6 @@
 
 ## Histórico de versões
 
-| Versão | Data | Descrição | Autor |
-|---|---|---|---|
-| 1.0 | DD/MM/AAAA | Criação do documento | Nome |
+| Versão | Data       | Descrição            | Autor |
+| ------ | ---------- | -------------------- | ----- |
+| 1.0    | DD/MM/AAAA | Criação do documento | Nome  |

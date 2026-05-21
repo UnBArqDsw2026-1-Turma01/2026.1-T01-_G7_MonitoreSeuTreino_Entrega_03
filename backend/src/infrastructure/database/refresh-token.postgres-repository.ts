@@ -90,4 +90,16 @@ export class RefreshTokenPostgresRepository implements RefreshTokenRepository {
       );
     }
   }
+
+  async deleteByUserId(userId: string): Promise<void> {
+    try {
+      await this.repository.delete({ userId });
+    } catch (err) {
+      throw new InfrastructureException(
+        'Failed to delete refresh tokens for user',
+        err,
+        JSON.stringify({ method: 'deleteByUserId', userId }),
+      );
+    }
+  }
 }
