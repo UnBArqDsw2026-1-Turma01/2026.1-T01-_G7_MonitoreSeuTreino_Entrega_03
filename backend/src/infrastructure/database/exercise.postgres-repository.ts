@@ -8,7 +8,7 @@ import { MuscleGroup } from '@domain/exercises/value-objects/muscle-group.vo';
 import { Timestamp } from '@domain/value-objects/timestamp.vo';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SelectQueryBuilder, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InfrastructureException } from '../exceptions/infrastructure-exceptions';
 import { ExerciseSearchChain } from './exercise-search.chain';
 import { ExerciseOrmEntity } from './exercise.orm-entity';
@@ -95,7 +95,7 @@ export class ExercisePostgresRepository implements ExerciseRepository {
 
       await new ExerciseSearchChain().execute({
         criteria,
-        queryBuilder: queryBuilder as SelectQueryBuilder<ExerciseOrmEntity>,
+        queryBuilder: queryBuilder,
       });
 
       const rows = await queryBuilder.getMany();

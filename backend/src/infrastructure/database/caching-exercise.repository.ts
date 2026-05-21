@@ -16,10 +16,7 @@ export class CachingExerciseRepository implements ExerciseRepository {
 
   private put(exercise: Exercise): void {
     this.idCache.set(exercise.id, exercise);
-    this.scopedCache.set(
-      this.cacheKey(exercise.userId, exercise.id),
-      exercise,
-    );
+    this.scopedCache.set(this.cacheKey(exercise.userId, exercise.id), exercise);
   }
 
   async save(exercise: Exercise): Promise<void> {

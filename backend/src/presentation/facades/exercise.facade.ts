@@ -12,11 +12,19 @@ export class ExerciseFacade {
     private readonly deactivateExercise: DeactivateExerciseUseCase,
   ) {}
 
-  create(userId: string, name: string, muscleGroup?: string): Promise<Exercise> {
+  create(
+    userId: string,
+    name: string,
+    muscleGroup?: string,
+  ): Promise<Exercise> {
     return this.createExercise.execute({ userId, name, muscleGroup });
   }
 
-  find(userId: string, name?: string, muscleGroup?: string): Promise<Exercise[]> {
+  find(
+    userId: string,
+    name?: string,
+    muscleGroup?: string,
+  ): Promise<Exercise[]> {
     return this.findExercises.execute({ userId, name, muscleGroup });
   }
 

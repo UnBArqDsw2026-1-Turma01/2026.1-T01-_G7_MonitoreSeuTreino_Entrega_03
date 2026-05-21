@@ -18,7 +18,12 @@ export class ExerciseOrmEntity {
   @Column({ length: 100 })
   name!: string;
 
-  @Column({ name: 'muscle_group', type: 'varchar', length: 100, nullable: true })
+  @Column({
+    name: 'muscle_group',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   muscleGroup!: string | null;
 
   @Column({ type: 'boolean', default: true })

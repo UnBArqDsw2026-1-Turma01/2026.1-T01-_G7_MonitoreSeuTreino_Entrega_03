@@ -27,7 +27,9 @@ abstract class ExerciseSearchHandler {
     }
   }
 
-  protected abstract apply(context: ExerciseSearchContext): Promise<void> | void;
+  protected abstract apply(
+    context: ExerciseSearchContext,
+  ): Promise<void> | void;
 }
 
 class ExerciseScopeHandler extends ExerciseSearchHandler {
@@ -60,7 +62,7 @@ class ExerciseMuscleGroupHandler extends ExerciseSearchHandler {
     }
 
     context.queryBuilder.andWhere(
-      'LOWER(COALESCE(exercise.muscle_group, \'\')) LIKE LOWER(:muscleGroup)',
+      "LOWER(COALESCE(exercise.muscle_group, '')) LIKE LOWER(:muscleGroup)",
       {
         muscleGroup: `%${muscleGroup}%`,
       },

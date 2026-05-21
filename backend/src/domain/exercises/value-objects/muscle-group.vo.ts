@@ -7,10 +7,9 @@ export class MuscleGroup {
     const trimmed = raw.trim();
 
     if (trimmed.length < 2 || trimmed.length > 100) {
-      throw new ValidationException(
-        'Muscle group must be 2–100 characters',
-        { muscleGroup: raw },
-      );
+      throw new ValidationException('Muscle group must be 2–100 characters', {
+        muscleGroup: raw,
+      });
     }
 
     return new MuscleGroup(trimmed);

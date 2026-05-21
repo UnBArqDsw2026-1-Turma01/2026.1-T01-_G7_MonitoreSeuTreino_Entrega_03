@@ -1,4 +1,7 @@
-import { NotFoundException, ValidationException } from '@domain/exceptions/domain-exceptions';
+import {
+  NotFoundException,
+  ValidationException,
+} from '@domain/exceptions/domain-exceptions';
 import { Exercise } from '@domain/exercises/entities/exercise.entity';
 import { ExerciseRepository } from '@domain/exercises/repositories/exercise.repository';
 import { ExerciseName } from '@domain/exercises/value-objects/exercise-name.vo';

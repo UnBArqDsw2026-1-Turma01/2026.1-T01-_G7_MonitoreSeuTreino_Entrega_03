@@ -80,7 +80,10 @@ export class ExercisesController {
   @Patch(':id/deactivate')
   @HttpCode(200)
   @ApiOperation({ summary: 'Deactivate an exercise' })
-  @ApiResponse({ status: 200, description: 'Exercise deactivated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Exercise deactivated successfully',
+  })
   async deactivate(@Req() req: Request, @Param('id') id: string) {
     const exercise = await this.exerciseFacade.deactivate(req.user!.userId, id);
     return ExerciseViewModel.toResponse(exercise);
