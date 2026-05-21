@@ -167,6 +167,6 @@ import { RefreshTokenPostgresRepository } from '../database/refresh-token.postgr
       ],
     },
   ],
-  exports: [TOKEN_SERVICE, JwtTokenService],
+  exports: [TOKEN_SERVICE, JwtTokenService, APP_LOGGER, DomainEventBus],
 })
 export class AuthModule {}

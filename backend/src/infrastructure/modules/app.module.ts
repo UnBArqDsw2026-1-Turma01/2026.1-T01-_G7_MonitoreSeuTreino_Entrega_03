@@ -7,11 +7,16 @@ import { RefreshTokenOrmEntity } from '../database/refresh-token.orm-entity';
 import { UserOrmEntity } from '../database/user.orm-entity';
 import { OnboardingHistoryOrmEntity } from '../database/onboarding-history.orm-entity';
 import { TrainingProfileOrmEntity } from '../database/training-profile.orm-entity';
+import { TrainingSessionOrmEntity } from '../database/session.orm-entity';
+import { ExerciseNodeOrmEntity } from '../database/exercise-node.orm-entity';
+import { TrainingSetOrmEntity } from '../database/training-set.orm-entity';
 import { ExerciseOrmEntity } from '../database/exercise.orm-entity';
 import { winstonConfig } from '../logger/winston.config';
 import { AuthModule } from './auth.module';
 import { ExerciseModule } from './exercise.module';
 import { OnboardingModule } from './onboarding.module';
+import { SessionModule } from './session.module';
+import { HistoryModule } from './history.module';
 
 @Module({
   imports: [
@@ -32,6 +37,9 @@ import { OnboardingModule } from './onboarding.module';
           RefreshTokenOrmEntity,
           TrainingProfileOrmEntity,
           OnboardingHistoryOrmEntity,
+          TrainingSessionOrmEntity,
+          ExerciseNodeOrmEntity,
+          TrainingSetOrmEntity,
           ExerciseOrmEntity,
         ],
         synchronize: config.get('NODE_ENV') === 'development',
@@ -40,6 +48,8 @@ import { OnboardingModule } from './onboarding.module';
     AuthModule,
     ExerciseModule,
     OnboardingModule,
+    SessionModule,
+    HistoryModule,
   ],
 })
 export class AppModule implements NestModule {
