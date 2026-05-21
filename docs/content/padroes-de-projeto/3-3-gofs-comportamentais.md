@@ -4,7 +4,7 @@
 
 Os padrões comportamentais tratam de algoritmos e da atribuição de responsabilidades entre objetos, focando em como os objetos interagem e distribuem responsabilidade.
 
-Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. As seções sinalizadas como **“a preencher”** aguardam a contribuição dos demais membros — siga a estrutura da seção de Onboarding como referência.
+Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. As seções sinalizadas como **"a preencher"** aguardam a contribuição dos demais membros — siga a estrutura da seção de Onboarding como referência.
 
 ---
 
@@ -29,15 +29,15 @@ Este documento reúne as contribuições de **todos os módulos do projeto**. Ca
 
 #### Problema arquitetural
 
-O fluxo de “refazer onboarding” (`PUT /v1/onboarding`) precisa:
+O fluxo de "refazer onboarding" (`PUT /v1/onboarding`) precisa:
 
 1. Recuperar o perfil atual do usuário.
 2. **Preservar esse estado** antes de modificá-lo (histórico).
 3. Atualizar o perfil com as novas respostas e nova classificação.
 
-O problema é que `TrainingProfile` é uma entidade de domínio rica — seus atributos são privados, encapsulados para garantir invariantes. Se o `RedoOnboardingUseCase` tentasse ler os atributos diretamente para montar um snapshot, ele violaria o encapsulamento da entidade, tornando o domínio frágil.
+O problema é que `TrainingProfile` é uma entidade de domínio rica — seus atributos são privados, encapsulados para garantir invariantes. Se o `RedoOnboardingUseCase` tentasse ler os atributos diretamente para montar um snapshot, violaria o encapsulamento da entidade, tornando o domínio frágil.
 
-O Memento resolve isso: a própria entidade é responsável por **criar o snapshot de si mesma** (`createMemento()`), encapsulando o “como salvar” dentro do objeto que sabe o que salvar.
+O Memento resolve isso: a própria entidade é responsável por **criar o snapshot de si mesma** (`createMemento()`), encapsulando o "como salvar" dentro do objeto que sabe o que salvar.
 
 #### Justificativa da escolha
 
@@ -115,8 +115,6 @@ classDiagram
 ```typescript
 // training-profile.entity.ts — Originador
 export class TrainingProfile {
-  // atributos privados omitidos por brevidade
-
   createMemento(): OnboardingMementoVO {
     return new OnboardingMementoVO({
       trainingProfileId: this.id,
@@ -140,7 +138,6 @@ export class TrainingProfile {
   }
 
   update(answers: OnboardingAnswers, result: ClassificationResult): void {
-    // atualiza os atributos com os novos valores
     this.classification = result.classification;
     this.score = result.score;
     // ...
@@ -149,10 +146,7 @@ export class TrainingProfile {
 
 // redo-onboarding.use-case.ts — Caretaker
 export class RedoOnboardingUseCase {
-  async execute(
-    userId: string,
-    answers: OnboardingAnswers,
-  ): Promise<TrainingProfile> {
+  async execute(userId: string, answers: OnboardingAnswers): Promise<TrainingProfile> {
     const profile = await this.profileRepository.findByUserId(userId);
     if (!profile) throw new NotFoundException("Perfil não encontrado");
 
@@ -172,7 +166,6 @@ export class RedoOnboardingUseCase {
 
     profile.update(answers, result);
     await this.profileRepository.save(profile);
-
     return profile;
   }
 }
@@ -219,21 +212,21 @@ sudo docker compose exec db psql -U monitore -d monitore_seu_treino \
 
 ##### Benefícios
 
-- **Encapsulamento preservado**: o use case não precisa conhecer os atributos internos de `TrainingProfile` para criar o histórico. Apenas chama `createMemento()`.
+- **Encapsulamento preservado**: o use case não precisa conhecer os atributos internos de `TrainingProfile` para criar o histórico.
 - **Histórico completo e imutável**: cada redo gera um registro permanente em `onboarding_history`. O dado nunca é sobrescrito — apenas inserido.
 - **Auditabilidade**: é possível reconstruir toda a evolução do perfil de um usuário consultando os snapshots ordenados por `capturedAt`.
-- **Extensibilidade**: se futuramente for necessário implementar “reverter para classificação anterior”, o dado já está lá — basta um endpoint de restauração.
+- **Extensibilidade**: se futuramente for necessário implementar "reverter para classificação anterior", o dado já está lá.
 
 ##### Limitações
 
-- **Sem mecanismo de restauração automática (undo)**: o Memento completo incluiria um `restore(memento)` no originador. No escopo atual, apenas o histórico é salvo; a restauração é manual (via suporte ou futuro endpoint). Isso é intencional — não há caso de uso de undo automático hoje.
-- **Tamanho do histórico**: cada redo insere uma linha em `onboarding_history`. Para usuários que refazem o onboarding com frequência, a tabela pode crescer. Uma política de retenção pode ser adicionada futuramente.
+- **Sem mecanismo de restauração automática (undo)**: o Memento completo incluiria um `restore(memento)` no originador. No escopo atual, apenas o histórico é salvo; a restauração é manual. Isso é intencional — não há caso de uso de undo automático hoje.
+- **Tamanho do histórico**: cada redo insere uma linha em `onboarding_history`. Uma política de retenção pode ser adicionada futuramente.
 
 ##### Alternativas consideradas
 
-- **Auditoria via triggers no banco**: o banco poderia capturar automaticamente a linha antes do UPDATE. Problema: acoplamento à infraestrutura de banco; a regra de “preservar antes de modificar” ficaria invisível no domínio. Rejeitado.
+- **Auditoria via triggers no banco**: acoplamento à infraestrutura de banco; a regra de "preservar antes de modificar" ficaria invisível no domínio. Rejeitado.
 - **Event Sourcing**: reconstruir o estado a partir de eventos seria a alternativa mais completa, mas introduz complexidade operacional desproporcional ao escopo. Avaliado e adiado.
-- **Soft delete + nova linha**: criar um novo `TrainingProfile` a cada redo e marcar o anterior como inativo. Problema: viola a identidade da entidade (o usuário tem um perfil, não vários). Rejeitado.
+- **Soft delete + nova linha**: viola a identidade da entidade (o usuário tem um perfil, não vários). Rejeitado.
 
 #### Referências (Memento)
 
@@ -250,9 +243,7 @@ O Template Method é utilizado de forma complementar ao Bridge na camada de dom�
 
 #### Problema
 
-O fluxo de classificação de onboarding precisa executar etapas em uma ordem fixa: preparar o contexto antes de classificar → classificar → reagir ao resultado. Diferentes fluxos (ex.: treino de força, hipertrofia, reabilitação) podem precisar de comportamentos específicos antes ou após a classificação, mas a **sequência geral nunca deve variar**.
-
-Sem Template Method, cada subclasse teria que reimplementar o método `execute()` inteiro, duplicando a lógica de orquestração e abrindo espaço para inconsistências (ex.: esquecer de chamar `afterClassify`).
+O fluxo de classificação de onboarding precisa executar etapas em uma ordem fixa: preparar o contexto antes de classificar → classificar → reagir ao resultado. Sem Template Method, cada subclasse teria que reimplementar o método `execute()` inteiro, duplicando a lógica de orquestração e abrindo espaço para inconsistências (ex.: esquecer de chamar `afterClassify`).
 
 #### Justificativa
 
@@ -290,8 +281,6 @@ classDiagram
     OnboardingFlow o--> ProfileClassifier : injected (Bridge)
 ```
 
-> `execute()` é o template method. `beforeClassify()` e `afterClassify()` são os hooks. `ProfileClassifier` é a implementação injetada pelo Bridge.
-
 #### Implementação
 
 | Papel GoF       | Classe / Arquivo                                                                  |
@@ -301,49 +290,28 @@ classDiagram
 | Hooks           | `beforeClassify()`, `afterClassify()` — extensíveis por subclasses                |
 | Concrete Class  | `StrengthOnboardingFlow` — `domain/onboarding/bridge/strength-onboarding-flow.ts` |
 
-##### Classe abstrata com o template method
-
 ```typescript
 // domain/onboarding/bridge/onboarding-flow.abstract.ts
 export abstract class OnboardingFlow {
   constructor(protected readonly classifier: ProfileClassifier) {}
 
-  // Template method: sequência imutável
   execute(answers: OnboardingAnswers): ClassificationResult {
     this.beforeClassify(answers);
-    const result = this.classifier.classify(answers); // delegado ao Bridge
+    const result = this.classifier.classify(answers);
     this.afterClassify(result);
     return result;
   }
 
-  // Hooks com implementação padrão vazia — subclasses sobrescrevem se necessário
   protected beforeClassify(_answers: OnboardingAnswers): void {}
   protected afterClassify(_result: ClassificationResult): void {}
 }
-```
 
-##### Subclasse concreta
-
-```typescript
 // domain/onboarding/bridge/strength-onboarding-flow.ts
 export class StrengthOnboardingFlow extends OnboardingFlow {
-  constructor(classifier: ProfileClassifier) {
-    super(classifier);
-  }
-
-  // Hooks disponíveis para extensão futura (ex.: validações específicas de força)
+  constructor(classifier: ProfileClassifier) { super(classifier); }
   protected override beforeClassify(_answers: OnboardingAnswers): void {}
   protected override afterClassify(_result: ClassificationResult): void {}
 }
-```
-
-##### Interação com Bridge e use case
-
-```typescript
-// application/use-cases/onboarding/submit-onboarding.use-case.ts
-const classifier = new RuleBasedProfileClassifier();
-const flow = new StrengthOnboardingFlow(classifier); // Bridge: classifer injetado
-const result = flow.execute(answers); // Template Method: sequência garantida
 ```
 
 #### Rastreabilidade
@@ -362,19 +330,19 @@ const result = flow.execute(answers); // Template Method: sequência garantida
 
 ##### Benefícios
 
-- **Sequência garantida**: nenhuma subclasse pode alterar a ordem `beforeClassify → classify → afterClassify`. A invariante do algoritmo é protegida pela classe abstrata.
-- **Extensibilidade sem duplicação**: adicionar um novo fluxo (ex.: `HypertrophyOnboardingFlow`) requer apenas sobrescrever os hooks relevantes — o template não é copiado.
-- **Composição com Bridge**: a separação de responsabilidades é clara — o Template Method controla _quando_ cada etapa ocorre; o Bridge controla _como_ a classificação é feita. Os dois padrões se complementam sem se sobrepor.
+- **Sequência garantida**: nenhuma subclasse pode alterar a ordem `beforeClassify → classify → afterClassify`.
+- **Extensibilidade sem duplicação**: adicionar um novo fluxo requer apenas sobrescrever os hooks relevantes.
+- **Composição com Bridge**: o Template Method controla _quando_ cada etapa ocorre; o Bridge controla _como_ a classificação é feita.
 
 ##### Limitações
 
-- **Hooks vazios na subclasse atual**: `StrengthOnboardingFlow` sobrescreve os hooks mas os mantém vazios. O valor do padrão é prospectivo — a estrutura está pronta para extensão, mas ainda não há lógica específica por tipo de treino. Isso é intencional no escopo atual.
-- **Acoplamento por herança**: Template Method usa herança, o que cria acoplamento vertical. Se a hierarquia crescer muito, pode ser substituído por composição com estratégias. No escopo atual, a hierarquia é rasa (uma subclasse), então o custo é baixo.
+- **Hooks vazios na subclasse atual**: o valor do padrão é prospectivo — a estrutura está pronta para extensão, mas ainda não há lógica específica por tipo de treino.
+- **Acoplamento por herança**: se a hierarquia crescer muito, pode ser substituído por composição com estratégias. No escopo atual, a hierarquia é rasa.
 
 ##### Alternativas consideradas
 
-- **Strategy puro sem Template Method**: delegar toda a lógica de fluxo ao `ProfileClassifier` via Strategy. Problema: a sequência `before/classify/after` deixaria de ser garantida — cada implementação de `ProfileClassifier` teria que reimplementá-la. Rejeitado.
-- **Listener/event hooks**: emitir eventos `onBeforeClassify` e `onAfterClassify` em vez de chamar métodos. Mais flexível, mas introduz infraestrutura de eventos desnecessária para o escopo. Avaliado e adiado.
+- **Strategy puro sem Template Method**: a sequência `before/classify/after` deixaria de ser garantida — cada implementação teria que reimplementá-la. Rejeitado.
+- **Listener/event hooks**: mais flexível, mas introduz infraestrutura de eventos desnecessária para o escopo. Avaliado e adiado.
 
 #### Referências (Template Method)
 
@@ -405,28 +373,19 @@ const result = flow.execute(answers); // Template Method: sequência garantida
 
 #### Problema arquitetural
 
-O sistema possui seis use cases de autenticação (`RegisterUserUseCase`, `AuthenticateUserUseCase`, `RotateRefreshTokenUseCase`, `RevokeSessionUseCase`, `UpdateUserUseCase`, `DeactivateUserUseCase`). Todos compartilham a mesma responsabilidade pós-execução: **publicar os eventos de domínio acumulados pelas entidades manipuladas**.
+O sistema possui seis use cases de autenticação. Todos compartilham a mesma responsabilidade pós-execução: **publicar os eventos de domínio acumulados pelas entidades manipuladas**.
 
-Sem Template Method, cada use case precisaria:
-
-1. Chamar sua lógica interna.
-2. Coletar os agregados resultantes.
-3. Iterar sobre os eventos de cada agregado.
-4. Publicar cada evento no `DomainEventBus`.
-
-Isso significa que qualquer alteração na política de publicação de eventos (ex.: adicionar logging, ordenar eventos, adicionar timeout) exigiria modificar os seis use cases. Além disso, um use case que esquecesse de publicar os eventos passaria despercebido em code review — não haveria nenhuma garantia estrutural de que a publicação ocorre.
+Sem Template Method, cada use case precisaria: chamar sua lógica interna, coletar os agregados resultantes, iterar sobre os eventos e publicar cada evento no `DomainEventBus`. Qualquer alteração na política de publicação exigiria modificar os seis use cases, e um use case que esquecesse de publicar os eventos passaria despercebido.
 
 #### Justificativa da escolha
 
-O Template Method resolve isso ao definir em `UseCase<TInput, TOutput>` um método `execute()` concreto que:
+O Template Method define em `UseCase<TInput, TOutput>` um método `execute()` concreto que:
 
 1. Limpa a lista de agregados pendentes.
 2. Chama `handle()` — o passo variável, implementado por cada subclasse.
 3. Chama `publishDomainEvents()` — o passo invariante, implementado uma única vez na classe base.
 
-Cada use case concreto implementa apenas `handle()`, que contém a lógica de negócio. A publicação de eventos é garantida estruturalmente — não é possível criar um use case que esqueça de publicar.
-
-O padrão também expõe `registerAggregate()` como hook protegido: use cases que precisam garantir a publicação de eventos de agregados não retornados diretamente pelo `handle()` (ex.: `RefreshToken` invalidado dentro de `RotateRefreshTokenUseCase`) registram o agregado explicitamente, e a classe base cuida da publicação.
+O padrão também expõe `registerAggregate()` como hook protegido para use cases que precisam garantir a publicação de eventos de agregados não retornados diretamente pelo `handle()`.
 
 #### Modelagem
 
@@ -443,25 +402,11 @@ classDiagram
         -collectAggregates(result: unknown) AggregateRoot[]
     }
 
-    class RegisterUserUseCase {
-        #handle(cmd: RegisterUserCommand) Promise~User~
-    }
-
-    class AuthenticateUserUseCase {
-        #handle(cmd: AuthenticateUserCommand) Promise~AuthenticationResult~
-    }
-
-    class RotateRefreshTokenUseCase {
-        #handle(cmd: RotateTokenCommand) Promise~RotateTokenResult~
-    }
-
-    class RevokeSessionUseCase {
-        #handle(cmd: RevokeSessionCommand) Promise~void~
-    }
-
-    class DeactivateUserUseCase {
-        #handle(id: string) Promise~void~
-    }
+    class RegisterUserUseCase { #handle(cmd) Promise~User~ }
+    class AuthenticateUserUseCase { #handle(cmd) Promise~AuthenticationResult~ }
+    class RotateRefreshTokenUseCase { #handle(cmd) Promise~RotateTokenResult~ }
+    class RevokeSessionUseCase { #handle(cmd) Promise~void~ }
+    class DeactivateUserUseCase { #handle(id) Promise~void~ }
 
     UseCase <|-- RegisterUserUseCase
     UseCase <|-- AuthenticateUserUseCase
@@ -491,28 +436,22 @@ export abstract class UseCase<TInput, TOutput> {
 
   constructor(protected readonly eventBus: DomainEventBus) {}
 
-  // Template method: sequência imutável — nenhuma subclasse pode alterar esta ordem
   async execute(input: TInput): Promise<TOutput> {
-    this._pendingAggregates = []; // ① limpa estado de execução anterior
-    const result = await this.handle(input); // ② delega ao passo variável
-    await this.publishDomainEvents(result); // ③ passo invariante — sempre executado
+    this._pendingAggregates = [];
+    const result = await this.handle(input);
+    await this.publishDomainEvents(result);
     return result;
   }
 
-  // Passo variável: cada subclasse implementa sua lógica de negócio aqui
   protected abstract handle(input: TInput): Promise<TOutput>;
 
-  // Hook protegido: registra agregados cujos eventos devem ser publicados
-  // mas que não são retornados diretamente pelo handle()
   protected registerAggregate(aggregate: AggregateRoot): void {
     this._pendingAggregates.push(aggregate);
   }
 
-  // Passo invariante: coleta eventos de _pendingAggregates + agregados no resultado
   private async publishDomainEvents(result: TOutput): Promise<void> {
     const fromResult = this.collectAggregates(result);
     const allAggregates = [...this._pendingAggregates, ...fromResult];
-
     for (const aggregate of allAggregates) {
       for (const event of aggregate.pullDomainEvents()) {
         await this.eventBus.publish(event);
@@ -520,21 +459,15 @@ export abstract class UseCase<TInput, TOutput> {
     }
   }
 
-  // Inspeciona o resultado recursivamente para encontrar AggregateRoots
-  // — cobre retorno direto, arrays e objetos com propriedades agregadas
   private collectAggregates(result: unknown): AggregateRoot[] {
     if (result instanceof AggregateRoot) return [result];
     if (Array.isArray(result))
-      return result.filter(
-        (v): v is AggregateRoot => v instanceof AggregateRoot,
-      );
+      return result.filter((v): v is AggregateRoot => v instanceof AggregateRoot);
     if (result !== null && typeof result === "object") {
       return Object.values(result).flatMap((value) => {
         if (value instanceof AggregateRoot) return [value];
         if (Array.isArray(value))
-          return value.filter(
-            (v): v is AggregateRoot => v instanceof AggregateRoot,
-          );
+          return value.filter((v): v is AggregateRoot => v instanceof AggregateRoot);
         return [];
       });
     }
@@ -542,52 +475,18 @@ export abstract class UseCase<TInput, TOutput> {
   }
 }
 
-// register-user.use-case.ts — Subclasse que só implementa handle()
-// A publicação de UserRegisteredEvent é garantida pela classe base,
-// sem nenhuma linha adicional aqui.
-export class RegisterUserUseCase extends UseCase<RegisterUserCommand, User> {
-  protected async handle(cmd: RegisterUserCommand): Promise<User> {
-    const email = Email.create(cmd.email);
-    const existing = await this.userRepository.findByEmail(email.toString());
-    if (existing) throw new ConflictException("Email already in use");
-
-    const user = User.create(
-      PersonName.create(cmd.name),
-      email,
-      HashedPassword.fromHash(await this.hashService.hash(cmd.password)),
-    );
-    // User.create() internamente chama pushEvent(new UserRegisteredEvent(...))
-    // A classe base coletará esse evento via collectAggregates(result)
-    // pois User é AggregateRoot e é retornado diretamente pelo handle()
-    await this.userRepository.save(user);
-    return user;
-  }
-}
-
-// rotate-refresh-token.use-case.ts — Subclasse que usa registerAggregate()
-// O token invalidado e o novo token não são retornados pelo handle(),
-// então seus eventos precisam ser registrados explicitamente via hook.
-export class RotateRefreshTokenUseCase extends UseCase<
-  RotateTokenCommand,
-  RotateTokenResult
-> {
+// rotate-refresh-token.use-case.ts — uso do hook registerAggregate()
+export class RotateRefreshTokenUseCase extends UseCase<RotateTokenCommand, RotateTokenResult> {
   protected async handle(cmd: RotateTokenCommand): Promise<RotateTokenResult> {
-    // ...validações omitidas por brevidade...
-    const invalidated = existingToken.invalidate(); // gera SessionInvalidatedEvent
-    this.registerAggregate(invalidated); // hook: garante publicação do evento
+    const invalidated = existingToken.invalidate();
+    this.registerAggregate(invalidated);
     await this.refreshTokenRepository.update(invalidated);
 
-    const newRefreshToken = RefreshToken.create(
-      user.id,
-      newTokenHash,
-      expiresAt,
-    );
-    this.registerAggregate(newRefreshToken); // hook: garante publicação de eventual evento futuro
+    const newRefreshToken = RefreshToken.create(user.id, newTokenHash, expiresAt);
+    this.registerAggregate(newRefreshToken);
     await this.refreshTokenRepository.insert(newRefreshToken);
 
     return { accessToken, refreshToken: newOpaqueToken };
-    // RotateTokenResult não é AggregateRoot — collectAggregates() não encontraria nada
-    // sem o registerAggregate() acima
   }
 }
 ```
@@ -607,19 +506,19 @@ export class RotateRefreshTokenUseCase extends UseCase<
 
 ##### Benefícios
 
-- **Publicação garantida estruturalmente**: não é possível implementar um use case que esqueça de publicar eventos. A garantia é dada pela classe base, não por disciplina de code review.
-- **Sem duplicação**: os seis use cases não repetem nenhuma linha de lógica de ciclo de vida. Alterar a política de publicação (ex.: adicionar retry, timeout, logging de eventos) requer modificar apenas `base.use-case.ts`.
-- **`collectAggregates()` como heurística inteligente**: a inspeção recursiva do resultado — cobrindo retorno direto, arrays e objetos compostos — permite que `AuthenticationResult` (que contém `user: User`) tenha seus eventos coletados automaticamente, sem que `AuthenticateUserUseCase` precise chamar `registerAggregate()`.
+- **Publicação garantida estruturalmente**: não é possível implementar um use case que esqueça de publicar eventos.
+- **Sem duplicação**: os seis use cases não repetem nenhuma linha de lógica de ciclo de vida.
+- **`collectAggregates()` como heurística inteligente**: a inspeção recursiva do resultado permite que `AuthenticationResult` (que contém `user: User`) tenha seus eventos coletados automaticamente.
 
 ##### Limitações
 
-- **`handle()` não é final no TypeScript**: diferentemente de Java, TypeScript não tem modificador `final` para métodos. Tecnicamente, uma subclasse poderia sobrescrever `execute()` e contornar o template. A proteção é por convenção — `execute()` não é `abstract` nem `protected`, o que sinaliza que não deve ser sobrescrito.
-- **`collectAggregates()` por reflexão de objeto**: a inspeção de `Object.values(result)` é genérica e não tem conhecimento do tipo de retorno em tempo de execução. Se um resultado contiver AggregateRoots em estruturas mais profundas (ex.: objeto aninhado dois níveis), eles não serão coletados automaticamente — `registerAggregate()` seria necessário. Isso é um trade-off explícito de simplicidade vs. Completude.
+- **`handle()` não é final no TypeScript**: tecnicamente uma subclasse poderia sobrescrever `execute()` e contornar o template. A proteção é por convenção.
+- **`collectAggregates()` por reflexão de objeto**: se um resultado contiver AggregateRoots em estruturas mais profundas, `registerAggregate()` seria necessário. Trade-off explícito de simplicidade vs. completude.
 
 ##### Alternativas consideradas
 
-- **Publicação explícita em cada use case**: cada use case chamaria `eventBus.publish()` manualmente após `handle()`. Funciona, mas duplica a responsabilidade e remove a garantia estrutural. Qualquer use case que omita a chamada passa despercebido. Rejeitado.
-- **Decorator de use case** (ex.: `EventPublishingUseCase<T>` wrapping qualquer use case): separaria a publicação de eventos em uma camada decoradora sem herança. Mais flexível, mas exigiria que cada use case fosse decorado individualmente na composição do módulo, adicionando verbosidade sem benefício real no escopo atual. Avaliado e rejeitado.
+- **Publicação explícita em cada use case**: duplica a responsabilidade e remove a garantia estrutural. Rejeitado.
+- **Decorator de use case**: separaria a publicação sem herança, mas exigiria que cada use case fosse decorado individualmente. Avaliado e rejeitado.
 
 ##### Referências (Template Method)
 
@@ -631,14 +530,11 @@ export class RotateRefreshTokenUseCase extends UseCase<
 
 #### Introdução
 
-Além do Template Method, o módulo de autenticação implementa o padrão **Observer** via `DomainEventBus`. O Observer define uma dependência de um-para-muitos entre objetos, de modo que quando um objeto muda de estado, todos os seus dependentes são notificados automaticamente. Aqui ele desacopla os emissores de eventos de domínio (entidades) dos handlers que reagem a esses eventos.
+Além do Template Method, o módulo de autenticação implementa o padrão **Observer** via `DomainEventBus`. Aqui ele desacopla os emissores de eventos de domínio (entidades) dos handlers que reagem a esses eventos.
 
 #### Problema arquitetural
 
-Quando um usuário é registrado, o sistema pode precisar reagir de múltiplas formas: enviar e-mail de boas-vindas, registrar métricas, notificar outro serviço. Se `RegisterUserUseCase` chamasse cada um desses handlers diretamente, dois problemas surgiriam:
-
-1. **Acoplamento ao crescimento**: adicionar um novo comportamento pós-registro exigiria modificar `RegisterUserUseCase` — violando o Open/Closed Principle.
-2. **Responsabilidade misturada**: o use case de registro passaria a conhecer detalhes de notificação, métricas e integrações externas — responsabilidades que pertencem a outras camadas.
+Quando um usuário é registrado, o sistema pode precisar reagir de múltiplas formas: enviar e-mail de boas-vindas, registrar métricas, notificar outro serviço. Se `RegisterUserUseCase` chamasse cada um desses handlers diretamente, adicionar um novo comportamento pós-registro exigiria modificar o use case — violando o Open/Closed Principle.
 
 #### Justificativa da escolha
 
@@ -648,7 +544,7 @@ O `DomainEventBus` implementa o Observer ao separar completamente o emissor do r
 - **Observadores** (handlers registrados via `subscribe()`): reagem ao evento sem que o emissor os conheça.
 - **Emissores** (entidades como `User`, `RefreshToken`): apenas acumulam eventos com `pushEvent()`; não conhecem o bus.
 
-O uso de `Promise.allSettled()` na publicação garante que a falha de um handler não impede a execução dos demais — cada observador é isolado.
+O uso de `Promise.allSettled()` na publicação garante que a falha de um handler não impede a execução dos demais.
 
 #### Modelagem
 
@@ -689,25 +585,17 @@ sequenceDiagram
 ```typescript
 // domain-event-bus.ts — Sujeito
 export class DomainEventBus {
-  // Mapa de nome do evento → lista de handlers registrados
   private readonly handlers = new Map<string, EventHandler[]>();
 
-  // Registra um observador para um tipo específico de evento
   subscribe(eventName: string, handler: EventHandler): void {
     const existing = this.handlers.get(eventName) ?? [];
     this.handlers.set(eventName, [...existing, handler]);
   }
 
   async publish(event: DomainEvent): Promise<void> {
-    const eventName = event.constructor.name; // ex.: 'UserRegisteredEvent'
+    const eventName = event.constructor.name;
     const handlers = this.handlers.get(eventName) ?? [];
-
-    // allSettled: falha em um handler não cancela os demais observadores
-    const results = await Promise.allSettled(
-      handlers.map((handler) => handler(event)),
-    );
-
-    // Handlers que falharam são logados sem relançar a exceção
+    const results = await Promise.allSettled(handlers.map((h) => h(event)));
     results
       .filter((r): r is PromiseRejectedResult => r.status === "rejected")
       .forEach((r) =>
@@ -721,7 +609,6 @@ export class DomainEventBus {
 }
 
 // aggregate-root.ts — Acumulador de eventos nas entidades
-// As entidades não conhecem o bus; apenas acumulam eventos internamente
 export abstract class AggregateRoot {
   private _domainEvents: DomainEvent[] = [];
 
@@ -729,37 +616,18 @@ export abstract class AggregateRoot {
     this._domainEvents.push(event);
   }
 
-  // Chamado pelo Template Method para drenar os eventos acumulados
   pullDomainEvents(): DomainEvent[] {
     const events = [...this._domainEvents];
-    this._domainEvents = []; // limpa após coleta — cada evento é publicado uma única vez
+    this._domainEvents = [];
     return events;
   }
 
-  // Permite transferir eventos de um agregado filho para o pai
-  // após operações imutáveis que retornam nova instância
   protected mergeEventsFrom(source: AggregateRoot): void {
     for (const event of source.pullDomainEvents()) {
       this.pushEvent(event);
     }
   }
 }
-
-// user-events.ts — Eventos concretos como Value Objects simples
-export class UserRegisteredEvent implements DomainEvent {
-  constructor(
-    public readonly userId: string,
-    public readonly email: string,
-    public readonly occurredAt: Date,
-  ) {}
-}
-
-// Exemplo de registro de handler (ponto de extensão)
-// Um handler de e-mail seria registrado no módulo, não no use case:
-eventBus.subscribe("UserRegisteredEvent", async (event: DomainEvent) => {
-  const e = event as UserRegisteredEvent;
-  await emailService.sendWelcome(e.email);
-});
 ```
 
 #### Rastreabilidade
@@ -777,32 +645,152 @@ eventBus.subscribe("UserRegisteredEvent", async (event: DomainEvent) => {
 
 ##### Benefícios
 
-- **Desacoplamento total emissor-receptor**: `User.Create ()` publica `UserRegisteredEvent` sem saber quem vai consumi-lo. Adicionar um novo handler (ex.: auditoria, webhook) não requer modificar nenhuma entidade nem use case.
-- **Resiliência por isolamento**: `Promise.AllSettled ()` garante que um handler de e-mail com falha não impede o handler de métricas de executar. Cada observador é independente.
-- **`mergeEventsFrom ()` preserva eventos em cadeias imutáveis**: como as entidades são imutáveis (mutações retornam nova instância), `mergeEventsFrom ()` transfere eventos acumulados na instância anterior para a nova — garantindo que nenhum evento seja perdido na cadeia `changeProfile ()` → `changePassword ()`.
+- **Desacoplamento total emissor-receptor**: adicionar um novo handler não requer modificar nenhuma entidade nem use case.
+- **Resiliência por isolamento**: `Promise.allSettled()` garante que um handler com falha não impede os demais de executar.
+- **`mergeEventsFrom()` preserva eventos em cadeias imutáveis**: garante que nenhum evento seja perdido em operações que retornam novas instâncias.
 
 ##### Limitações
 
-- **Sem handlers registrados atualmente**: o `DomainEventBus` está plenamente implementado, mas nenhum handler é registrado no `AuthModule` atual. Os eventos são publicados e descartados silenciosamente. A infraestrutura está pronta, mas o valor do padrão é prospectivo no escopo entregue.
-- **Entrega em memória, sem persistência**: se o processo cair após `handle ()` mas antes de `publishDomainEvents ()`, os eventos são perdidos. Para garantias de entrega (at-least-once), seria necessário um Outbox Pattern — fora do escopo atual.
-- **Ordem de publicação sequencial**: os handlers de um mesmo evento são chamados em sequência dentro de `Promise.AllSettled ()`. Para alto volume de eventos, uma fila assíncrona seria mais adequada.
+- **Sem handlers registrados atualmente**: o `DomainEventBus` está implementado, mas nenhum handler é registrado no `AuthModule` atual. O valor do padrão é prospectivo no escopo entregue.
+- **Entrega em memória, sem persistência**: se o processo cair após `handle()` mas antes de `publishDomainEvents()`, os eventos são perdidos. Para garantias de entrega seria necessário um Outbox Pattern — fora do escopo atual.
+- **Ordem de publicação sequencial**: para alto volume de eventos, uma fila assíncrona seria mais adequada.
 
 ##### Alternativas consideradas
 
-- **Chamada direta de handlers nos use cases**: `RegisterUserUseCase` chamaria `emailService.SendWelcome ()` diretamente. Mais simples no curto prazo, mas acopla o use case a cada handler e viola o Open/Closed Principle ao crescer. Rejeitado.
-- **Event emitter nativo do Node. Js (`EventEmitter`)**: mais simples que uma implementação própria, mas síncrono por padrão e sem suporte nativo a `async/await` sem adaptação. O `DomainEventBus` personalizado oferece controle total sobre o comportamento assíncrono e de erro. Avaliado e rejeitado.
-- **Message broker externo (RabbitMQ, Kafka)**: entrega garantida e desacoplamento entre serviços. Desproporcional para um monólito modular no escopo atual; pode ser adotado quando houver necessidade de comunicação entre serviços distintos. Avaliado e adiado.
+- **Chamada direta de handlers nos use cases**: acopla o use case a cada handler e viola o Open/Closed Principle. Rejeitado.
+- **`EventEmitter` nativo do Node.js**: síncrono por padrão, sem suporte nativo a `async/await`. Rejeitado.
+- **Message broker externo (RabbitMQ, Kafka)**: desproporcional para um monólito modular no escopo atual. Avaliado e adiado.
 
 ##### Referências (Observer)
 
 - GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Observer, p. 293–303.
-- FOWLER, M. _Patterns of Enterprise Application Architecture_. Addison-Wesley, 2002. Domain Event, p. —; disponível em: [https://martinfowler.com/eaaDev/DomainEvent.html](https://martinfowler.com/eaaDev/DomainEvent.html).
+- FOWLER, M. _Patterns of Enterprise Application Architecture_. Addison-Wesley, 2002. Domain Event; disponível em: https://martinfowler.com/eaaDev/DomainEvent.html.
+
+---
+
+## Módulo de Exercícios
+
+> **Responsável:** Daniel Teles | **Branch:** `feature/exercise_module`
+>
+> Contexto: a busca de exercícios aceita múltiplos filtros (nome, grupo muscular) além de impor escopo por `userId` e excluir exercícios inativos. O objetivo era uma forma extensível de aplicar filtros na query sem criar condicionais inchadas no repositório.
+
+### Padrões analisados
+
+| Padrão                  | Possível aplicação                                | Status      | Justificativa                                                                               |
+| ----------------------- | ------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------- |
+| Chain of Responsibility | Aplicar filtros encadeados na construção da query | Selecionado | Encadeamento limpo e extensível para novos filtros                                          |
+| Specification           | Compor predicados reutilizáveis                   | Avaliado    | Útil para regras complexas, mas requer wrapping adicional para QueryBuilder; Chain é mais direto |
+
+### Padrão implementado — Chain of Responsibility · `ExerciseSearchChain`
+
+#### Problema arquitetural
+
+O repositório precisava montar uma query dinâmica com condições que variam conforme os filtros providos. Inserir `if`/`andWhere` repetidos no repositório torna o código difícil de estender; cada novo filtro aumentaria a complexidade ciclomática.
+
+#### Justificativa da escolha
+
+O `ExerciseSearchChain` encapsula cada etapa de filtro em um handler: escopo por `userId` + ativo, filtro por nome, filtro por grupo muscular. Handlers podem ser reordenados ou estendidos sem tocar na lógica base do repositório — alinhado ao princípio Open/Closed.
+
+#### Modelagem
+
+```mermaid
+classDiagram
+    class IExerciseSearchHandler {
+        <<interface>>
+        +setNext(handler: IExerciseSearchHandler) IExerciseSearchHandler
+        +execute(context: SearchContext) void
+    }
+
+    class BaseSearchHandler {
+        -nextHandler: IExerciseSearchHandler
+        +setNext(handler) IExerciseSearchHandler
+        +execute(context) void
+    }
+
+    class UserScopeHandler {
+        +execute(context) void
+    }
+
+    class NameFilterHandler {
+        +execute(context) void
+    }
+
+    class MuscleGroupFilterHandler {
+        +execute(context) void
+    }
+
+    IExerciseSearchHandler <|.. BaseSearchHandler
+    BaseSearchHandler <|-- UserScopeHandler
+    BaseSearchHandler <|-- NameFilterHandler
+    BaseSearchHandler <|-- MuscleGroupFilterHandler
+```
+
+#### Implementação
+
+| Elemento               | Papel na Chain                            | Caminho                                                                        |
+| ---------------------- | ----------------------------------------- | ------------------------------------------------------------------------------ |
+| `ExerciseSearchChain`  | Montagem e disparo da cadeia              | `backend/src/infrastructure/database/exercise-search.chain.ts`                 |
+| `BaseSearchHandler`    | Handler abstrato com lógica de delegação  | `backend/src/infrastructure/database/exercise-search.chain.ts`                 |
+| `UserScopeHandler`     | Aplica filtro de `userId` + `active=true` | `backend/src/infrastructure/database/exercise-search.chain.ts`                 |
+| `NameFilterHandler`    | Aplica filtro opcional por nome           | `backend/src/infrastructure/database/exercise-search.chain.ts`                 |
+| `MuscleGroupFilterHandler` | Aplica filtro opcional por grupo muscular | `backend/src/infrastructure/database/exercise-search.chain.ts`             |
+| Repositório consumidor | Instancia e executa a chain               | `backend/src/infrastructure/database/exercise.postgres-repository.ts`          |
+| Use Case               | Aciona o repositório com os critérios     | `backend/src/application/use-cases/exercises/find-exercises.use-case.ts`       |
+
+##### Trecho central
+
+```typescript
+const queryBuilder = this.repository
+  .createQueryBuilder('exercise')
+  .orderBy('exercise.name', 'ASC');
+
+await new ExerciseSearchChain().execute({ criteria, queryBuilder });
+const rows = await queryBuilder.getMany();
+```
+
+#### Evidência de execução
+
+As buscas filtradas executam com sucesso. Validação via:
+
+```bash
+docker compose exec api npx jest search-chain --verbose
+```
+
+#### Rastreabilidade
+
+| Artefato                      | Relação                                                                                      |
+| ----------------------------- | -------------------------------------------------------------------------------------------- |
+| Requisito                     | RF14 — consulta de exercícios por nome ou grupo muscular com ordenação e exclusão de inativos |
+| Módulo                        | `infrastructure/database/` · `application/use-cases/exercises/`                              |
+| Camada                        | Infraestrutura                                                                               |
+| Padrão estrutural relacionado | Decorator — os handlers da chain operam sobre o mesmo repositório decorado com cache e log   |
+
+#### Senso crítico
+
+##### Benefícios
+
+- **Menor complexidade ciclomática**: cada condição de filtro fica isolada em seu próprio handler, em vez de `if`/`andWhere` aninhados.
+- **Extensibilidade dinâmica**: novos filtros são adicionados como novos handlers sem modificar o repositório ou os handlers existentes.
+
+##### Limitações
+
+- **Dificuldade de depuração**: rastrear onde uma query perdeu escopo pode ser trabalhoso quando muitos handlers são encadeados e um deles suprime ou altera o contexto indevidamente.
+
+##### Alternativas consideradas
+
+- **Specification Pattern**: criar query objects. Descartado porque demandaria um acoplamento mais pesado ao TypeORM; a Chain manipula o contexto (`QueryBuilder`) livremente sem essa indireção.
+
+#### Referências (Chain of Responsibility)
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Chain of Responsibility.
+
+---
 
 ## [Módulo: ____________] — A preencher
 
 > **Responsável:** [Nome do membro] | **Branch:** [nome da branch]
 
-!!! warning “Seção pendente”
+!!! warning "Seção pendente"
 
     Esta seção aguarda a contribuição do responsável pelo módulo.
 
@@ -824,5 +812,6 @@ eventBus.subscribe("UserRegisteredEvent", async (event: DomainEvent) => {
 
 | Versão | Data       | Descrição                                                                     | Autor                   |
 | ------ | ---------- | ----------------------------------------------------------------------------- | ----------------------- |
-| 1.0    | 19/05/2026 | Documentação dos padrões Memento e Template Method do módulo de onboarding    | Lucas Antunes           |
-| 1.1    | 20/05/2026 | Documentação dos padrões Template Method e Observer do módulo de autenticação | Samuel Nogueira Caetano |
+| 1.0    | 19/05/2026 | Documentação dos padrões Memento e Template Method do módulo de Onboarding    | Lucas Antunes           |
+| 1.1    | 20/05/2026 | Documentação dos padrões Template Method e Observer do módulo de Autenticação | Samuel Nogueira Caetano |
+| 1.2    | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de exercícios       | Daniel Teles            |

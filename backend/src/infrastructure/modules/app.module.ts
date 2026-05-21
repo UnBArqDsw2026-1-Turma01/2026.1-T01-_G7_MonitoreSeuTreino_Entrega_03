@@ -7,8 +7,10 @@ import { RefreshTokenOrmEntity } from '../database/refresh-token.orm-entity';
 import { UserOrmEntity } from '../database/user.orm-entity';
 import { OnboardingHistoryOrmEntity } from '../database/onboarding-history.orm-entity';
 import { TrainingProfileOrmEntity } from '../database/training-profile.orm-entity';
+import { ExerciseOrmEntity } from '../database/exercise.orm-entity';
 import { winstonConfig } from '../logger/winston.config';
 import { AuthModule } from './auth.module';
+import { ExerciseModule } from './exercise.module';
 import { OnboardingModule } from './onboarding.module';
 
 @Module({
@@ -30,11 +32,13 @@ import { OnboardingModule } from './onboarding.module';
           RefreshTokenOrmEntity,
           TrainingProfileOrmEntity,
           OnboardingHistoryOrmEntity,
+          ExerciseOrmEntity,
         ],
         synchronize: config.get('NODE_ENV') === 'development',
       }),
     }),
     AuthModule,
+    ExerciseModule,
     OnboardingModule,
   ],
 })

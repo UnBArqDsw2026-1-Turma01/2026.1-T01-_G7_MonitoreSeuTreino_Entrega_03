@@ -49,9 +49,13 @@ Documentar as tecnologias adotadas no projeto MonitoreSeuTreino, suas justificat
 | **Facade**          | NestJS providers + `@Injectable()` permitem injetar o facade no controller sem expor os use cases individuais ao container |
 | **Memento**         | Value Objects imutáveis (TypeScript `readonly`) garantem que o memento não seja mutado após a captura                      |
 | **Template Method** | Classes abstratas TypeScript com métodos `protected` implementam os hooks sem precisar de framework adicional              |
+| **Builder**         | TypeScript e a tipagem estática previnem que desenvolvedores esqueçam de chamar propriedades da entidade antes de construir (`build()`)      |
+| **Decorator**       | Interfaces TypeScript e herança auxiliam em interceptar as camadas do repositório TypeORM na sua instanciação no NestJS                    |
+| **Chain of Resp.**  | O QueryBuilder do TypeORM (`SelectQueryBuilder`) entra como contexto passável (`req/res`) pelos interceptadores iterativos                 |
 
 ## Histórico de versões
 
 | Versão | Data       | Descrição                                                       | Autor         |
 |--------|------------|-----------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Documentação da stack com relação aos padrões GoF implementados | Lucas Antunes |
+| 1.1    | 21/05/2026 | Adição dos padrões GoF pertinentes ao módulo de Exercícios                      | Daniel Teles        |

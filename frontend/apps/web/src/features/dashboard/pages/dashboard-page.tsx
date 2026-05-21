@@ -120,16 +120,18 @@ export function DashboardPage() {
             </svg>
           }
         />
-        <NavItem
-          label="Treino"
-          icon={
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M6.5 6.5h11M6.5 17.5h11M4 12h16" strokeLinecap="round" />
-              <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none" />
-              <circle cx="20" cy="12" r="1.5" fill="currentColor" stroke="none" />
-            </svg>
-          }
-        />
+        <Link to="/exercises">
+          <NavItem
+            label="Exercícios"
+            icon={
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6.5 6.5h11M6.5 17.5h11M4 12h16" strokeLinecap="round" />
+                <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                <circle cx="20" cy="12" r="1.5" fill="currentColor" stroke="none" />
+              </svg>
+            }
+          />
+        </Link>
         <div className="flex flex-col items-center gap-1 py-1">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#ccff00] to-[#a8d400] flex items-center justify-center shadow-[0_0_20px_rgba(204,255,0,0.35)] -mt-6">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
