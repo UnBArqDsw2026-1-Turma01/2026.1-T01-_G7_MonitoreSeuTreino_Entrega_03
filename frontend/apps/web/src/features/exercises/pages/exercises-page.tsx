@@ -21,9 +21,21 @@ export function ExercisesPage() {
   const [message, setMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const createMut = useMutation({ mutationFn: createExercise, onSuccess: () => { setMessage('Exercício cadastrado com sucesso'); setShowCreate(false); queryClient.invalidateQueries(['exercises']); } });
-  const updateMut = useMutation({ mutationFn: updateExercise, onSuccess: () => { setMessage('Exercício atualizado com sucesso'); setEditing(null); queryClient.invalidateQueries(['exercises']); } });
-  const deactivateMut = useMutation({ mutationFn: (id: string) => deactivateExercise(id), onSuccess: () => { setMessage('Exercício inativado'); queryClient.invalidateQueries(['exercises']); } });
+  // CORREÇÃO: invalidateQueries agora recebe um objeto { queryKey: [...] }
+  const createMut = useMutation({ 
+    mutationFn: createExercise, 
+    onSuccess: () => { setMessage('Exercício cadastrado com sucesso'); setShowCreate(false); queryClient.invalidateQueries({ queryKey: ['exercises'] }); } 
+  });
+  
+  const updateMut = useMutation({ 
+    mutationFn: updateExercise, 
+    onSuccess: () => { setMessage('Exercício atualizado com sucesso'); setEditing(null); queryClient.invalidateQueries({ queryKey: ['exercises'] }); } 
+  });
+  
+  const deactivateMut = useMutation({ 
+    mutationFn: (id: string) => deactivateExercise(id), 
+    onSuccess: () => { setMessage('Exercício inativado'); queryClient.invalidateQueries({ queryKey: ['exercises'] }); } 
+  });
 
   return (
     <div className="min-h-screen bg-[#0d0b1e] flex flex-col pb-20">
@@ -66,7 +78,8 @@ export function ExercisesPage() {
                 </button>
               </div>
               <div className="p-6">
-                <ExerciseForm isSubmitting={createMut.isLoading} onSubmit={(v) => createMut.mutate(v as CreateExercisePayload)} submitLabel="CONFIRMAR" onCancel={() => setShowCreate(false)} />
+                {/* CORREÇÃO: isLoading substituído por isPending nas mutations */}
+                <ExerciseForm isSubmitting={createMut.isPending} onSubmit={(v) => createMut.mutate(v as CreateExercisePayload)} submitLabel="CONFIRMAR" onCancel={() => setShowCreate(false)} />
               </div>
             </div>
           </div>
@@ -86,7 +99,8 @@ export function ExercisesPage() {
                 </button>
               </div>
               <div className="p-6">
-                <ExerciseForm defaultValues={editing} isSubmitting={updateMut.isLoading} onSubmit={(v) => updateMut.mutate({ ...(v as UpdateExercisePayload), id: editing.id })} submitLabel="CONFIRMAR" onCancel={() => setEditing(null)} />
+                {/* CORREÇÃO: isLoading substituído por isPending nas mutations */}
+                <ExerciseForm defaultValues={editing} isSubmitting={updateMut.isPending} onSubmit={(v) => updateMut.mutate({ ...(v as UpdateExercisePayload), id: editing.id })} submitLabel="CONFIRMAR" onCancel={() => setEditing(null)} />
               </div>
             </div>
           </div>

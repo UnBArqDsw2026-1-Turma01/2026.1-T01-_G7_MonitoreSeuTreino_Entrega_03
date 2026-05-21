@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useState } from 'react';
 import { searchExercises } from '../services/exercises-api';
 import { ExerciseCard } from './exercise-card';
@@ -15,7 +15,8 @@ export function ExerciseList({ onEdit, onDeactivate }: Props) {
   const query = useQuery({
     queryKey: ['exercises', filter],
     queryFn: () => searchExercises({ name: filter }),
-    keepPreviousData: true,
+    // CORREÇÃO: Nova sintaxe do React Query v5
+    placeholderData: keepPreviousData,
   });
 
   return (
@@ -54,7 +55,8 @@ export function ExerciseList({ onEdit, onDeactivate }: Props) {
           {query.isLoading ? (
             <div className="text-[#8b7fa8] text-center text-sm py-4">Carregando...</div>
           ) : query.data && query.data.length > 0 ? (
-            query.data.map((ex) => (
+            // CORREÇÃO: Adicionada a tipagem (ex: Exercise) e corrigido o map
+            query.data.map((ex: Exercise) => (
               <ExerciseCard key={ex.id} exercise={ex} onEdit={onEdit} onDeactivate={onDeactivate} />
             ))
           ) : (
