@@ -19,6 +19,9 @@ Mapear cada padrão GoF implementado ao seu artefato de código, camada de arqui
 | **Criacional**     | Builder         | Exercises  | Domain                  | `ExerciseBuilder`                                       | Centralizar regras de montagem e validações obrigacionas vs opcionais do agregado `Exercise` | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md)             | `POST /v1/exercises`            |
 | **Estrutural**     | Decorator       | Exercises  | Domain + Infrastructure | `LoggingExerciseRepository` + `CachingExerciseRepository` | OCP para cacheamento e logging de respostas das rotas de leitura   | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md)             | `GET/POST/PUT /v1/exercises` |
 | **Comportamental** | Chain of Resp.  | Exercises  | Infrastructure          | `ExerciseSearchChain`                                   | Encadeamento de restrições de busca `where` (ativos, name, muscleGroup) | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md)       | `GET /v1/exercises`             |
+| **Criacional**     | Builder         | Usuário    | Presentation            | `PasswordResetRequestBuilder`, `AccountDeletionRequestBuilder` | Construção validada de comandos com campos obrigatórios antes da execução da cadeia | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md) | `POST /v1/auth/password-reset/request`, `DELETE /v1/users/me` |
+| **Estrutural**     | Facade          | Usuário    | Presentation            | `PasswordResetFacade`, `AccountDeletionFacade`          | Interface única para orquestrar cadeia, repositórios, e-mail e eventos              | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md)  | `POST /v1/auth/password-reset/*`, `DELETE /v1/users/me` |
+| **Comportamental** | Chain of Resp.  | Usuário    | Application             | `password-reset.chain.ts`, `account-deletion.chain.ts`  | Etapas sequenciais com validação e interrupção em qualquer ponto — abort silencioso por segurança | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `POST /v1/auth/password-reset/request`, `POST /v1/auth/password-reset/confirm`, `DELETE /v1/users/me` |
 
 ## Elos entre padrões
 
@@ -108,3 +111,4 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/v1/history/session
 | 1.0    | 19/05/2026 | Matriz de rastreabilidade com os 5 padrões GoF do módulo de onboarding e elos entre eles | Lucas Antunes              |
 | 1.1    | 20/05/2026 | Matriz expandida com os 3 padrões GoF do módulo de Exercises                              | Daniel Teles               |
 | 1.2    | 20/05/2026 | Inclusão de Multiton, Proxy e Observer do módulo de histórico (RF26/RF27)               | Giovanni Dornelas Ferreira |
+| 1.3    | 21/05/2026 | Adição dos padrões do Módulo de Usuário na matriz de rastreabilidade                    | André Ricardo Meyer de Melo |

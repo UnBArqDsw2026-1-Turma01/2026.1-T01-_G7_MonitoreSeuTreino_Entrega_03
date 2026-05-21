@@ -480,6 +480,96 @@ Exemplo de resposta da listagem:
 
 ---
 
+## Módulo de Usuário — Builder
+
+**Autor:** André Ricardo Meyer de Melo  
+**Funcionalidades:** RF04 (Recuperar Senha) e RF07 (Excluir Conta)
+
+### Problema
+
+Os fluxos de recuperação de senha e exclusão de conta precisam construir objetos de comando com campos obrigatórios distintos antes de acionar a cadeia de responsabilidade. Sem um padrão de construção explícito, a validação ficaria espalhada entre o controller e a facade, dificultando a rastreabilidade e criando construtores com múltiplos parâmetros posicionais frágeis.
+
+### Solução
+
+Dois builders concretos — `PasswordResetRequestBuilder` e `AccountDeletionRequestBuilder` — constroem seus respectivos comandos passo a passo via interface fluente. O método `build()` centraliza a validação: se qualquer campo obrigatório estiver ausente, lança `ValidationException` antes que a cadeia seja montada.
+
+```typescript
+// RF04 — uso na PasswordResetFacade
+const command = new PasswordResetRequestBuilder()
+  .setEmail(email)
+  .build(); // lança ValidationException se email estiver vazio
+
+// RF07 — uso na AccountDeletionFacade
+const command = new AccountDeletionRequestBuilder()
+  .setUserId(userId)
+  .setPassword(password)
+  .setConfirmation(confirmation)
+  .build(); // lança ValidationException se qualquer campo estiver ausente
+```
+
+### Diagrama
+
+```mermaid
+classDiagram
+    class PasswordResetRequestBuilder {
+        -email?: string
+        +setEmail(email: string) this
+        +build() PasswordResetRequestCommand
+        -validate() void
+    }
+    class PasswordResetRequestCommand {
+        +email: string
+    }
+    class AccountDeletionRequestBuilder {
+        -userId?: string
+        -password?: string
+        -confirmation?: string
+        +setUserId(userId: string) this
+        +setPassword(password: string) this
+        +setConfirmation(confirmation: string) this
+        +build() AccountDeletionRequestCommand
+        -validate() void
+    }
+    class AccountDeletionRequestCommand {
+        +userId: string
+        +password: string
+        +confirmation: string
+    }
+    class PasswordResetFacade {
+        +requestReset(email: string) Promise~void~
+    }
+    class AccountDeletionFacade {
+        +delete(userId, password, confirmation) Promise~void~
+    }
+
+    PasswordResetFacade ..> PasswordResetRequestBuilder : usa
+    PasswordResetRequestBuilder --> PasswordResetRequestCommand : constrói
+    AccountDeletionFacade ..> AccountDeletionRequestBuilder : usa
+    AccountDeletionRequestBuilder --> AccountDeletionRequestCommand : constrói
+```
+
+### Artefatos
+
+| Papel GoF | Classe | Arquivo |
+|---|---|---|
+| ConcreteBuilder | `PasswordResetRequestBuilder` | `presentation/facades/password-reset.facade.ts` |
+| ConcreteBuilder | `AccountDeletionRequestBuilder` | `presentation/facades/account-deletion.facade.ts` |
+| Product | `PasswordResetRequestCommand` | `presentation/facades/password-reset.facade.ts` |
+| Product | `AccountDeletionRequestCommand` | `presentation/facades/account-deletion.facade.ts` |
+
+### Senso Crítico
+
+**Benefícios:**
+- Validação centralizada em `build()` — falha antes de qualquer efeito colateral
+- Interface fluente torna o código de uso autoexplicativo
+- Encapsula a criação do comando, isolando a facade de mudanças na assinatura
+
+**Limitações:**
+- Para comandos simples (1–2 campos), o Builder adiciona indireção que poderia ser substituída por validação direta no método da facade
+- Os builders são classes privadas nos arquivos de facade — adequado para o escopo atual, mas dificultaria reuso em outros contextos
+
+---
+
 ## Histórico de versões
 
 | Versão | Data       | Descrição                                                                          | Autor                      |
@@ -487,3 +577,4 @@ Exemplo de resposta da listagem:
 | 1.0    | 19/05/2026 | Documentação do padrão Singleton do módulo de onboarding (regras de classificação) | Lucas Antunes              |
 | 1.1    | 20/05/2026 | Documentação do padrão Builder para o módulo de exercises (criação de Exercise)      | Daniel Teles               |
 | 1.2    | 20/05/2026 | Documentação do padrão Multiton do módulo de histórico de sessões (RF26/RF27)      | Giovanni Dornelas Ferreira |
+| 1.3    | 21/05/2026 | Adição do Módulo de Usuário: Builder (RF04 e RF07)                                  | André Ricardo Meyer de Melo |

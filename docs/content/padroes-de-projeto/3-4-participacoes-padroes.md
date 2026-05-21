@@ -95,6 +95,18 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 
 ---
 
+## Módulo de Usuário — RF04 e RF07
+
+**Responsável:** André Ricardo Meyer de Melo | **Branch:** `feat/modulo-usuario-4-7`
+
+| Padrão | Nome do Membro | Contribuição | Significância |
+|--------|----------------|--------------|---------------|
+| Builder | André Ricardo Meyer de Melo | `PasswordResetRequestBuilder` e `AccountDeletionRequestBuilder` — constroem comandos validados para RF04 e RF07 | Excelente |
+| Facade | André Ricardo Meyer de Melo | `PasswordResetFacade` e `AccountDeletionFacade` — orquestram cadeia, repositórios, e-mail e eventos | Excelente |
+| Chain of Responsibility | André Ricardo Meyer de Melo | Cadeia RF04 (4 handlers) e cadeia RF07 (4 handlers) com decisões de segurança embutidas | Excelente |
+
+---
+
 ## Histórico de versões
 
 | Versão | Data       | Descrição                                                                                                                    | Autor                      |
@@ -102,3 +114,4 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | 1.0    | 19/05/2026 | Registro de participações nos padrões GoF do módulo de onboarding (Singleton, Bridge, Facade, Memento, Template Method)      | Lucas Antunes              |
 | 1.1    | 20/05/2026 | Adição de participações do módulo de Exercises                                                                               | Daniel Teles               |
 | 1.2    | 20/05/2026 | Participações no módulo de histórico (Multiton, Proxy, Observer) — RF26/RF27                                                | Giovanni Dornelas Ferreira |
+| 1.3    | 21/05/2026 | Adição das contribuições do Módulo de Usuário (RF04 e RF07)                                                                 | André Ricardo Meyer de Melo |
