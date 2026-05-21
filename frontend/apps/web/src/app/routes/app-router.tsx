@@ -26,6 +26,13 @@ export const appRouter = createBrowserRouter([
           return { Component: OnboardingResultPage };
         },
       },
+      {
+        path: '/exercises',
+        lazy: async () => {
+          const { ExercisesPage } = await import('../../features/exercises/pages/exercises-page');
+          return { Component: ExercisesPage };
+        },
+      },
     ],
   },
   {
