@@ -75,41 +75,46 @@ graph TD
     BE_UseCase --> BE_Infra
     BE_Infra --> DB
 ```
-
 ## Módulos implementados
 
-| **Módulo**   | **Backend**                                               | **Frontend**                                   | **Status**   |
-| ------------ | --------------------------------------------------------- | ---------------------------------------------- | ------------ |
-| Autenticação | `auth/` (JWT, refresh token, eventos, decorators, guards) | `features/auth/` (login, cadastro)             | Implementado |
-| Onboarding   | `onboarding/` (perfil, histórico, classificação)          | `features/onboarding/` (formulário, resultado) | Implementado |
-| Exercícios   | `exercises/` (criação, edição, listagem)                  | `features/exercises/` (listagem, modais)       | Implementado |
-| Dashboard    | —                                                         | `features/dashboard/` (tela inicial)           | Parcial      |
-| Treinos      | —                                                         | —                                              | Planejado    |
+| Módulo | Backend | Frontend | Status |
+|---|---|---|---|
+| Autenticação | `auth/` (JWT, refresh token, eventos, decorators, guards) | `features/auth/` (login, cadastro) | Implementado |
+| Onboarding | `onboarding/` (perfil, histórico, classificação) | `features/onboarding/` (formulário, resultado) | Implementado |
+| Sessões | `session/` (registro de treino, composite) | — | Implementado (API) |
+| Histórico | `history/` (RF26, RF27, Multiton, Proxy, Observer) | — | Implementado (API) |
+| Exercícios | `exercises/` (criação, edição, listagem) | `features/exercises/` (listagem, modais) | Implementado |
+| Dashboard | — | `features/dashboard/` (tela inicial) | Parcial |
+| Treinos | — | — | Planejado |
 
 ## Relação com os padrões GoF
 
-Os padrões foram aplicados dentro dos módulos de **Onboarding**, **Autenticação** e **Exercícios** nesta entrega. A tabela abaixo localiza cada padrão na arquitetura:
+Os padrões foram aplicados dentro dos módulos de **Onboarding**, **Autenticação**, **Exercícios** e **Histórico** nesta entrega. A tabela abaixo localiza cada padrão na arquitetura.
 
-| **Padrão**      | **Módulo**   | **Camada**              | **Localização**                                           | **Problema resolvido**                                                                                  |
-| --------------- | ------------ | ----------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Singleton       | Onboarding   | Domain                  | `domain/onboarding/rules/`                                | Fonte única de regras de classificação para múltiplos classificadores                                   |
-| Factory Method  | Autenticação | Domain                  | `domain/entities/` (User / RefreshToken)                  | Separação semântica da criação genuína com disparo de eventos da reconstituição a partir da base        |
-| Bridge          | Onboarding   | Domain                  | `domain/onboarding/bridge/`                               | Separar hierarquia de fluxos da hierarquia de classificadores                                           |
-| Facade          | Onboarding   | Presentation            | `presentation/facades/onboarding.facade.ts`               | Isolar o controller do subsistema interno de use cases                                                  |
-| Facade          | Autenticação | Presentation            | `presentation/facades/authentication.facade.ts`           | Roteamento simplificado dos fluxos de Auth (Login/Logout parcial ou total) blindando o Controller       |
-| Decorator       | Autenticação | Infrastructure          | `infrastructure/database/`                                | Empilhar políticas de cache em memória e log (`CachingUserRepository`) sem alterar a classe base        |
-| Memento         | Onboarding   | Domain + Infrastructure | `domain/onboarding/entities/`, `infrastructure/database/` | Preservar estado anterior do perfil antes de um redo sem quebrar encapsulamento                         |
-| Template Method | Onboarding   | Domain                  | `domain/onboarding/bridge/` (OnboardingFlow)              | Garantir sequência imutável do algoritmo de classificação com steps predefinidos                        |
-| Template Method | Autenticação | Application             | `application/use-cases/base.use-case.ts`                  | Centralizar e garantir execução da rotina de limpeza, ação principal e extração/publicação de eventos   |
-| Observer        | Autenticação | Domain + Application    | `application/events/`, `domain/entities/`                 | Desacoplar publicação de eventos (`DomainEventBus`) dos Handlers que devem reagir de forma independente |
-| Builder         | Exercícios   | Domain                  | `domain/exercises/builders/`                              | Centralizar validações e montagem de parâmetros obrigatórios e opcionais do agregado `Exercise`         |
-| Decorator       | Exercícios   | Domain + Infrastructure | `infrastructure/modules/` e `infrastructure/database/`    | Inclusão transparente de logs e cache sobre o repositório base                                          |
-| Chain of Resp.  | Exercícios   | Infrastructure          | `infrastructure/database/` (ExerciseSearchChain)          | Construção dinâmica das restrições encadeadas da pipeline de busca                                      |
+| Padrão | Módulo | Camada | Localização | Problema resolvido |
+|---|---|---|---|---|
+| Singleton | Onboarding | Domain | `domain/onboarding/rules/` | Fonte única de regras de classificação para múltiplos classificadores. |
+| Factory Method | Autenticação | Domain | `domain/entities/` (`User` / `RefreshToken`) | Separação semântica da criação genuína com disparo de eventos da reconstituição a partir da base. |
+| Builder | Exercícios | Domain | `domain/exercises/builders/` | Centralizar validações e montagem de parâmetros obrigatórios e opcionais do agregado `Exercise`. |
+| Multiton | Histórico | Domain | `domain/history/history-manager.ts` | Uma instância de gerenciador de histórico por usuário autenticado. |
+| Bridge | Onboarding | Domain | `domain/onboarding/bridge/` | Separar hierarquia de fluxos da hierarquia de classificadores. |
+| Facade | Onboarding | Presentation | `presentation/facades/onboarding.facade.ts` | Isolar o controller do subsistema interno de use cases. |
+| Facade | Autenticação | Presentation | `presentation/facades/authentication.facade.ts` | Roteamento simplificado dos fluxos de autenticação, blindando o controller. |
+| Decorator | Autenticação | Infrastructure | `infrastructure/database/` | Empilhar políticas de cache em memória e log sem alterar a classe base. |
+| Decorator | Exercícios | Domain + Infrastructure | `infrastructure/modules/` e `infrastructure/database/` | Inclusão transparente de logs e cache sobre o repositório base. |
+| Proxy | Histórico | Infrastructure | `infrastructure/services/history-service.proxy.ts` | Validar acesso, auditar e delegar ao serviço real de histórico. |
+| Memento | Onboarding | Domain + Infrastructure | `domain/onboarding/entities/`, `infrastructure/database/` | Preservar estado anterior do perfil antes de refazer o questionário sem quebrar encapsulamento. |
+| Template Method | Onboarding | Domain | `domain/onboarding/bridge/` (`OnboardingFlow`) | Garantir sequência imutável do algoritmo de classificação com steps predefinidos. |
+| Template Method | Autenticação | Application | `application/use-cases/base.use-case.ts` | Centralizar e garantir execução da rotina de limpeza, ação principal e extração/publicação de eventos. |
+| Observer | Autenticação | Domain + Application | `application/events/`, `domain/entities/` | Desacoplar publicação de eventos (`DomainEventBus`) dos handlers que devem reagir de forma independente. |
+| Observer | Histórico | Domain + Application | `domain/history/observers/`, `register-session.use-case` | Atualizar histórico automaticamente ao concluir sessão de treino. |
+| Chain of Responsibility | Exercícios | Infrastructure | `infrastructure/database/` (`ExerciseSearchChain`) | Construção dinâmica das restrições encadeadas da pipeline de busca. |
 
 ## Histórico de versões
 
-| **Versão** | **Data**   | **Descrição**                                                                      | **Autor**               |
-| ---------- | ---------- | ---------------------------------------------------------------------------------- | ----------------------- |
-| 1.0        | 19/05/2026 | Visão geral da arquitetura com localização dos padrões GoF do módulo de Onboarding | Lucas Antunes           |
-| 1.1        | 20/05/2026 | Atualização da arquitetura incorporando os 5 padrões GoF do Módulo de Autenticação | Samuel Nogueira Caetano |
-| 1.2        | 21/05/2026 | Adição do módulo de Exercícios à lista de módulos e padrões GoF correspondentes    | Daniel Teles            |
+| Versão | Data | Descrição | Autor |
+|---|---|---|---|
+| 1.0 | 19/05/2026 | Visão geral da arquitetura com localização dos padrões GoF do módulo de Onboarding. | Lucas Antunes |
+| 1.1 | 20/05/2026 | Atualização da arquitetura incorporando os 5 padrões GoF do módulo de Autenticação. | Samuel Nogueira Caetano |
+| 1.2 | 20/05/2026 | Inclusão do módulo de Histórico com padrões Multiton, Proxy e Observer. | Giovanni Dornelas Ferreira |
+| 1.3 | 21/05/2026 | Adição do módulo de Exercícios à lista de módulos e padrões GoF correspondentes. | Daniel Teles |
