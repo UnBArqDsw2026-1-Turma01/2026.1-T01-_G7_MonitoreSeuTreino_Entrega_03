@@ -60,6 +60,34 @@ export class Routine extends AggregateRoot {
     return routine;
   }
 
+  static reconstitute(data: {
+    id: string;
+    userId: string;
+    name: string;
+    divisions: any[];
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt?: Date | null;
+  }): Routine {
+    return new Routine(
+      RoutineId.reconstitute(data.id),
+      UserId.reconstitute(data.userId),
+      RoutineName.create(data.name),
+      data.divisions as RoutineDivision[],
+      data.isActive,
+      Timestamp.reconstitute(data.createdAt),
+      Timestamp.reconstitute(data.updatedAt),
+      data.deletedAt ? Timestamp.reconstitute(data.deletedAt) : null,
+    );
+  }
+
+  update(newName: RoutineName, newDivisions: RoutineDivision[]): void {
+    (this as any).name = newName;
+    (this as any).divisions = newDivisions;
+    (this as any).updatedAt = Timestamp.now();
+  }
+
   // ─── GOF Criacional: PROTOTYPE ───────────────────────────────────
 
   // Permite clonar a rotina inteira (deep copy), gerando um novo ID, mas mantendo a estrutura de treinos.

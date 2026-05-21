@@ -13,30 +13,14 @@ interface UpdateRoutineInput {
 }
 
 @Injectable()
-export class UpdateRoutineUseCase extends UseCase<UpdateRoutineInput, void> {
-  constructor(
-    @Inject(ROUTINE_REPOSITORY_TOKEN) // O Decorator garante que o Proxy seja injetado
-    private readonly routineRepository: RoutineRepository,
-    eventBus: DomainEventBus,
-  ) {
-    super(eventBus);
-  }
+export class UpdateRoutineUseCase extends UseCase<any, void> {
+  constructor(@Inject(ROUTINE_REPOSITORY_TOKEN) private repo: RoutineRepository, eventBus: DomainEventBus) { super(eventBus); }
 
-  protected async handle(input: UpdateRoutineInput): Promise<void> {
-    const routine = await this.routineRepository.findById(input.routineId);
+  protected async handle(input: any): Promise<void> {
+    const routine = await this.repo.findById(input.routineId);
+    if (!routine) throw new ValidationException('Routine not found');
 
-    if (!routine) {
-      throw new ValidationException('Routine not found');
-    }
-
-    if (routine.userId.toString() !== input.userId) {
-      throw new ValidationException('You do not have permission to edit this routine');
-    }
-
-    const updatedRoutine = routine.clone(RoutineName.create(input.newName));
-
-    await this.routineRepository.save(updatedRoutine);
-
-    this.registerAggregate(updatedRoutine);
+    routine.update(RoutineName.create(input.newName), input.divisions);
+    await this.repo.save(routine);
   }
 }

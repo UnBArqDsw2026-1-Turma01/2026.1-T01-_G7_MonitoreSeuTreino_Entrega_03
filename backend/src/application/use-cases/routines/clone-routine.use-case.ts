@@ -1,5 +1,6 @@
+import { Injectable, Inject } from '@nestjs/common';
 import { UseCase } from '../base.use-case';
-import { RoutineRepository } from '../../../domain/repositories/routine.repository';
+import { RoutineRepository, ROUTINE_REPOSITORY_TOKEN } from '../../../domain/repositories/routine.repository';
 import { RoutineName } from '../../../domain/value-objects/routine-name.vo';
 import { ValidationException } from '../../../domain/exceptions/domain-exceptions';
 import { DomainEventBus } from '../../events/domain-event-bus';
@@ -10,8 +11,10 @@ interface CloneRoutineInput {
   newName?: string;
 }
 
+@Injectable()
 export class CloneRoutineUseCase extends UseCase<CloneRoutineInput, void> {
   constructor(
+    @Inject(ROUTINE_REPOSITORY_TOKEN)
     private readonly routineRepository: RoutineRepository,
     eventBus: DomainEventBus,
   ) {

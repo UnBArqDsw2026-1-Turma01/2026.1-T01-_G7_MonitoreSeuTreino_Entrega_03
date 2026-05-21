@@ -36,7 +36,6 @@ export class ActivateRoutineUseCase extends UseCase<ActivateRoutineInput, void> 
 
     await this.routineRepository.save(activatedRoutine);
 
-    // O EventBus dispara o RoutineActivatedEvent
     this.registerAggregate(activatedRoutine);
   }
 }

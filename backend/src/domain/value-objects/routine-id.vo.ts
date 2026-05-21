@@ -12,4 +12,8 @@ export class RoutineId extends AggregateId {
   static fromString(id: string): RoutineId {
     return new RoutineId(id);
   }
+
+  static reconstitute(value: string): RoutineId {
+    return new RoutineId(value);
+  }
 }

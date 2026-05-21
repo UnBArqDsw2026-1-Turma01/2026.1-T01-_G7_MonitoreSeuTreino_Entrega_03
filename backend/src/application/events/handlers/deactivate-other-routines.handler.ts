@@ -1,18 +1,25 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { RoutineActivatedEvent } from '../../../domain/events/routine-events';
-import { ROUTINE_REPOSITORY_TOKEN } from '../../../domain/repositories/routine.repository';
-import type { RoutineRepository } from '../../../domain/repositories/routine.repository';
+import { Inject, Injectable } from '@nestjs/common';
+import { ROUTINE_REPOSITORY_TOKEN, RoutineRepository } from '../../../domain/repositories/routine.repository';
 
+@EventsHandler(RoutineActivatedEvent)
 @Injectable()
-export class DeactivateOtherRoutinesHandler {
+export class DeactivateOtherRoutinesHandler implements IEventHandler<RoutineActivatedEvent> {
   constructor(
-    @Inject(ROUTINE_REPOSITORY_TOKEN)
-    private readonly routineRepository: RoutineRepository,
+    @Inject(ROUTINE_REPOSITORY_TOKEN) private readonly repo: RoutineRepository
   ) {}
 
-  async handle(event: RoutineActivatedEvent): Promise<void> {
-    console.log(`\n📡 [Mediator] Evento capturado: A rotina ${event.routineId} foi ativada!`);
-    console.log(`⚙️  [Mediator] Buscando outras rotinas do usuário ${event.userId} para desativá-las...`);
-    console.log(`✅ [Mediator] Sucesso: Todas as outras rotinas foram desativadas silenciosamente.\n`);
+  async handle(event: RoutineActivatedEvent) {
+    const { userId, routineId } = event;
+
+    const activeRoutines = await this.repo.findByUserId(userId);
+    const others = activeRoutines.filter(r => r.id.toString() !== routineId);
+
+    // Inativando outras rotinas
+    for (const routine of others) {
+      (routine as any).isActive = false;
+      await this.repo.save(routine);
+    }
   }
 }

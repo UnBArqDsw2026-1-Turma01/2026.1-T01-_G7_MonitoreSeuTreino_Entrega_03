@@ -19,6 +19,10 @@ export class RoutineRepositoryProxy implements RoutineRepository {
     return this.realRepository.findById(id);
   }
 
+  async findByUserId(userId: string): Promise<Routine[]> {
+    return this.realRepository.findByUserId(userId);
+  }
+
   async save(routine: Routine): Promise<void> {
     const hasHistory = await this.sessionRepository.hasCompletedSessions(routine.id.toString());
 
@@ -29,5 +33,9 @@ export class RoutineRepositoryProxy implements RoutineRepository {
     }
 
     await this.realRepository.save(routine);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.realRepository.delete(id);
   }
 }
