@@ -81,12 +81,26 @@ graph TD
 |--------------|--------------------------------------------------|------------------------------------------------|--------------|
 | Autenticação | `auth/` (JWT, refresh token, guards)             | `features/auth/` (login, cadastro)             | Implementado |
 | Onboarding   | `onboarding/` (perfil, histórico, classificação) | `features/onboarding/` (formulário, resultado) | Implementado |
+| Sessões      | `session/` (registro de treino, composite)       | —                                              | Implementado (API) |
+| Histórico    | `history/` (RF26, RF27, Multiton, Proxy, Observer) | —                                            | Implementado (API) |
 | Exercícios   | `exercises/` (criação, edição, listagem)         | `features/exercises/` (listagem, modais)       | Implementado |
 | Dashboard    | —                                                | `features/dashboard/` (tela inicial)           | Parcial      |
 | Treinos      | —                                                | —                                              | Planejado    |
 
 ## Relação com os padrões GoF
 
+Os padrões GoF estão distribuídos nos módulos de **Onboarding** e **Histórico de Sessões**. A tabela abaixo localiza cada padrão na arquitetura:
+
+| Padrão          | Módulo     | Camada                  | Localização                                               | Problema resolvido                                                    |
+|-----------------|------------|-------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
+| Singleton       | Onboarding | Domain                  | `domain/onboarding/rules/`                                | Fonte única de regras de classificação para múltiplos classificadores |
+| Multiton        | Histórico  | Domain                  | `domain/history/history-manager.ts`                       | Uma instância de gerenciador de histórico por usuário autenticado     |
+| Bridge          | Onboarding | Domain                  | `domain/onboarding/bridge/`                               | Separar hierarquia de fluxos da hierarquia de classificadores         |
+| Facade          | Onboarding | Presentation            | `presentation/facades/`                                   | Isolar o controller do subsistema interno de use cases                |
+| Proxy           | Histórico  | Infrastructure          | `infrastructure/services/history-service.proxy.ts`        | Validar acesso, auditar e delegar ao serviço real de histórico        |
+| Memento         | Onboarding | Domain + Infrastructure | `domain/onboarding/entities/`, `infrastructure/database/` | Preservar estado anterior do perfil antes de um redo                  |
+| Template Method | Onboarding | Domain                  | `domain/onboarding/bridge/` (OnboardingFlow)              | Garantir sequência imutável do algoritmo de classificação             |
+| Observer        | Histórico  | Domain + Application    | `domain/history/observers/`, `register-session.use-case`  | Atualizar histórico automaticamente ao concluir sessão de treino      |
 Os padrões foram aplicados dentro dos módulos de **Onboarding** e **Exercícios** nesta entrega. A tabela abaixo localiza cada padrão na arquitetura:
 
 | Padrão          | Camada                  | Localização                                               | Problema resolvido                                                    |
@@ -104,5 +118,6 @@ Os padrões foram aplicados dentro dos módulos de **Onboarding** e **Exercício
 
 | Versão | Data       | Descrição                                                                          | Autor         |
 |--------|------------|------------------------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Visão geral da arquitetura com localização dos padrões GoF do módulo de onboarding | Lucas Antunes |
-| 1.1    | 21/05/2026 | Adição do módulo de exercícios à lista de módulos e GoFs                           | Daniel Teles        |
+| 1.0    | 19/05/2026 | Visão geral da arquitetura com localização dos padrões GoF do módulo de onboarding | Lucas Antunes              |
+| 1.1    | 21/05/2026 | Adição do módulo de exercícios à lista de módulos e GoFs                           | Daniel Teles               |
+| 1.2    | 20/05/2026 | Inclusão do módulo de Histórico com padrões Multiton, Proxy e Observer   | Giovanni Dornelas Ferreira |

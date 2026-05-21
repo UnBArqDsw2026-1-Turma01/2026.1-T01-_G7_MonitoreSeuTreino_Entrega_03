@@ -4,7 +4,7 @@
 
 Os padrões estruturais tratam de como classes e objetos são compostos para formar estruturas maiores, mantendo flexibilidade e eficiência.
 
-Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. As seções sinalizadas como **"a preencher"** aguardam a contribuição dos demais membros — siga a estrutura da seção de Onboarding como referência.
+Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. Ao final do arquivo, a seção **"[Módulo: ____________] — A preencher"** permanece disponível para novas contribuições — siga a estrutura das seções de Onboarding ou Histórico de Sessões como referência.
 
 ---
 
@@ -359,6 +359,47 @@ export class OnboardingController {
 
 ---
 
+## Módulo de Histórico de Sessões
+
+> **Responsável:** Giovanni Dornelas Ferreira | **Branch:** `feat/modulo-historico`
+>
+> Contexto: o histórico expõe operações sensíveis (dados de treino do usuário). O Proxy intercepta chamadas ao serviço real para **validar acesso, auditar logs e validar filtros** sem poluir a lógica de negócio.
+
+### Padrões analisados
+
+| Padrão     | Possível aplicação                         | Status          | Justificativa                                                                 |
+|------------|--------------------------------------------|-----------------|-------------------------------------------------------------------------------|
+| **Proxy**  | Intermediar `IHistoryService`                | Selecionado     | Controle transversal (authz, logs, validação de datas) transparente aos use cases |
+| Facade     | Unificar listagem + detalhe                | Avaliado        | Controller já delega a dois use cases finos; Proxy cobre o subsistema de serviço |
+| Decorator  | Empilhar comportamentos no serviço         | Avaliado        | Proxy é mais adequado quando a interface é idêntica ao real (substituição)  |
+| Adapter    | Adaptar repositório legado                 | Não selecionado | Repositório TypeORM já segue contrato de domínio                              |
+| Bridge     | Separar listagem de persistência           | Não selecionado | Responsabilidades já separadas em serviço + repositório                      |
+
+### Padrão implementado — Proxy · `HistoryServiceProxy` → `HistoryService`
+
+## Problema arquitetural
+
+Os use cases `ListSessionHistoryUseCase` e `GetSessionHistoryDetailUseCase` precisam de um serviço de histórico, mas **não devem** misturar:
+
+1. **Regras de negócio** (consultar sessões concluídas, mapear DTOs, usar Multiton).
+2. **Preocupações transversais** (garantir `userId` autenticado, validar intervalo de datas, registrar auditoria em log).
+
+Sem Proxy, essas responsabilidades ficariam no `HistoryService` ou duplicadas em cada use case — violando Single Responsibility.
+
+## Justificativa da escolha
+
+O **Proxy** implementa a mesma interface `IHistoryService` que o serviço real:
+
+| Componente            | Papel                                                         |
+|-----------------------|---------------------------------------------------------------|
+| `IHistoryService`     | Contrato compartilhado                                        |
+| `HistoryService`      | Serviço real — repositório + Multiton + mapeamento            |
+| `HistoryServiceProxy` | Intercepta chamadas, valida, loga, delega ao real             |
+
+No NestJS, o token `HISTORY_SERVICE` resolve para o **Proxy**; use cases nunca injetam o serviço real diretamente.
+
+Isso é **estrutural** (GoF): o Proxy compõe o real e controla o acesso à mesma interface, sem o cliente saber qual implementação executa a lógica pesada.
+
 ## Módulo de Exercicios — Decorator
 
 > **Responsável:** Daniel | **Branch:** `feature/exercise_module`
@@ -406,6 +447,79 @@ const logging = new LoggingExerciseRepository(cached, logger);
 
 ```mermaid
 classDiagram
+    class IHistoryService {
+        <<interface>>
+        +listCompletedSessions(userId, filter)
+        +getSessionDetail(userId, sessionId)
+    }
+
+    class HistoryService {
+        +listCompletedSessions(userId, filter)
+        +getSessionDetail(userId, sessionId)
+    }
+
+    class HistoryServiceProxy {
+        -realService: HistoryService
+        -logger: AppLogger
+        +listCompletedSessions(userId, filter)
+        +getSessionDetail(userId, sessionId)
+        -assertAuthenticated(userId)
+        -validateDateRange(filter)
+    }
+
+    class ListSessionHistoryUseCase {
+        -historyService: IHistoryService
+        +execute(input)
+    }
+
+    class HistoryController {
+        +list(req, query)
+        +getDetail(req, sessionId)
+    }
+
+    IHistoryService <|.. HistoryService
+    IHistoryService <|.. HistoryServiceProxy
+    HistoryServiceProxy --> HistoryService : delega
+    ListSessionHistoryUseCase --> IHistoryService : HISTORY_SERVICE = Proxy
+    HistoryController --> ListSessionHistoryUseCase
+```
+
+## Implementação
+
+| Elemento              | Papel no Proxy | Caminho                                                                 |
+|-----------------------|----------------|-------------------------------------------------------------------------|
+| `IHistoryService`     | Interface      | `backend/src/domain/history/services/i-history.service.ts`              |
+| `HistoryService`      | Real subject   | `backend/src/application/services/history.service.ts`                   |
+| `HistoryServiceProxy` | Proxy          | `backend/src/infrastructure/services/history-service.proxy.ts`        |
+| Provider NestJS       | Wiring         | `backend/src/infrastructure/modules/history.module.ts`                  |
+| Use cases             | Clientes       | `backend/src/application/use-cases/history/`                            |
+| Controller            | HTTP           | `backend/src/presentation/controllers/history.controller.ts`          |
+
+### Trechos centrais
+
+```typescript
+// history.module.ts — cliente recebe o Proxy via token
+{
+  provide: HISTORY_SERVICE,
+  useFactory: (real: HistoryService, logger: AppLogger) =>
+    new HistoryServiceProxy(real, logger),
+  inject: [HistoryService, APP_LOGGER],
+}
+
+// history-service.proxy.ts
+export class HistoryServiceProxy implements IHistoryService {
+  constructor(
+    private readonly realService: HistoryService,
+    @Inject(APP_LOGGER) private readonly logger: AppLogger,
+  ) {}
+
+  async listCompletedSessions(authenticatedUserId: string, filter?: DateRangeFilter) {
+    this.assertAuthenticated(authenticatedUserId);
+    this.validateDateRange(filter);
+    this.logger.log(`[HistoryProxy] Listagem — userId=${authenticatedUserId}`);
+    return this.realService.listCompletedSessions(authenticatedUserId, filter);
+  }
+}
     class IExerciseRepository {
         <<interface>>
         +save(exercise: Exercise)
@@ -437,6 +551,27 @@ classDiagram
 
 ## Evidência de execução
 
+1. Registrar sessão e listar histórico com token válido → logs Winston contêm `[HistoryProxy] Listagem`.
+2. Chamar listagem com `startDate` posterior a `endDate` → resposta `400` com mensagem de intervalo inválido (validação no Proxy).
+3. Swagger: tag **history** — `GET /v1/history/sessions` e `GET /v1/history/sessions/{sessionId}`.
+
+```bash
+# Exemplo com curl (substitua TOKEN)
+curl -s -H "Authorization: Bearer TOKEN" \
+  "http://localhost:3000/v1/history/sessions?startDate=2026-01-01T00:00:00.000Z&endDate=2026-12-31T23:59:59.999Z"
+```
+
+## Rastreabilidade
+
+| Artefato                          | Relação                                                    |
+|-----------------------------------|------------------------------------------------------------|
+| Requisitos                        | RF26, RF27                                                 |
+| Módulo                            | `infrastructure/services/`, `application/services/`        |
+| Camada                            | Infraestrutura (Proxy) + Aplicação (serviço real)          |
+| Padrão criacional relacionado     | Multiton (serviço real usa `HistoryManager.getInstance`)   |
+| Padrão comportamental relacionado | Observer (atualiza cache antes da leitura via Proxy)       |
+| Guard de apresentação             | `BearerTokenGuard` (autenticação HTTP; Proxy valida userId) |
+
 Os logs aparecem no console (stdout) do docker indicando o tempo de execução e o sucesso das chamadas. O cache invalida ou usa dados em memória conforme necessário.
 
 ```bash
@@ -447,6 +582,24 @@ docker compose logs api
 
 ### Benefícios
 
+- **Separação clara**: regras de listagem/detalhe permanecem no `HistoryService`; auditoria e validação no Proxy.
+- **Substituível**: amanhã pode-se adicionar cache ou rate limit no Proxy sem alterar use cases.
+- **Testável**: o serviço real pode ser testado sem mocks de logger; o Proxy testado com mock do real.
+
+### Limitações
+
+- **Autenticação HTTP já existe**: o `BearerTokenGuard` já garante usuário logado; o Proxy reforça `userId` não vazio — redundância intencional como defesa em profundidade.
+- **Não é Proxy remoto**: é Proxy de proteção local (virtual proxy), não RPC.
+
+### Alternativas consideradas
+
+- **Middleware NestJS global**: validaria HTTP, mas não encapsularia o contrato `IHistoryService`. Rejeitado para lógica de domínio de histórico.
+- **Decorator em cima do HistoryService**: semanticamente próximo; GoF distingue Decorator (empilhar features) de Proxy (controlar acesso ao real). Proxy foi escolhido por alinhar à disciplina.
+
+## Referências
+
+- GAMMA, E. et al. *Design Patterns*. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Proxy, p. 207–213.
+- FOWLER, M. *Patterns of Enterprise Application Architecture*. Addison-Wesley, 2002. Service Layer / Remote Proxy (conceito adaptado localmente).
 - **Responsabilidade Única (SRP):** Logs e banco de dados ficam separados.
 - **Open/Closed (OCP):** Podemos adicionar mais decorators futuramente sem tocar no repositório base.
 - **Transparência:** Para o UseCase e Controller, eles apenas enxergam a interface `IExerciseRepository`.
@@ -477,7 +630,7 @@ docker compose logs api
 
 !!! warning "Seção pendente"
     Esta seção aguarda a contribuição do responsável pelo módulo.
-    Siga a estrutura da seção **Módulo de Onboarding** acima como referência:
+    Siga a estrutura da seção **Módulo de Onboarding** ou **Módulo de Histórico de Sessões** acima como referência:
 
     1. **Padrões analisados** — tabela com os padrões GoF avaliados e justificativa da escolha
     2. **Padrão implementado** — nome e identificador central (ex.: classe ou interface principal)
@@ -493,8 +646,9 @@ docker compose logs api
 
 ## Histórico de versões
 
-| Versão | Data       | Descrição                                                             | Autor         |
-|--------|------------|-----------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Documentação dos padrões Bridge e Facade do módulo de onboarding      | Lucas Antunes |
-| 1.1    | 20/05/2026 | Documentação do padrão Decorator para repositório de Exercises       | Daniel Teles|
+| Versão | Data       | Descrição                                                             | Autor                      |
+|--------|------------|-----------------------------------------------------------------------|----------------------------|
+| 1.0    | 19/05/2026 | Documentação dos padrões Bridge e Facade do módulo de onboarding      | Lucas Antunes              |
+| 1.1    | 21/05/2026 | Documentação do padrão Decorator para repositório de Exercises       | Daniel Teles               |
+| 1.2    | 20/05/2026 | Documentação do padrão Proxy do módulo de histórico de sessões         | Giovanni Dornelas Ferreira |
 

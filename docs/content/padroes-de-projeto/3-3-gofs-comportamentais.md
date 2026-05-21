@@ -4,7 +4,7 @@
 
 Os padrões comportamentais tratam de algoritmos e da atribuição de responsabilidades entre objetos, focando em como os objetos interagem e distribuem responsabilidade.
 
-Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. As seções sinalizadas como **"a preencher"** aguardam a contribuição dos demais membros — siga a estrutura da seção de Onboarding como referência.
+Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. Ao final do arquivo, a seção **"[Módulo: ____________] — A preencher"** permanece disponível para novas contribuições — siga a estrutura das seções de Onboarding ou Histórico de Sessões como referência.
 
 ---
 
@@ -379,13 +379,186 @@ const result = flow.execute(answers);               // Template Method: sequênc
 
 ---
 
+## Módulo de Histórico de Sessões
+
+> **Responsável:** Giovanni Dornelas Ferreira | **Branch:** `feat/modulo-historico`
+>
+> Contexto: quando uma sessão de treino é registrada (`POST /v1/sessions`), o histórico deve ser **atualizado automaticamente** sem o use case de registro conhecer o módulo de histórico — baixo acoplamento via Observer.
+
+### Padrões analisados
+
+| Padrão                  | Possível aplicação                              | Status          | Justificativa                                                              |
+|-------------------------|-------------------------------------------------|-----------------|----------------------------------------------------------------------------|
+| **Observer**            | `WorkoutSessionSubject` + `HistoryObserver`     | Selecionado     | Notificação desacoplada após sessão concluída; extensível a novos observers |
+| Domain Event Bus        | Publicar `SessionCompletedEvent`                | Avaliado        | Já existe no projeto para aggregates; Observer explícito atende RF e disciplina |
+| Mediator                | Centralizar comunicação entre módulos           | Não selecionado | Observer é mais direto para 1:N notificação pontual                        |
+| Chain of Responsibility | Validar sessão antes de notificar               | Não selecionado | Validação já ocorre no builder e DTOs da apresentação                      |
+| Command                 | Encapsular registro como comando reversível     | Avaliado        | Sem requisito de undo; Observer + persistência são suficientes             |
+
+### Padrão implementado — Observer · `WorkoutSessionSubject` + `HistoryObserver`
+
+## Problema arquitetural
+
+Após `RegisterSessionUseCase` persistir uma sessão **COMPLETED**, o histórico (RF26) deve refletir a nova sessão **sem**:
+
+- Importar `HistoryService` ou `HistoryManager` no use case de registro.
+- Chamar manualmente “atualizar histórico” em todo ponto que concluir sessão no futuro.
+
+O acoplamento direto criaria dependência circular conceitual: **Sessões → Histórico** em compile-time, dificultando evolução (ex.: módulo de notificações, analytics).
+
+## Justificativa da escolha
+
+O Observer define:
+
+- **Subject** (`WorkoutSessionSubject`): `subscribe()`, `unsubscribe()`, `notify(session)`.
+- **Observer** (`HistoryObserver`): `update(session)` — adiciona ao Multiton se `session.isCompleted()`.
+
+Fluxo real:
+
+```
+RegisterSessionUseCase.save()
+  → workoutSessionSubject.notify(session)
+    → historyObserver.update(session)
+      → HistoryManager.getInstance(userId).addSession(session)
+```
+
+O `HistoryModule.onModuleInit()` inscreve o observer — configuração em um único lugar.
+
+## Modelagem
+
+```mermaid
+sequenceDiagram
+    participant UC as RegisterSessionUseCase
+    participant Sub as WorkoutSessionSubject
+    participant Obs as HistoryObserver
+    participant HM as HistoryManager
+    participant API as GET /history/sessions
+
+    UC->>UC: sessionRepository.save(session)
+    UC->>Sub: notify(session)
+    Sub->>Obs: update(session)
+    Obs->>HM: getInstance(userId).addSession(session)
+    Note over API: Listagem posterior usa mesma instância Multiton
+    API->>HM: getInstance(userId)
+```
+
+```mermaid
+classDiagram
+    class SessionObserver {
+        <<interface>>
+        +update(session) void
+    }
+
+    class WorkoutSessionSubject {
+        -observers: SessionObserver[]
+        +subscribe(observer) void
+        +unsubscribe(observer) void
+        +notify(session) void
+    }
+
+    class HistoryObserver {
+        +update(session) void
+    }
+
+    class RegisterSessionUseCase {
+        +handle(request)
+    }
+
+    SessionObserver <|.. HistoryObserver
+    WorkoutSessionSubject o--> SessionObserver
+    RegisterSessionUseCase --> WorkoutSessionSubject : notify após save
+```
+
+## Implementação
+
+| Elemento                    | Papel no Observer | Caminho                                                              |
+|-----------------------------|-------------------|----------------------------------------------------------------------|
+| `SessionObserver`           | Interface         | `backend/src/domain/history/observers/session-observer.interface.ts` |
+| `WorkoutSessionSubject`     | Subject           | `backend/src/domain/history/observers/workout-session-subject.ts`  |
+| `HistoryObserver`           | ConcreteObserver  | `backend/src/domain/history/observers/history-observer.ts`         |
+| `RegisterSessionUseCase`    | Disparador        | `backend/src/application/use-cases/session/register-session.use-case.ts` |
+| Inscrição na inicialização  | Wiring            | `backend/src/infrastructure/modules/history.module.ts` (`onModuleInit`) |
+| Export do Subject           | Módulo de sessão  | `backend/src/infrastructure/modules/session.module.ts`             |
+
+### Trechos centrais
+
+```typescript
+// workout-session-subject.ts
+export class WorkoutSessionSubject {
+  private readonly observers: SessionObserver[] = [];
+
+  subscribe(observer: SessionObserver): void { /* ... */ }
+  unsubscribe(observer: SessionObserver): void { /* ... */ }
+
+  notify(session: TrainingSession): void {
+    for (const observer of this.observers) {
+      observer.update(session);
+    }
+  }
+}
+
+// register-session.use-case.ts — após persistir
+await this.sessionRepository.save(session);
+this.workoutSessionSubject.notify(session);
+
+// history.module.ts
+onModuleInit(): void {
+  this.workoutSessionSubject.subscribe(this.historyObserver);
+}
+```
+
+## Evidência de execução
+
+1. `POST /v1/sessions` com token e payload válido → `201` com `sessionId`.
+2. Imediatamente `GET /v1/history/sessions` → nova sessão aparece na lista (sem reiniciar API).
+3. Logs do Proxy confirmam leitura subsequente.
+
+Ordem sugerida no Swagger ou REST Client: login → registrar sessão → listar histórico → filtrar por datas.
+
+## Rastreabilidade
+
+| Artefato                      | Relação                                                                 |
+|-------------------------------|-------------------------------------------------------------------------|
+| Requisitos                    | RF26 (histórico atualizado após conclusão de sessão)                    |
+| Módulo                        | `domain/history/observers/`                                             |
+| Camada                        | Domínio (Subject/Observer) + Aplicação (notify no use case)             |
+| Padrão criacional relacionado | Multiton (destino do `update`)                                          |
+| Padrão estrutural relacionado | Proxy (leitura do histórico após atualização)                             |
+| Endpoint disparador           | `POST /v1/sessions`                                                     |
+| Endpoint consumidor           | `GET /v1/history/sessions`, `GET /v1/history/sessions/:sessionId`       |
+
+## Senso crítico
+
+### Benefícios
+
+- **Baixo acoplamento**: `RegisterSessionUseCase` só conhece o Subject, não o histórico.
+- **Extensível**: novos observers (métricas, push notification) via `subscribe()` sem alterar registro.
+- **Alinhado ao requisito**: atualização automática do histórico após conclusão.
+
+### Limitações
+
+- **Síncrono**: `notify()` é chamada inline; observer lento impactaria latência do POST (hoje `update` só altera Map em memória).
+- **Sem persistência de eventos**: se o processo cair entre `save` e `notify`, o cache Multiton pode ficar desatualizado até próxima leitura do banco — mitigado porque `HistoryService` consulta o repositório quando necessário.
+
+### Alternativas consideradas
+
+- **DomainEventBus existente**: adequado para eventos de aggregate; o Observer dedicado deixa explícito o vínculo sessão→histórico para a disciplina e RF26.
+- **Chamada direta ao HistoryService no use case**: mais simples, porém acoplamento forte. Rejeitado.
+
+## Referências
+
+- GAMMA, E. et al. *Design Patterns*. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Observer, p. 293–303.
+- EVANS, E. *Domain-Driven Design*. Addison-Wesley, 2003. Cap. 11 — Domain Events (comparação conceitual com Observer).
+
+---
+
 ## [Módulo: ____________] — A preencher
 
 > **Responsável:** [Nome do membro] | **Branch:** [nome da branch]
 
 !!! warning "Seção pendente"
     Esta seção aguarda a contribuição do responsável pelo módulo.
-    Siga a estrutura da seção **Módulo de Onboarding** acima como referência:
+    Siga a estrutura da seção **Módulo de Onboarding** ou **Módulo de Histórico de Sessões** acima como referência:
 
     1. **Padrões analisados** — tabela com os padrões GoF avaliados e justificativa da escolha
     2. **Padrão implementado** — nome e identificador central (ex.: classe ou interface principal)
@@ -506,8 +679,9 @@ docker compose exec api npx jest search-chain
 
 ## Histórico de versões
 
-| Versão | Data       | Descrição                                                                              | Autor         |
-|--------|------------|----------------------------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Documentação dos padrões Memento e Template Method do módulo de onboarding             | Lucas Antunes |
-| 1.1    | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de exercícios               | Daniel Teles       |
+| Versão | Data       | Descrição                                                                              | Autor                      |
+|--------|------------|----------------------------------------------------------------------------------------|----------------------------|
+| 1.0    | 19/05/2026 | Documentação dos padrões Memento e Template Method do módulo de onboarding             | Lucas Antunes              |
+| 1.1    | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de exercícios               | Daniel Teles               |
+| 1.2    | 20/05/2026 | Documentação do padrão Observer do módulo de histórico de sessões                      | Giovanni Dornelas Ferreira |
 
