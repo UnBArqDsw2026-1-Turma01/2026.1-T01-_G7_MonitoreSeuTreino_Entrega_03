@@ -33,23 +33,24 @@ export class ConfirmPasswordResetUseCase extends UseCase<
   }
 
   protected async handle(cmd: ConfirmPasswordResetCommand): Promise<void> {
-    const hash = crypto
-      .createHash('sha256')
-      .update(cmd.token)
-      .digest('hex');
+    const hash = crypto.createHash('sha256').update(cmd.token).digest('hex');
     const tokenHash = TokenHash.from(hash);
 
     const resetToken =
       await this.passwordResetTokenRepository.findByTokenHash(tokenHash);
 
     if (!resetToken) {
-      throw new UnauthorizedException('Invalid or expired password reset token');
+      throw new UnauthorizedException(
+        'Invalid or expired password reset token',
+      );
     }
     if (resetToken.isExpired()) {
       throw new UnauthorizedException('Password reset token has expired');
     }
     if (resetToken.isUsed()) {
-      throw new UnauthorizedException('Password reset token has already been used');
+      throw new UnauthorizedException(
+        'Password reset token has already been used',
+      );
     }
 
     const user = await this.userRepository.findById(resetToken.userId);

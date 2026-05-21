@@ -10,9 +10,7 @@ import { Repository } from 'typeorm';
 import { PasswordResetTokenOrmEntity } from './password-reset-token.orm-entity';
 
 @Injectable()
-export class PasswordResetTokenPostgresRepository
-  implements PasswordResetTokenRepository
-{
+export class PasswordResetTokenPostgresRepository implements PasswordResetTokenRepository {
   constructor(
     @InjectRepository(PasswordResetTokenOrmEntity)
     private readonly repository: Repository<PasswordResetTokenOrmEntity>,

@@ -1,9 +1,4 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfirmPasswordResetRequest } from '../dtos/confirm-password-reset.request';
 import { RequestPasswordResetRequest } from '../dtos/request-password-reset.request';
@@ -27,12 +22,15 @@ export class PasswordResetController {
 
   @Post('confirm')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Confirm password reset with token and new password' })
+  @ApiOperation({
+    summary: 'Confirm password reset with token and new password',
+  })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
-  @ApiResponse({ status: 401, description: 'Invalid, expired or already used token' })
-  async confirmReset(
-    @Body() dto: ConfirmPasswordResetRequest,
-  ): Promise<void> {
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid, expired or already used token',
+  })
+  async confirmReset(@Body() dto: ConfirmPasswordResetRequest): Promise<void> {
     await this.passwordResetFacade.confirmReset(dto.token, dto.newPassword);
   }
 }

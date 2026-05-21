@@ -113,9 +113,7 @@ export class ValidateConfirmationPhraseHandler extends Handler {
  * row is removed, satisfying the FK constraint on the refresh_tokens table.
  */
 export class RevokeSessionsHandler extends Handler {
-  constructor(
-    private readonly refreshTokenRepository: RefreshTokenRepository,
-  ) {
+  constructor(private readonly refreshTokenRepository: RefreshTokenRepository) {
     super();
   }
 

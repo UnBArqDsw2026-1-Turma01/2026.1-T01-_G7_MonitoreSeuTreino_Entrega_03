@@ -1,4 +1,3 @@
-import { TrainingSession, SessionState } from './training-session';
 import { ExerciseNode } from './exercise-node';
 import { TrainingSet } from './training-set';
 import { TrainingSessionBuilder } from '../builders/training-session.builder';
@@ -37,7 +36,12 @@ describe('Workout Session Domain Modules (Builder, Composite, Iterator)', () => 
 
     it('should throw an error if adding a set to a non-existent exercise nodeId', () => {
       expect(() => {
-        new TrainingSessionBuilder(userId).addSetToExercise('invalid-node', 10, 10, 50);
+        new TrainingSessionBuilder(userId).addSetToExercise(
+          'invalid-node',
+          10,
+          10,
+          50,
+        );
       }).toThrow('Exercicio com ID invalid-node não encontrado no buider.');
     });
   });
