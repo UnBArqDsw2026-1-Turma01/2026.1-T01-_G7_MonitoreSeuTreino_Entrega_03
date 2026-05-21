@@ -13,7 +13,14 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Nome do Membro | Contribuição | Significância | Comprobatórios |
 |----------------|--------------|---------------|----------------|
 | Lucas Antunes | Modelagem do Singleton, implementação de `calculateScore()` e sub-métodos de pontuação por critério (experiência, frequência, técnica, consistência), testes unitários (5 casos), documentação | Excelente | `backend/src/domain/onboarding/rules/` |
-| [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
+### Builder — Módulo de Exercises
+
+**Contexto:** Implementação de `ExerciseBuilder` para garantir a criação correta do agregado `Exercise` com seus value objects vinculados.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|----------------|--------------|---------------|----------------|
+| Daniel Teles | Modelagem do Builder para gerenciar construção de exercícios, separando a lógica inline do UseCase e melhorando segurança da criação. | Excelente | `backend/src/domain/exercises/builders/` |
 
 ---
 
@@ -28,7 +35,14 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Nome do Membro | Contribuição | Significância | Comprobatórios |
 |----------------|--------------|---------------|----------------|
 | Lucas Antunes | Bridge: abstração `OnboardingFlow`, `StrengthOnboardingFlow`, interface `ProfileClassifier`, `MaleProfileClassifier`, `FemaleProfileClassifier`, testes (6 casos). Facade: `OnboardingFacade`, integração com `OnboardingController` | Excelente | `backend/src/domain/onboarding/bridge/`, `backend/src/presentation/facades/` |
-| [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
+### Decorator — Módulo de Exercises
+
+**Contexto:** Padrões Caching e Logging ao redor do repositório base para ganho em observabilidade e performance.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|----------------|--------------|---------------|----------------|
+| Daniel Teles | Adição de Decorators `CachingExerciseRepository` e `LoggingExerciseRepository` em volta do Postgres Repository, mantendo OCP e SRP. | Excelente | `backend/src/infrastructure/database/` e `backend/src/infrastructure/modules/` |
 
 ---
 
@@ -43,12 +57,20 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Nome do Membro | Contribuição | Significância | Comprobatórios |
 |----------------|--------------|---------------|----------------|
 | Lucas Antunes | Memento: `OnboardingMementoVO`, `createMemento()` em `TrainingProfile`, `RedoOnboardingUseCase` (caretaker), `onboarding_history` (ORM + repositório), testes (5 casos). Template Method: `execute()` em `OnboardingFlow`, hooks protegidos, `StrengthOnboardingFlow` | Excelente | `backend/src/domain/onboarding/entities/`, `backend/src/domain/onboarding/value-objects/`, `backend/src/domain/onboarding/bridge/`, `backend/src/infrastructure/database/` |
-| [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
+### Chain of Responsibility — Módulo de Exercises
+
+**Contexto:** Construção elástica da query de busca através de uma pipeline de handlers.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|----------------|--------------|---------------|----------------|
+| Daniel Teles | Encadeamento de restrições de busca `ExerciseSearchChain` para permitir múltiplos testes dinâmicos de filtro. | Excelente | `backend/src/infrastructure/database/exercise-search.chain.ts` |
 
 ---
 
 ## Histórico de versões
 
-| Versão | Data       | Descrição                                                                                                                    | Autor         |
-|--------|------------|------------------------------------------------------------------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Registro de participações nos padrões GoF do módulo de onboarding (Singleton, Bridge, Facade, Memento, Template Method)      | Lucas Antunes |
+| Versão | Data       | Descrição | Autor |
+|--------|------------|-----------|-------|
+| 1.0    | 19/05/2026 | Registro de participações nos padrões GoF do módulo de onboarding | Lucas Antunes |
+| 1.1    | 20/05/2026 | Adição de participações de Exercises | Daniel Teles |
