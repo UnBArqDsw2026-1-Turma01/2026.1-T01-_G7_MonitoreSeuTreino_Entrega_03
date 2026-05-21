@@ -25,7 +25,7 @@ export class RoutinePostgresRepository implements RoutineRepository {
   async findByUserId(userId: string): Promise<Routine[]> {
     const ormEntities = await this.repository.find({
       where: { userId },
-      order: { isActive: 'DESC' }
+      order: { isActive: 'DESC' },
     });
     return ormEntities as unknown as Routine[];
   }

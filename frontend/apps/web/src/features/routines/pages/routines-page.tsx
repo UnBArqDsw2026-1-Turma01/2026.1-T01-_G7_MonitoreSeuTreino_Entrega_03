@@ -13,7 +13,6 @@ import { BottomNavigation } from '../../../shared/components/bottom-navigation';
 import { useAuthStore } from '../../auth/store/auth-store';
 import { searchExercises } from '../../exercises/services/exercises-api';
 import { AppHeader } from '../../../shared/components/app-header';
-import App from 'next/app';
 
 const getUserIdFromToken = (token: string | null) => {
   if (!token) return null;
@@ -28,6 +27,7 @@ const getUserIdFromToken = (token: string | null) => {
 
 export function RoutinesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedRoutine, setSelectedRoutine] = useState<any>(null);
 
   // ESTADOS PARA EXPANSÃO E ABAS
@@ -38,10 +38,7 @@ export function RoutinesPage() {
   const { token } = useAuthStore();
   const userId = getUserIdFromToken(token);
 
-  if (!userId) {
-     return <p className="text-center mt-10">Você não está autenticado. Por favor, faça login.</p>;
-  }
-
+  // REGRAS DOS HOOKS: Todos os hooks devem ser chamados antes de qualquer "return" (if !userId)
   const { data: routines = [], isLoading: isLoadingRoutines } = useQuery({
     queryKey: ['routines', userId],
     queryFn: () => fetchRoutines(userId!),
@@ -55,12 +52,12 @@ export function RoutinesPage() {
   });
 
   const cloneMutation = useMutation({
-    mutationFn: (id: string) => cloneRoutine(id, userId),
+    mutationFn: (id: string) => cloneRoutine(id, userId!),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['routines'] }),
   });
 
   const activateMutation = useMutation({
-    mutationFn: (id: string) => activateRoutine(id, userId),
+    mutationFn: (id: string) => activateRoutine(id, userId!),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['routines'] }),
   });
 
@@ -74,17 +71,20 @@ export function RoutinesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['routines'] }),
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleOpenModal = (routine?: any) => {
     setSelectedRoutine(routine || null);
     setIsModalOpen(true);
   };
 
+   
   const getExerciseName = (exerciseId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const exercise = exercises.find((ex: any) => ex.id === exerciseId);
     return exercise ? exercise.name : 'Exercício não encontrado';
   };
 
-  // LOGICA REFINADA DE EXPANSÃO
+  // LÓGICA REFINADA DE EXPANSÃO
   const toggleExpand = (routineId: string) => {
     if (expandedRoutineId === routineId) {
       setExpandedRoutineId(null); // Fecha se clicar no mesmo
@@ -102,8 +102,8 @@ export function RoutinesPage() {
     return routine.divisions.reduce((total, div) => total + (div.exercises?.length || 0), 0);
   };
 
-  // COMPONENTE INTERNO: Agora com "Abas" (Tabs)
-  const RenderExpandedDetails = ({ routine }: { routine: Routine }) => {
+  // FUNÇÃO AUXILIAR: Transformado de componente para função para evitar erro no React Compiler
+  const renderExpandedDetails = (routine: Routine) => {
     if (expandedRoutineId !== routine.id) return null;
 
     const activeDiv = routine.divisions[activeDivisionIndex];
@@ -150,8 +150,8 @@ export function RoutinesPage() {
     );
   };
 
-  // ÍCONE CHEVRON REUTILIZÁVEL (Setinha)
-  const ChevronIcon = ({ isExpanded }: { isExpanded: boolean }) => (
+  // FUNÇÃO AUXILIAR: Ícone Chevron Transformado para função
+  const renderChevronIcon = (isExpanded: boolean) => (
     <svg
       className={`w-4 h-4 text-[#8b7fa8] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
       fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
@@ -159,6 +159,11 @@ export function RoutinesPage() {
       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
     </svg>
   );
+
+  // EARLY RETURN COLOCADO DEPOIS DOS HOOKS
+  if (!userId) {
+     return <p className="text-center mt-10">Você não está autenticado. Por favor, faça login.</p>;
+  }
 
   return (
     <div className="min-h-screen bg-[#0d0b1e] flex flex-col pb-20 font-sans text-white">
@@ -187,8 +192,8 @@ export function RoutinesPage() {
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ccff00]"></div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="bg-[#ccff00] text-black text-[10px] font-bold px-2 py-1 rounded">ACTIVE</span>
-                    {/* AQUI ESTÁ A SETINHA DISCRETA */}
-                    <ChevronIcon isExpanded={expandedRoutineId === currentRoutine.id} />
+                    {/* CHAMANDO FUNÇÃO EM VEZ DE COMPONENTE */}
+                    {renderChevronIcon(expandedRoutineId === currentRoutine.id)}
                   </div>
                   <h3 className="text-xl font-black uppercase leading-tight mb-1">{currentRoutine.name}</h3>
                   <div className="flex items-center justify-between mt-4">
@@ -201,7 +206,8 @@ export function RoutinesPage() {
                     </button>
                   </div>
 
-                  <RenderExpandedDetails routine={currentRoutine} />
+                  {/* CHAMANDO FUNÇÃO EM VEZ DE COMPONENTE */}
+                  {renderExpandedDetails(currentRoutine)}
                 </div>
               </section>
             )}
@@ -226,8 +232,8 @@ export function RoutinesPage() {
                            >
                              ATIVAR
                            </button>
-                           {/* AQUI ESTÁ A SETINHA DISCRETA */}
-                           <ChevronIcon isExpanded={expandedRoutineId === routine.id} />
+                           {/* CHAMANDO FUNÇÃO EM VEZ DE COMPONENTE */}
+                           {renderChevronIcon(expandedRoutineId === routine.id)}
                          </div>
                       </div>
 
@@ -255,7 +261,8 @@ export function RoutinesPage() {
                         </button>
                       </div>
 
-                      <RenderExpandedDetails routine={routine} />
+                      {/* CHAMANDO FUNÇÃO EM VEZ DE COMPONENTE */}
+                      {renderExpandedDetails(routine)}
                     </div>
                   ))}
                 </div>
@@ -278,7 +285,7 @@ export function RoutinesPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={selectedRoutine}
-        userId={userId}
+        userId={userId!}
       />
 
     <BottomNavigation />

@@ -6,7 +6,9 @@ export class RoutineName {
   static create(value: string): RoutineName {
     const trimmed = value.trim();
     if (trimmed.length < 3) {
-      throw new ValidationException('Routine name must be at least 3 characters long');
+      throw new ValidationException(
+        'Routine name must be at least 3 characters long',
+      );
     }
     return new RoutineName(trimmed);
   }

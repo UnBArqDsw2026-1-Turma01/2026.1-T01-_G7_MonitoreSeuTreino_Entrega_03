@@ -12,6 +12,7 @@ export function RoutineModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any;
   userId: string;
 }) {
@@ -29,8 +30,11 @@ export function RoutineModal({
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRoutineName(initialData?.name || '');
+       
       setDivisions(initialData?.divisions || [{ name: 'TREINO A', exercises: [] }]);
+       
       setActiveDivisionIndex(0);
     }
   }, [isOpen, initialData]);
@@ -169,7 +173,7 @@ export function RoutineModal({
                     🗑
                   </button>
 
-                  {/* 2. O Dropdown substituindo o Input antigo */}
+                  {/* O Dropdown substituindo o Input antigo */}
                   {isLoadingExercises ? (
                     <p className="text-[#8b7fa8] text-[10px] uppercase mb-2">Carregando exercícios...</p>
                   ) : (
@@ -179,7 +183,7 @@ export function RoutineModal({
                       className="bg-transparent text-[#ccff00] font-black text-base outline-none w-[85%] mb-1 pb-1 border-b border-[rgba(139,127,168,0.3)] appearance-none cursor-pointer"
                     >
                       <option value="" disabled className="text-gray-500 bg-[#1a1530]">Selecione um exercício...</option>
-                      {availableExercises.map((exercise: any) => (
+                      {availableExercises.map((exercise: { id: string; name: string }) => (
                         <option key={exercise.id} value={exercise.id} className="text-white bg-[#1a1530]">
                           {exercise.name}
                         </option>

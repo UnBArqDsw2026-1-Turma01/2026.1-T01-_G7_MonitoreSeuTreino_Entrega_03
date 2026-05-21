@@ -5,13 +5,16 @@ import type { RoutineRepository } from '../../../domain/repositories/routine.rep
 import { ValidationException } from '../../../domain/exceptions/domain-exceptions';
 import { DomainEventBus } from '../../events/domain-event-bus';
 
-interface ActivateRoutineInput {
+export interface ActivateRoutineInput {
   userId: string;
   routineId: string;
 }
 
 @Injectable()
-export class ActivateRoutineUseCase extends UseCase<ActivateRoutineInput, void> {
+export class ActivateRoutineUseCase extends UseCase<
+  ActivateRoutineInput,
+  void
+> {
   constructor(
     @Inject(ROUTINE_REPOSITORY_TOKEN)
     private readonly routineRepository: RoutineRepository,
@@ -28,7 +31,9 @@ export class ActivateRoutineUseCase extends UseCase<ActivateRoutineInput, void> 
     }
 
     if (routine.userId.toString() !== input.userId) {
-      throw new ValidationException('You do not have permission to activate this routine');
+      throw new ValidationException(
+        'You do not have permission to activate this routine',
+      );
     }
 
     // A rotina se ativa e registra o evento internamente

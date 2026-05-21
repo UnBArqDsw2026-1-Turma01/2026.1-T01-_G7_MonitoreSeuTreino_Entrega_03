@@ -3,7 +3,11 @@ import { RoutineId } from '../value-objects/routine-id.vo';
 import { RoutineName } from '../value-objects/routine-name.vo';
 import { UserId } from '../value-objects/user-id.vo';
 import { Timestamp } from '../value-objects/timestamp.vo';
-import { RoutineCreatedEvent, RoutineClonedEvent, RoutineActivatedEvent } from '../events/routine-events';
+import {
+  RoutineCreatedEvent,
+  RoutineClonedEvent,
+  RoutineActivatedEvent,
+} from '../events/routine-events';
 
 export interface ExerciseParam {
   exerciseId: string;
@@ -21,11 +25,11 @@ export class Routine extends AggregateRoot {
   private constructor(
     public readonly id: RoutineId,
     public readonly userId: UserId,
-    public readonly name: RoutineName,
-    public readonly divisions: RoutineDivision[],
-    public readonly isActive: boolean,
+    public name: RoutineName,
+    public divisions: RoutineDivision[],
+    public isActive: boolean,
     public readonly createdAt: Timestamp,
-    public readonly updatedAt: Timestamp,
+    public updatedAt: Timestamp,
     public readonly deletedAt: Timestamp | null = null,
   ) {
     super();
@@ -38,7 +42,7 @@ export class Routine extends AggregateRoot {
     userId: UserId,
     name: RoutineName,
     divisions: RoutineDivision[],
-    isActive: boolean = false
+    isActive: boolean = false,
   ): Routine {
     const now = Timestamp.now();
     const routineId = RoutineId.create();
@@ -54,13 +58,18 @@ export class Routine extends AggregateRoot {
     );
 
     routine.pushEvent(
-      new RoutineCreatedEvent(routineId.toString(), userId.toString(), name.toString(), now.toDate())
+      new RoutineCreatedEvent(
+        routineId.toString(),
+        userId.toString(),
+        name.toString(),
+        now.toDate(),
+      ),
     );
 
     return routine;
   }
 
-static reconstitute(data: {
+  static reconstitute(data: {
     id: string;
     userId: string;
     name: string;
@@ -83,9 +92,14 @@ static reconstitute(data: {
   }
 
   update(newName: RoutineName, newDivisions: RoutineDivision[]): void {
-    (this as any).name = newName;
-    (this as any).divisions = newDivisions;
-    (this as any).updatedAt = Timestamp.now();
+    this.name = newName;
+    this.divisions = newDivisions;
+    this.updatedAt = Timestamp.now();
+  }
+
+  inactivate(): void {
+    this.isActive = false;
+    this.updatedAt = Timestamp.now();
   }
 
   // ─── GOF Criacional: PROTOTYPE ───────────────────────────────────
@@ -95,9 +109,9 @@ static reconstitute(data: {
     const now = Timestamp.now();
     const clonedId = RoutineId.create();
 
-    const clonedDivisions = this.divisions.map(division => ({
+    const clonedDivisions = this.divisions.map((division) => ({
       name: division.name,
-      exercises: division.exercises.map(ex => ({ ...ex }))
+      exercises: division.exercises.map((ex) => ({ ...ex })),
     }));
 
     const clonedRoutine = new Routine(
@@ -111,7 +125,12 @@ static reconstitute(data: {
     );
 
     clonedRoutine.pushEvent(
-      new RoutineClonedEvent(this.id.toString(), clonedId.toString(), this.userId.toString(), now.toDate())
+      new RoutineClonedEvent(
+        this.id.toString(),
+        clonedId.toString(),
+        this.userId.toString(),
+        now.toDate(),
+      ),
     );
 
     return clonedRoutine;
@@ -135,7 +154,11 @@ static reconstitute(data: {
     );
 
     activatedRoutine.pushEvent(
-      new RoutineActivatedEvent(this.id.toString(), this.userId.toString(), now.toDate())
+      new RoutineActivatedEvent(
+        this.id.toString(),
+        this.userId.toString(),
+        now.toDate(),
+      ),
     );
 
     return activatedRoutine;

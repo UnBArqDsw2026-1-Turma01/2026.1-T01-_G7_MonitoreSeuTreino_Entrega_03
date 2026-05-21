@@ -1,9 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Routine } from '../../domain/entities/routine.entity';
 import type { RoutineRepository } from '../../domain/repositories/routine.repository';
-import type { SessionRepository } from '../../domain/repositories/session.repository';
-import { SESSION_REPOSITORY_TOKEN } from '../../domain/repositories/session.repository';
 import { ValidationException } from '../../domain/exceptions/domain-exceptions';
+import type { ITrainingSessionRepository } from '../../domain/repositories/training-session.repository';
+import { TRAINING_SESSION_REPOSITORY } from '../../domain/repositories/training-session.repository';
 
 @Injectable()
 export class RoutineRepositoryProxy implements RoutineRepository {
@@ -11,8 +11,8 @@ export class RoutineRepositoryProxy implements RoutineRepository {
     @Inject('REAL_ROUTINE_REPOSITORY')
     private readonly realRepository: RoutineRepository,
 
-    @Inject(SESSION_REPOSITORY_TOKEN)
-    private readonly sessionRepository: SessionRepository,
+    @Inject(TRAINING_SESSION_REPOSITORY)
+    private readonly sessionRepository: ITrainingSessionRepository,
   ) {}
 
   async findById(id: string): Promise<Routine | null> {
@@ -24,11 +24,13 @@ export class RoutineRepositoryProxy implements RoutineRepository {
   }
 
   async save(routine: Routine): Promise<void> {
-    const hasHistory = await this.sessionRepository.hasCompletedSessions(routine.id.toString());
+    const hasHistory = await this.sessionRepository.hasCompletedSessions(
+      routine.id.toString(),
+    );
 
     if (hasHistory) {
       throw new ValidationException(
-        'Proxy Protection: Esta rotina possui histórico de treinos e não pode ser editada diretamente.'
+        'Proxy Protection: Esta rotina possui histórico de treinos e não pode ser editada diretamente.',
       );
     }
 

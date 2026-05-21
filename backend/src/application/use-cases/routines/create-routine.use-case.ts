@@ -1,12 +1,18 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { UseCase } from '../base.use-case';
-import { RoutineRepository, ROUTINE_REPOSITORY_TOKEN } from '../../../domain/repositories/routine.repository';
-import { Routine, RoutineDivision } from '../../../domain/entities/routine.entity';
+import {
+  RoutineRepository,
+  ROUTINE_REPOSITORY_TOKEN,
+} from '../../../domain/repositories/routine.repository';
+import {
+  Routine,
+  RoutineDivision,
+} from '../../../domain/entities/routine.entity';
 import { RoutineName } from '../../../domain/value-objects/routine-name.vo';
 import { UserId } from '../../../domain/value-objects/user-id.vo';
 import { DomainEventBus } from '../../events/domain-event-bus';
 
-interface CreateRoutineInput {
+export interface CreateRoutineInput {
   userId: string;
   name: string;
   divisions: RoutineDivision[];
@@ -27,7 +33,7 @@ export class CreateRoutineUseCase extends UseCase<CreateRoutineInput, void> {
       UserId.reconstitute(input.userId),
       RoutineName.create(input.name),
       input.divisions,
-      false
+      false,
     );
 
     await this.routineRepository.save(routine);

@@ -19,6 +19,12 @@ A tabela abaixo consolida todos os padrões implementados. Cada seção dos docu
 | **Estrutural**   | Facade          | Onboarding     | Lucas Antunes | `OnboardingFacade`                                 | `GET/POST/PUT /v1/onboarding`     |
 | **Comportamental** | Memento       | Onboarding     | Lucas Antunes | `TrainingProfile.createMemento()` + `OnboardingMementoVO` | `PUT /v1/onboarding`       |
 | **Comportamental** | Template Method | Onboarding  | Lucas Antunes | `OnboardingFlow.execute()`                         | `POST /v1/onboarding`             |
+| **Criacional**   | Multiton        | Histórico    | Giovanni Dornelas Ferreira | `HistoryManager.getInstance(userId)` | `GET /v1/history/sessions`        |
+| **Estrutural**   | Proxy           | Histórico    | Giovanni Dornelas Ferreira | `HistoryServiceProxy` → `HistoryService` | `GET /v1/history/sessions`        |
+| **Comportamental** | Observer      | Histórico    | Giovanni Dornelas Ferreira | `WorkoutSessionSubject` + `HistoryObserver` | `POST /v1/sessions`               |
+| Criacional       | [A definir]     | [Módulo]       | [Nome]        | —                                                  | —                                 |
+| Estrutural       | [A definir]     | [Módulo]       | [Nome]        | —                                                  | —                                 |
+| Comportamental   | [A definir]     | [Módulo]       | [Nome]        | —                                                  | —                                 |
 | **Criacional**   | Builder         | Exercises      | Daniel Teles       | `ExerciseBuilder`                                  | `POST /v1/exercises`              |
 | **Estrutural**   | Decorator       | Exercises      | Daniel Teles       | `CachingExerciseRepository` / `Logging...` | `GET/POST/PUT /v1/exercises`      |
 | **Comportamental** | Chain of Resp.  | Exercises    | Daniel Teles       | `ExerciseSearchChain`                              | `GET /v1/exercises`               |
@@ -27,9 +33,9 @@ A tabela abaixo consolida todos os padrões implementados. Cada seção dos docu
 
 | Seção                    | Descrição                                                                                                       |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------|
-| [3.1 GoFs Criacionais](3-1-gofs-criacionais.md) | Padrões que tratam da criação de objetos — Singleton implementado no módulo de onboarding; seções adicionais aguardam contribuições dos demais membros |
-| [3.2 GoFs Estruturais](3-2-gofs-estruturais.md) | Padrões de composição de classes e objetos — Bridge e Facade implementados no módulo de onboarding; seções adicionais abertas para contribuição |
-| [3.3 GoFs Comportamentais](3-3-gofs-comportamentais.md) | Padrões de interação e distribuição de responsabilidade — Memento e Template Method implementados no módulo de onboarding; seções adicionais abertas para contribuição |
+| [3.1 GoFs Criacionais](3-1-gofs-criacionais.md) | Singleton (Onboarding), Builder (Exercícios), Multiton (Histórico) |
+| [3.2 GoFs Estruturais](3-2-gofs-estruturais.md) | Bridge e Facade (Onboarding); Decorator (Exercícios); Proxy (Histórico) |
+| [3.3 GoFs Comportamentais](3-3-gofs-comportamentais.md) | Memento e Template Method (Onboarding); Chain of Responsibility (Exercícios); Observer (Histórico) |
 | [3.4 Participações](3-4-participacoes-padroes.md) | Registro individual das contribuições de cada membro, com significância e comprobatórios por padrão implementado |
 | [3.5 Iniciativas Extras](3-5-iniciativas-extras.md) | Iniciativas além do escopo mínimo — testes de integração, documentação de API, organização de arquivos por padrão de módulo |
 
@@ -51,7 +57,7 @@ Cada documento de GoF (3-1, 3-2, 3-3) contém uma seção **"[Módulo: _________
 1. Identifique o padrão GoF aplicado no seu módulo.
 2. Abra o arquivo correspondente ao tipo (criacional/estrutural/comportamental).
 3. Preencha a seção de placeholder com o nome do seu módulo e branch.
-4. Siga a estrutura de referência do **Módulo de Onboarding** no mesmo arquivo.
+4. Siga a estrutura de referência do **Módulo de Onboarding** ou do **Módulo de Histórico de Sessões** no mesmo arquivo (ou substitua a seção **"[Módulo: ____________] — A preencher"** ao final do documento).
 5. Registre sua participação em [3.4 Participações](3-4-participacoes-padroes.md).
 6. Atualize a tabela **"GoFs implementados"** neste arquivo.
 
@@ -60,4 +66,5 @@ Cada documento de GoF (3-1, 3-2, 3-3) contém uma seção **"[Módulo: _________
 | Versão | Data       | Descrição                                                                                           | Autor         |
 |--------|------------|-----------------------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Estruturação do módulo de padrões de projeto com todos os GoFs do módulo de onboarding documentados | Lucas Antunes |
-| 1.1    | 21/05/2026 | Atualização do painel de GoFs com o módulo de exercícios | Daniel Teles |
+| 1.1    | 21/05/2026 | Atualização do painel de GoFs com o módulo de exercícios                                        | Daniel Teles               |
+| 1.2    | 20/05/2026 | Inclusão dos GoFs do módulo de histórico (Multiton, Proxy, Observer) — RF26 e RF27              | Giovanni Dornelas Ferreira |

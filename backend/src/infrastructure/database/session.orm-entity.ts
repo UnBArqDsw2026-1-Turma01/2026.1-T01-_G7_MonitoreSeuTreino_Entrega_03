@@ -1,13 +1,27 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm';
+import { ExerciseNodeOrmEntity } from './exercise-node.orm-entity';
 
-@Entity('sessions')
-export class SessionOrmEntity {
+@Entity('training_sessions')
+export class TrainingSessionOrmEntity {
   @PrimaryColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column('uuid')
-  routineId: string;
+  userId!: string;
 
-  @Column({ default: false })
-  completed: boolean;
+  @Column({ type: 'timestamp' })
+  date!: Date;
+
+  @Column()
+  state!: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  routineId!: string | null;
+
+  @OneToMany(
+    () => ExerciseNodeOrmEntity,
+    (node: ExerciseNodeOrmEntity) => node.session,
+    { cascade: true, eager: true },
+  )
+  exercises!: ExerciseNodeOrmEntity[];
 }

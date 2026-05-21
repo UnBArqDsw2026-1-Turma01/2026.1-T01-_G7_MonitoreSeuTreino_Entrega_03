@@ -1,5 +1,4 @@
 import { apiClient } from '../../../shared/lib/http/api-client';
-import type { CloneRoutineData } from '../schemas/clone-routine.schema';
 
 export interface Exercise {
   exerciseId: string;
@@ -25,6 +24,7 @@ export async function fetchRoutines(userId: string): Promise<Routine[]> {
   });
   return data;
 }
+
 export async function createRoutine(name: string, userId: string, divisions: Division[]): Promise<void> {
   await apiClient.post(`/routines`, { name, userId, divisions });
 }
@@ -37,7 +37,7 @@ export async function updateRoutine(
   routineId: string,
   userId: string,
   newName: string,
-  divisions: any[]
+  divisions: Division[]
 ): Promise<void> {
   await apiClient.put(`/routines/${routineId}`, {
     userId,
