@@ -4,7 +4,7 @@
 
 Os padrões comportamentais tratam de algoritmos e da atribuição de responsabilidades entre objetos, focando em como os objetos interagem e distribuem responsabilidade.
 
-Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. Ao final do arquivo, a seção **"[Módulo: ____________] — A preencher"** permanece disponível para novas contribuições — siga a estrutura das seções de Onboarding ou Histórico de Sessões como referência.
+Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. Ao final do arquivo, a seção **"[Módulo: ____________] — A preencher"** permanece disponível para novas contribuições.
 
 ---
 
@@ -16,39 +16,39 @@ Este documento reúne as contribuições de **todos os módulos do projeto**. Ca
 
 ### Padrões analisados
 
-| Padrão                  | Possível aplicação                                    | Status                        | Justificativa                                                                                    |
-|-------------------------|-------------------------------------------------------|-------------------------------|--------------------------------------------------------------------------------------------------|
-| **Memento**             | Preservar estado do perfil antes do redo              | Selecionado                   | Permite snapshot do estado interno da entidade sem expor seus atributos privados                 |
-| Command                 | Encapsular a operação de redo como comando reversível | Avaliado                      | O redo não precisa de desfazer interativo (undo em runtime); o histórico persistido é suficiente |
-| Observer                | Notificar outros módulos quando o perfil muda         | Avaliado                      | Relevante para evoluções futuras; adiado para não criar acoplamento prematuro                    |
-| Chain of Responsibility | Cadeia de validações antes de classificar             | Não selecionado               | As validações estão no Value Object `OnboardingAnswers`, onde pertencem ao domínio               |
-| Template Method         | Definir esqueleto do fluxo de classificação           | Implementado como complemento | Presente em `OnboardingFlow` (parte do Bridge); o Memento é ortogonal a ele                      |
-| Strategy                | Variar algoritmo de classificação                     | Avaliado                      | Absorvido pelo Bridge, que é mais adequado para duas dimensões de variação                       |
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Memento** | Preservar estado do perfil antes do redo | Selecionado | Permite snapshot do estado interno da entidade sem expor seus atributos privados. |
+| Command | Encapsular a operação de redo como comando reversível | Avaliado | O redo não precisa de desfazer interativo; o histórico persistido é suficiente. |
+| Observer | Notificar outros módulos quando o perfil muda | Avaliado | Relevante para evoluções futuras; adiado para não criar acoplamento prematuro. |
+| Chain of Responsibility | Cadeia de validações antes de classificar | Não selecionado | As validações estão no Value Object `OnboardingAnswers`, onde pertencem ao domínio. |
+| Template Method | Definir esqueleto do fluxo de classificação | Implementado como complemento | Presente em `OnboardingFlow`; o Memento é ortogonal a ele. |
+| Strategy | Variar algoritmo de classificação | Avaliado | Absorvido pelo Bridge, que é mais adequado para duas dimensões de variação. |
 
 ### Padrão implementado — Memento · `TrainingProfile.createMemento()` + `OnboardingMementoVO`
 
-## Problema arquitetural
+#### Problema arquitetural
 
 O fluxo de "refazer onboarding" (`PUT /v1/onboarding`) precisa:
 
 1. Recuperar o perfil atual do usuário.
-2. **Preservar esse estado** antes de modificá-lo (histórico).
+2. **Preservar esse estado** antes de modificá-lo.
 3. Atualizar o perfil com as novas respostas e nova classificação.
 
-O problema é que `TrainingProfile` é uma entidade de domínio rica — seus atributos são privados, encapsulados para garantir invariantes. Se o `RedoOnboardingUseCase` tentasse ler os atributos diretamente para montar um snapshot, ele violaria o encapsulamento da entidade, tornando o domínio frágil.
+O problema é que `TrainingProfile` é uma entidade de domínio rica — seus atributos são privados, encapsulados para garantir invariantes. Se o `RedoOnboardingUseCase` tentasse ler os atributos diretamente para montar um snapshot, violaria o encapsulamento da entidade, tornando o domínio frágil.
 
 O Memento resolve isso: a própria entidade é responsável por **criar o snapshot de si mesma** (`createMemento()`), encapsulando o "como salvar" dentro do objeto que sabe o que salvar.
 
-## Justificativa da escolha
+#### Justificativa da escolha
 
 O Memento é o padrão canônico para esse cenário porque:
 
-- **Preserva o encapsulamento**: `TrainingProfile.createMemento()` cria o snapshot usando seus próprios atributos privados. O use case recebe um `OnboardingMementoVO` opaco e o persiste — sem precisar saber quais campos existem.
-- **Separação de responsabilidades**: a entidade sabe *o que* salvar; o repositório sabe *onde* salvar; o use case orquestra *quando* salvar.
-- **Imutabilidade do snapshot**: `OnboardingMementoVO` é um Value Object — uma vez criado, não pode ser alterado. O histórico é auditável e confiável.
-- **Auditoria nativa**: cada vez que o usuário refaz o onboarding, um novo `OnboardingHistory` é inserido no banco com o snapshot anterior. Nenhum dado histórico é perdido.
+- **Preserva o encapsulamento**: `TrainingProfile.createMemento()` cria o snapshot usando seus próprios atributos privados.
+- **Separação de responsabilidades**: a entidade sabe _o que_ salvar; o repositório sabe _onde_ salvar; o use case orquestra _quando_ salvar.
+- **Imutabilidade do snapshot**: `OnboardingMementoVO` é um Value Object — uma vez criado, não pode ser alterado.
+- **Auditoria nativa**: cada vez que o usuário refaz o onboarding, um novo `OnboardingHistory` é inserido no banco com o snapshot anterior.
 
-## Modelagem
+#### Modelagem
 
 ```mermaid
 classDiagram
@@ -98,25 +98,23 @@ classDiagram
     RedoOnboardingUseCase --> OnboardingHistoryRepository : save()
 ```
 
-## Implementação
+#### Implementação
 
-| Elemento                          | Papel no Memento                                   | Caminho                                                                                   |
-|-----------------------------------|----------------------------------------------------|-------------------------------------------------------------------------------------------|
-| `TrainingProfile`                 | Originador — cria e reconstrói a partir do memento | `backend/src/domain/onboarding/entities/training-profile.entity.ts`                       |
-| `OnboardingMementoVO`             | Memento — snapshot imutável do estado              | `backend/src/domain/onboarding/value-objects/onboarding-memento.vo.ts`                    |
-| `RedoOnboardingUseCase`           | Caretaker — solicita o memento e o persiste        | `backend/src/application/onboarding/use-cases/redo-onboarding.use-case.ts`                |
-| `OnboardingHistoryRepository`     | Persistência do histórico                          | `backend/src/domain/onboarding/repositories/onboarding-history.repository.ts`             |
-| `OnboardingHistoryRepositoryImpl` | Implementação TypeORM                              | `backend/src/infrastructure/persistence/onboarding/onboarding-history.repository.impl.ts` |
-| `OnboardingHistoryOrmEntity`      | Tabela `onboarding_history`                        | `backend/src/infrastructure/persistence/onboarding/onboarding-history.orm-entity.ts`      |
-| Testes                            | Verificação do Memento                             | `backend/src/domain/onboarding/entities/training-profile-memento.spec.ts`                 |
+| Elemento | Papel no Memento | Caminho |
+|---|---|---|
+| `TrainingProfile` | Originador — cria e reconstrói a partir do memento | `backend/src/domain/onboarding/entities/training-profile.entity.ts` |
+| `OnboardingMementoVO` | Memento — snapshot imutável do estado | `backend/src/domain/onboarding/value-objects/onboarding-memento.vo.ts` |
+| `RedoOnboardingUseCase` | Caretaker — solicita o memento e o persiste | `backend/src/application/onboarding/use-cases/redo-onboarding.use-case.ts` |
+| `OnboardingHistoryRepository` | Persistência do histórico | `backend/src/domain/onboarding/repositories/onboarding-history.repository.ts` |
+| `OnboardingHistoryRepositoryImpl` | Implementação TypeORM | `backend/src/infrastructure/persistence/onboarding/onboarding-history.repository.impl.ts` |
+| `OnboardingHistoryOrmEntity` | Tabela `onboarding_history` | `backend/src/infrastructure/persistence/onboarding/onboarding-history.orm-entity.ts` |
+| Testes | Verificação do Memento | `backend/src/domain/onboarding/entities/training-profile-memento.spec.ts` |
 
-### Trechos centrais
+##### Trechos centrais
 
 ```typescript
 // training-profile.entity.ts — Originador
 export class TrainingProfile {
-  // atributos privados omitidos por brevidade
-
   createMemento(): OnboardingMementoVO {
     return new OnboardingMementoVO({
       trainingProfileId: this.id,
@@ -140,29 +138,32 @@ export class TrainingProfile {
   }
 
   update(answers: OnboardingAnswers, result: ClassificationResult): void {
-    // atualiza os atributos com os novos valores
     this.classification = result.classification;
     this.score = result.score;
     // ...
   }
 }
+```
 
+```typescript
 // redo-onboarding.use-case.ts — Caretaker
 export class RedoOnboardingUseCase {
-  async execute(userId: string, answers: OnboardingAnswers): Promise<TrainingProfile> {
+  async execute(
+    userId: string,
+    answers: OnboardingAnswers,
+  ): Promise<TrainingProfile> {
     const profile = await this.profileRepository.findByUserId(userId);
-    if (!profile) throw new NotFoundException('Perfil não encontrado');
+    if (!profile) throw new NotFoundException("Perfil não encontrado");
 
-    // ① captura o estado atual antes de modificar
     const memento = profile.createMemento();
 
-    // ② persiste o snapshot no histórico
     await this.historyRepository.save(memento);
 
-    // ③ atualiza o perfil com os novos dados
-    const classifier = answers.sex === Sex.MALE
-      ? new MaleProfileClassifier()
-      : new FemaleProfileClassifier();
+    const classifier =
+      answers.sex === Sex.MALE
+        ? new MaleProfileClassifier()
+        : new FemaleProfileClassifier();
+
     const flow = new StrengthOnboardingFlow(classifier);
     const result = flow.execute(answers);
 
@@ -174,11 +175,9 @@ export class RedoOnboardingUseCase {
 }
 ```
 
-## Evidência de execução
+#### Evidência de execução
 
-Os testes verificam o contrato do Memento:
-
-```
+```text
 ✓ createMemento() captura o estado atual do perfil
 ✓ o snapshot não é afetado por update() posterior
 ✓ update() altera classification e score do perfil original
@@ -199,42 +198,42 @@ sudo docker compose exec db psql -U monitore -d monitore_seu_treino \
   -c "SELECT id, user_id, classification, score, captured_at FROM onboarding_history ORDER BY captured_at DESC LIMIT 5;"
 ```
 
-## Rastreabilidade
+#### Rastreabilidade
 
-| Artefato                      | Relação                                                                              |
-|-------------------------------|--------------------------------------------------------------------------------------|
-| Requisito                     | Preservar histórico anterior ao refazer o onboarding                                 |
-| Módulo                        | `domain/onboarding/entities`, `domain/onboarding/value-objects`                      |
-| Camada                        | Domínio (originador + memento), Aplicação (caretaker), Infraestrutura (persistência) |
-| Padrão criacional relacionado | Singleton (regras usadas no fluxo que produz o novo `ClassificationResult`)          |
-| Padrão estrutural relacionado | Bridge (fluxo que recalcula a classificação após o redo)                             |
-| Endpoint                      | `PUT /v1/onboarding`                                                                 |
-| Tabela no banco               | `onboarding_history`                                                                 |
+| Artefato | Relação |
+|---|---|
+| Requisito | Preservar histórico anterior ao refazer o onboarding. |
+| Módulo | `domain/onboarding/entities`, `domain/onboarding/value-objects` |
+| Camada | Domínio, Aplicação e Infraestrutura |
+| Padrão criacional relacionado | Singleton — regras usadas no fluxo que produz o novo `ClassificationResult`. |
+| Padrão estrutural relacionado | Bridge — fluxo que recalcula a classificação após o redo. |
+| Endpoint | `PUT /v1/onboarding` |
+| Tabela no banco | `onboarding_history` |
 
-## Senso crítico
+#### Senso crítico
 
-### Benefícios
+##### Benefícios
 
-- **Encapsulamento preservado**: o use case não precisa conhecer os atributos internos de `TrainingProfile` para criar o histórico. Apenas chama `createMemento()`.
-- **Histórico completo e imutável**: cada redo gera um registro permanente em `onboarding_history`. O dado nunca é sobrescrito — apenas inserido.
-- **Auditabilidade**: é possível reconstruir toda a evolução do perfil de um usuário consultando os snapshots ordenados por `capturedAt`.
-- **Extensibilidade**: se futuramente for necessário implementar "reverter para classificação anterior", o dado já está lá — basta um endpoint de restauração.
+- **Encapsulamento preservado**: o use case não precisa conhecer os atributos internos de `TrainingProfile`.
+- **Histórico completo e imutável**: cada redo gera um registro permanente em `onboarding_history`.
+- **Auditabilidade**: é possível reconstruir a evolução do perfil por meio dos snapshots ordenados por `capturedAt`.
+- **Extensibilidade**: futuramente, pode permitir reverter para uma classificação anterior.
 
-### Limitações
+##### Limitações
 
-- **Sem mecanismo de restauração automática (undo)**: o Memento completo incluiria um `restore(memento)` no originador. No escopo atual, apenas o histórico é salvo; a restauração é manual (via suporte ou futuro endpoint). Isso é intencional — não há caso de uso de undo automático hoje.
-- **Tamanho do histórico**: cada redo insere uma linha em `onboarding_history`. Para usuários que refazem o onboarding com frequência, a tabela pode crescer. Uma política de retenção pode ser adicionada futuramente.
+- **Sem mecanismo de restauração automática**: o escopo atual salva o histórico, mas não implementa undo automático.
+- **Tamanho do histórico**: cada redo insere uma linha em `onboarding_history`.
 
-### Alternativas consideradas
+##### Alternativas consideradas
 
-- **Auditoria via triggers no banco**: o banco poderia capturar automaticamente a linha antes do UPDATE. Problema: acoplamento à infraestrutura de banco; a regra de "preservar antes de modificar" ficaria invisível no domínio. Rejeitado.
-- **Event Sourcing**: reconstruir o estado a partir de eventos seria a alternativa mais completa, mas introduz complexidade operacional desproporcional ao escopo. Avaliado e adiado.
-- **Soft delete + nova linha**: criar um novo `TrainingProfile` a cada redo e marcar o anterior como inativo. Problema: viola a identidade da entidade (o usuário tem um perfil, não vários). Rejeitado.
+- **Auditoria via triggers no banco**: rejeitada por acoplar a regra à infraestrutura.
+- **Event Sourcing**: avaliado e adiado por complexidade operacional.
+- **Soft delete + nova linha**: rejeitado por violar a identidade da entidade.
 
-### Referências (Memento)
+#### Referências
 
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Memento, p. 283–291.
-- EVANS, E. *Domain-Driven Design: Tackling Complexity in the Heart of Software*. Addison-Wesley, 2003. Cap. 5 — A Model Expressed in Software (Value Objects).
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Memento, p. 283–291.
+- EVANS, E. _Domain-Driven Design: Tackling Complexity in the Heart of Software_. Addison-Wesley, 2003. Cap. 5 — A Model Expressed in Software.
 
 ---
 
@@ -242,23 +241,19 @@ sudo docker compose exec db psql -U monitore -d monitore_seu_treino \
 
 #### Contexto
 
-O Template Method é utilizado de forma complementar ao Bridge na camada de domínio do módulo de onboarding. Enquanto o Bridge separa a abstração (`OnboardingFlow`) da implementação (`ProfileClassifier`), o Template Method define o **esqueleto do algoritmo** de classificação dentro da própria abstração — garantindo que a sequência de etapas seja sempre respeitada, independentemente da subclasse concreta.
+O Template Method é utilizado de forma complementar ao Bridge na camada de domínio do módulo de onboarding. Enquanto o Bridge separa a abstração (`OnboardingFlow`) da implementação (`ProfileClassifier`), o Template Method define o **esqueleto do algoritmo** de classificação dentro da própria abstração — garantindo que a sequência de etapas seja sempre respeitada.
 
 #### Problema
 
-O fluxo de classificação de onboarding precisa executar etapas em uma ordem fixa: preparar o contexto antes de classificar → classificar → reagir ao resultado. Diferentes fluxos (ex.: treino de força, hipertrofia, reabilitação) podem precisar de comportamentos específicos antes ou após a classificação, mas a **sequência geral nunca deve variar**.
-
-Sem Template Method, cada subclasse teria que reimplementar o método `execute()` inteiro, duplicando a lógica de orquestração e abrindo espaço para inconsistências (ex.: esquecer de chamar `afterClassify`).
+O fluxo de classificação de onboarding precisa executar etapas em uma ordem fixa: preparar o contexto antes de classificar → classificar → reagir ao resultado. Sem Template Method, cada subclasse teria que reimplementar o método `execute()` inteiro, duplicando a lógica de orquestração.
 
 #### Justificativa
 
 O Template Method resolve isso ao:
 
-1. Tornar `execute()` um método **final** (não sobrescrito) que define a sequência imutável.
-2. Expor dois **hooks** protegidos — `beforeClassify()` e `afterClassify()` — com implementação padrão vazia.
-3. Permitir que subclasses sobrescrevam apenas os hooks relevantes para seu contexto.
-
-Isso garante o **Princípio Aberto/Fechado**: o algoritmo está fechado para modificação, mas aberto para extensão via hooks.
+1. Definir `execute()` como método que organiza a sequência fixa.
+2. Expor dois hooks protegidos: `beforeClassify()` e `afterClassify()`.
+3. Permitir que subclasses sobrescrevam apenas os hooks relevantes.
 
 #### Diagrama
 
@@ -286,96 +281,282 @@ classDiagram
     OnboardingFlow o--> ProfileClassifier : injected (Bridge)
 ```
 
-> `execute()` é o template method. `beforeClassify()` e `afterClassify()` são os hooks. `ProfileClassifier` é a implementação injetada pelo Bridge.
-
 #### Implementação
 
-| Papel GoF       | Classe / Arquivo                                                                  |
-|-----------------|-----------------------------------------------------------------------------------|
-| Abstract Class  | `OnboardingFlow` — `domain/onboarding/bridge/onboarding-flow.abstract.ts`         |
-| Template Method | `execute()` — define a sequência fixa de classificação                            |
-| Hooks           | `beforeClassify()`, `afterClassify()` — extensíveis por subclasses                |
-| Concrete Class  | `StrengthOnboardingFlow` — `domain/onboarding/bridge/strength-onboarding-flow.ts` |
-
-### Classe abstrata com o template method
+| Papel GoF | Classe / Arquivo |
+|---|---|
+| Abstract Class | `OnboardingFlow` — `domain/onboarding/bridge/onboarding-flow.abstract.ts` |
+| Template Method | `execute()` — define a sequência fixa de classificação |
+| Hooks | `beforeClassify()`, `afterClassify()` |
+| Concrete Class | `StrengthOnboardingFlow` — `domain/onboarding/bridge/strength-onboarding-flow.ts` |
 
 ```typescript
-// domain/onboarding/bridge/onboarding-flow.abstract.ts
 export abstract class OnboardingFlow {
   constructor(protected readonly classifier: ProfileClassifier) {}
 
-  // Template method: sequência imutável
   execute(answers: OnboardingAnswers): ClassificationResult {
     this.beforeClassify(answers);
-    const result = this.classifier.classify(answers);  // delegado ao Bridge
+    const result = this.classifier.classify(answers);
     this.afterClassify(result);
     return result;
   }
 
-  // Hooks com implementação padrão vazia — subclasses sobrescrevem se necessário
   protected beforeClassify(_answers: OnboardingAnswers): void {}
   protected afterClassify(_result: ClassificationResult): void {}
 }
 ```
 
-### Subclasse concreta
-
-```typescript
-// domain/onboarding/bridge/strength-onboarding-flow.ts
-export class StrengthOnboardingFlow extends OnboardingFlow {
-  constructor(classifier: ProfileClassifier) {
-    super(classifier);
-  }
-
-  // Hooks disponíveis para extensão futura (ex.: validações específicas de força)
-  protected override beforeClassify(_answers: OnboardingAnswers): void {}
-  protected override afterClassify(_result: ClassificationResult): void {}
-}
-```
-
-### Interação com Bridge e use case
-
-```typescript
-// application/use-cases/onboarding/submit-onboarding.use-case.ts
-const classifier = new RuleBasedProfileClassifier();
-const flow = new StrengthOnboardingFlow(classifier); // Bridge: classifer injetado
-const result = flow.execute(answers);               // Template Method: sequência garantida
-```
-
 #### Rastreabilidade
 
-| Artefato                       | Relação                                                                               |
-|--------------------------------|---------------------------------------------------------------------------------------|
-| Requisito                      | Classificar o perfil do usuário de forma extensível e consistente                     |
-| Módulo                         | `domain/onboarding/bridge/`                                                           |
-| Camada                         | Domínio                                                                               |
-| Padrão estrutural relacionado  | Bridge — `ProfileClassifier` é a implementação injetada no `OnboardingFlow`           |
-| Padrão criacional relacionado  | Singleton — `OnboardingClassificationRules` é usado pelo `RuleBasedProfileClassifier` |
-| Padrão comportamental primário | Memento — o resultado produzido por `execute()` é capturado como snapshot no redo     |
-| Endpoint                       | `POST /v1/onboarding`, `PUT /v1/onboarding`                                           |
+| Artefato | Relação |
+|---|---|
+| Requisito | Classificar o perfil do usuário de forma extensível e consistente. |
+| Módulo | `domain/onboarding/bridge/` |
+| Camada | Domínio |
+| Padrão estrutural relacionado | Bridge — `ProfileClassifier` é a implementação injetada no `OnboardingFlow`. |
+| Padrão criacional relacionado | Singleton — `OnboardingClassificationRules` é usado pelos classificadores. |
+| Padrão comportamental primário | Memento — resultado produzido por `execute()` é capturado como snapshot no redo. |
+| Endpoint | `POST /v1/onboarding`, `PUT /v1/onboarding` |
 
 #### Senso crítico
 
 ##### Benefícios
 
-- **Sequência garantida**: nenhuma subclasse pode alterar a ordem `beforeClassify → classify → afterClassify`. A invariante do algoritmo é protegida pela classe abstrata.
-- **Extensibilidade sem duplicação**: adicionar um novo fluxo (ex.: `HypertrophyOnboardingFlow`) requer apenas sobrescrever os hooks relevantes — o template não é copiado.
-- **Composição com Bridge**: a separação de responsabilidades é clara — o Template Method controla *quando* cada etapa ocorre; o Bridge controla *como* a classificação é feita. Os dois padrões se complementam sem se sobrepor.
+- **Sequência garantida**: mantém a ordem `beforeClassify → classify → afterClassify`.
+- **Extensibilidade sem duplicação**: novos fluxos sobrescrevem apenas hooks.
+- **Composição com Bridge**: Template Method controla _quando_ cada etapa ocorre; Bridge controla _como_ a classificação é feita.
 
 ##### Limitações
 
-- **Hooks vazios na subclasse atual**: `StrengthOnboardingFlow` sobrescreve os hooks mas os mantém vazios. O valor do padrão é prospectivo — a estrutura está pronta para extensão, mas ainda não há lógica específica por tipo de treino. Isso é intencional no escopo atual.
-- **Acoplamento por herança**: Template Method usa herança, o que cria acoplamento vertical. Se a hierarquia crescer muito, pode ser substituído por composição com estratégias. No escopo atual, a hierarquia é rasa (uma subclasse), então o custo é baixo.
+- **Hooks vazios na subclasse atual**: valor prospectivo para expansão futura.
+- **Acoplamento por herança**: se a hierarquia crescer muito, pode ser substituído por composição.
 
 ##### Alternativas consideradas
 
-- **Strategy puro sem Template Method**: delegar toda a lógica de fluxo ao `ProfileClassifier` via Strategy. Problema: a sequência `before/classify/after` deixaria de ser garantida — cada implementação de `ProfileClassifier` teria que reimplementá-la. Rejeitado.
-- **Listener/event hooks**: emitir eventos `onBeforeClassify` e `onAfterClassify` em vez de chamar métodos. Mais flexível, mas introduz infraestrutura de eventos desnecessária para o escopo. Avaliado e adiado.
+- **Strategy puro sem Template Method**: rejeitado porque não garantiria a sequência fixa.
+- **Listener/event hooks**: avaliado e adiado por exigir infraestrutura desnecessária.
 
-#### Referências (Template Method)
+#### Referências
 
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Template Method, p. 325–330.
-- MARTIN, R. C. *Agile Software Development, Principles, Patterns, and Practices*. Prentice Hall, 2002. Cap. 14 — Template Method and Strategy Patterns.
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Template Method, p. 325–330.
+- MARTIN, R. C. _Agile Software Development, Principles, Patterns, and Practices_. Prentice Hall, 2002.
+
+---
+
+## Módulo de Autenticação
+
+> **Responsável:** Samuel Nogueira Caetano | **Branch:** `main (integrada a partir da feat/modulo-autenticacao)`
+>
+> Contexto: os desafios comportamentais centrais eram que **todos os use cases precisam executar a mesma sequência de ciclo de vida** sem duplicar essa orquestração, e que **os eventos gerados pelas entidades precisam ser propagados para handlers desacoplados** sem que o emissor conheça os consumidores.
+
+### Padrões analisados
+
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Template Method** | Definir ciclo de vida comum a todos os use cases | Selecionado | Garante que `execute()` sempre publica eventos após `handle()`, sem que cada use case reimplemente essa orquestração. |
+| **Observer** | Propagar eventos de domínio para handlers desacoplados | Implementado como complemento | Permite que `DomainEventBus` distribua eventos para N handlers sem que o emissor os conheça. |
+| Strategy | Variar algoritmo de autenticação | Avaliado | Não há variação de algoritmo no escopo atual. |
+| Chain of Responsibility | Encadear validações antes de autenticar | Não selecionado | As validações são invariantes de Value Objects, como `Email` e `PlainPassword`. |
+| Command | Encapsular operações de autenticação como comandos reversíveis | Não selecionado | Os comandos de autenticação não precisam de desfazer. |
+
+### Padrão implementado — Template Method · `UseCase<TInput, TOutput>.execute()`
+
+#### Problema arquitetural
+
+O sistema possui seis use cases de autenticação. Todos compartilham a mesma responsabilidade pós-execução: **publicar os eventos de domínio acumulados pelas entidades manipuladas**.
+
+Sem Template Method, cada use case precisaria chamar sua lógica interna, coletar os agregados resultantes, iterar sobre os eventos e publicar cada evento no `DomainEventBus`.
+
+#### Justificativa da escolha
+
+O Template Method define em `UseCase<TInput, TOutput>` um método `execute()` concreto que:
+
+1. Limpa a lista de agregados pendentes.
+2. Chama `handle()`, o passo variável implementado por cada subclasse.
+3. Chama `publishDomainEvents()`, o passo invariante implementado uma única vez na classe base.
+
+O padrão também expõe `registerAggregate()` como hook protegido para use cases que precisam garantir a publicação de eventos de agregados não retornados diretamente pelo `handle()`.
+
+#### Modelagem
+
+```mermaid
+classDiagram
+    class UseCase~TInput,TOutput~ {
+        <<abstract>>
+        -_pendingAggregates: AggregateRoot[]
+        #eventBus: DomainEventBus
+        +execute(input: TInput) Promise~TOutput~
+        #handle(input: TInput) Promise~TOutput~*
+        #registerAggregate(aggregate: AggregateRoot) void
+        -publishDomainEvents(result: TOutput) Promise~void~
+        -collectAggregates(result: unknown) AggregateRoot[]
+    }
+
+    class RegisterUserUseCase { #handle(cmd) Promise~User~ }
+    class AuthenticateUserUseCase { #handle(cmd) Promise~AuthenticationResult~ }
+    class RotateRefreshTokenUseCase { #handle(cmd) Promise~RotateTokenResult~ }
+    class RevokeSessionUseCase { #handle(cmd) Promise~void~ }
+    class DeactivateUserUseCase { #handle(id) Promise~void~ }
+
+    UseCase <|-- RegisterUserUseCase
+    UseCase <|-- AuthenticateUserUseCase
+    UseCase <|-- RotateRefreshTokenUseCase
+    UseCase <|-- RevokeSessionUseCase
+    UseCase <|-- DeactivateUserUseCase
+```
+
+#### Implementação
+
+| Elemento | Papel no Template Method | Caminho |
+|---|---|---|
+| `UseCase<TInput, TOutput>` | Classe abstrata que define o template | `backend/src/application/use-cases/base.use-case.ts` |
+| `execute()` | Template Method — sequência imutável | `base.use-case.ts` |
+| `handle()` | Passo variável abstrato | Implementado em cada subclasse |
+| `registerAggregate()` | Hook protegido | `base.use-case.ts` |
+| `publishDomainEvents()` | Passo invariante | `base.use-case.ts` |
+| `RegisterUserUseCase` | Subclasse concreta | `backend/src/application/use-cases/auth/register-user.use-case.ts` |
+| `RotateRefreshTokenUseCase` | Subclasse concreta com `registerAggregate()` | `backend/src/application/use-cases/auth/rotate-refresh-token.use-case.ts` |
+
+##### Trechos centrais
+
+```typescript
+export abstract class UseCase<TInput, TOutput> {
+  private _pendingAggregates: AggregateRoot[] = [];
+
+  constructor(protected readonly eventBus: DomainEventBus) {}
+
+  async execute(input: TInput): Promise<TOutput> {
+    this._pendingAggregates = [];
+    const result = await this.handle(input);
+    await this.publishDomainEvents(result);
+    return result;
+  }
+
+  protected abstract handle(input: TInput): Promise<TOutput>;
+
+  protected registerAggregate(aggregate: AggregateRoot): void {
+    this._pendingAggregates.push(aggregate);
+  }
+}
+```
+
+#### Rastreabilidade
+
+| Artefato | Relação |
+|---|---|
+| Requisito | Garantir que eventos de domínio sejam publicados após qualquer operação de autenticação. |
+| Módulo | `application/use-cases/` |
+| Camada | Aplicação |
+| Padrão comportamental relacionado | Observer — `DomainEventBus` recebe os eventos publicados pelo Template Method. |
+| Padrão estrutural relacionado | Facade — `AuthenticationFacade` aciona `execute()` dos use cases. |
+| Padrão criacional relacionado | Factory Method — `User.create()` e `RefreshToken.create()` geram eventos coletados pelo template. |
+
+#### Senso crítico
+
+##### Benefícios
+
+- **Publicação garantida estruturalmente**: reduz o risco de um use case esquecer de publicar eventos.
+- **Sem duplicação**: os use cases não repetem a lógica de ciclo de vida.
+- **`registerAggregate()` como hook explícito**: permite registrar agregados não retornados diretamente pelo `handle()`.
+
+##### Limitações
+
+- **`execute()` não é final no TypeScript**: uma subclasse poderia sobrescrever o método e contornar o template.
+- **Coleta de agregados depende de convenção**: estruturas mais profundas podem exigir `registerAggregate()`.
+
+##### Alternativas consideradas
+
+- **Publicação explícita em cada use case**: rejeitada por duplicar responsabilidade.
+- **Decorator de use case**: avaliado e rejeitado por exigir decoração individual de cada caso de uso.
+
+#### Referências
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Template Method, p. 325–330.
+
+---
+
+### Padrão complementar — Observer · `DomainEventBus`
+
+#### Introdução
+
+Além do Template Method, o módulo de autenticação implementa o padrão **Observer** via `DomainEventBus`. Ele desacopla os emissores de eventos de domínio dos handlers que reagem a esses eventos.
+
+#### Problema arquitetural
+
+Quando um usuário é registrado, o sistema pode precisar reagir de múltiplas formas. Se `RegisterUserUseCase` chamasse cada handler diretamente, adicionar um novo comportamento pós-registro exigiria modificar o use case, violando o Open/Closed Principle.
+
+#### Justificativa da escolha
+
+O `DomainEventBus` implementa o Observer ao separar emissor e receptor:
+
+- **Sujeito**: `DomainEventBus`.
+- **Observadores**: handlers registrados via `subscribe()`.
+- **Emissores**: entidades como `User` e `RefreshToken`, que acumulam eventos com `pushEvent()`.
+
+#### Modelagem
+
+```mermaid
+sequenceDiagram
+    participant UC as RegisterUserUseCase
+    participant Base as UseCase
+    participant User as User
+    participant Bus as DomainEventBus
+    participant H1 as EmailHandler
+    participant H2 as MetricsHandler
+
+    UC->>User: User.create(name, email, password)
+    User->>User: pushEvent(UserRegisteredEvent)
+    UC-->>Base: retorna User
+    Base->>User: pullDomainEvents()
+    User-->>Base: [UserRegisteredEvent]
+    Base->>Bus: publish(UserRegisteredEvent)
+    Bus->>H1: handler(UserRegisteredEvent)
+    Bus->>H2: handler(UserRegisteredEvent)
+```
+
+#### Implementação
+
+| Elemento | Papel no Observer | Caminho |
+|---|---|---|
+| `DomainEventBus` | Sujeito — mantém handlers e notifica | `backend/src/application/events/domain-event-bus.ts` |
+| `DomainEvent` | Interface do evento | `backend/src/domain/events/domain-event.ts` |
+| `UserRegisteredEvent`, `SessionInvalidatedEvent` | Eventos concretos | `backend/src/domain/events/user-events.ts`, `refresh-token-events.ts` |
+| `AggregateRoot` | Acumulador de eventos | `backend/src/domain/entities/aggregate-root.ts` |
+| `UseCase.publishDomainEvents()` | Ponte entre Template Method e Observer | `backend/src/application/use-cases/base.use-case.ts` |
+
+#### Rastreabilidade
+
+| Artefato | Relação |
+|---|---|
+| Requisito | Reagir a eventos de domínio de forma desacoplada. |
+| Módulo | `application/events/`, `domain/events/`, `domain/entities/` |
+| Camada | Domínio + Aplicação |
+| Padrão comportamental relacionado | Template Method — `publishDomainEvents()` aciona o Observer. |
+| Padrão criacional relacionado | Factory Method — eventos são criados dentro dos métodos factory das entidades. |
+
+#### Senso crítico
+
+##### Benefícios
+
+- **Desacoplamento emissor-receptor**: novos handlers não exigem alteração nas entidades nem nos use cases.
+- **Resiliência**: `Promise.allSettled()` permite que a falha de um handler não impeça os demais.
+- **Extensibilidade**: novos efeitos colaterais podem ser adicionados por assinatura de eventos.
+
+##### Limitações
+
+- **Sem handlers registrados atualmente**: o valor do padrão é prospectivo no escopo entregue.
+- **Entrega em memória, sem persistência**: para garantias fortes de entrega seria necessário Outbox Pattern.
+
+##### Alternativas consideradas
+
+- **Chamada direta de handlers nos use cases**: rejeitada por acoplar use case aos handlers.
+- **`EventEmitter` nativo do Node.js**: rejeitado por limitações em fluxos assíncronos.
+- **Message broker externo**: avaliado e adiado por complexidade.
+
+#### Referências
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Observer, p. 293–303.
+- FOWLER, M. _Patterns of Enterprise Application Architecture_. Addison-Wesley, 2002.
 
 ---
 
@@ -383,48 +564,44 @@ const result = flow.execute(answers);               // Template Method: sequênc
 
 > **Responsável:** Giovanni Dornelas Ferreira | **Branch:** `feat/modulo-historico`
 >
-> Contexto: quando uma sessão de treino é registrada (`POST /v1/sessions`), o histórico deve ser **atualizado automaticamente** sem o use case de registro conhecer o módulo de histórico — baixo acoplamento via Observer.
+> Contexto: quando uma sessão de treino é registrada (`POST /v1/sessions`), o histórico deve ser **atualizado automaticamente** sem o use case de registro conhecer o módulo de histórico.
 
 ### Padrões analisados
 
-| Padrão                  | Possível aplicação                              | Status          | Justificativa                                                              |
-|-------------------------|-------------------------------------------------|-----------------|----------------------------------------------------------------------------|
-| **Observer**            | `WorkoutSessionSubject` + `HistoryObserver`     | Selecionado     | Notificação desacoplada após sessão concluída; extensível a novos observers |
-| Domain Event Bus        | Publicar `SessionCompletedEvent`                | Avaliado        | Já existe no projeto para aggregates; Observer explícito atende RF e disciplina |
-| Mediator                | Centralizar comunicação entre módulos           | Não selecionado | Observer é mais direto para 1:N notificação pontual                        |
-| Chain of Responsibility | Validar sessão antes de notificar               | Não selecionado | Validação já ocorre no builder e DTOs da apresentação                      |
-| Command                 | Encapsular registro como comando reversível     | Avaliado        | Sem requisito de undo; Observer + persistência são suficientes             |
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Observer** | `WorkoutSessionSubject` + `HistoryObserver` | Selecionado | Notificação desacoplada após sessão concluída; extensível a novos observers. |
+| Domain Event Bus | Publicar `SessionCompletedEvent` | Avaliado | Já existe no projeto para aggregates; Observer explícito atende ao requisito e à disciplina. |
+| Mediator | Centralizar comunicação entre módulos | Não selecionado | Observer é mais direto para notificação 1:N. |
+| Chain of Responsibility | Validar sessão antes de notificar | Não selecionado | Validação já ocorre no builder e DTOs da apresentação. |
+| Command | Encapsular registro como comando reversível | Avaliado | Sem requisito de undo. |
 
 ### Padrão implementado — Observer · `WorkoutSessionSubject` + `HistoryObserver`
 
-## Problema arquitetural
+#### Problema arquitetural
 
-Após `RegisterSessionUseCase` persistir uma sessão **COMPLETED**, o histórico (RF26) deve refletir a nova sessão **sem**:
+Após `RegisterSessionUseCase` persistir uma sessão **COMPLETED**, o histórico deve refletir a nova sessão sem:
 
-- Importar `HistoryService` ou `HistoryManager` no use case de registro.
-- Chamar manualmente “atualizar histórico” em todo ponto que concluir sessão no futuro.
+- importar `HistoryService` ou `HistoryManager` no use case de registro;
+- chamar manualmente “atualizar histórico” em todo ponto que concluir sessão no futuro.
 
-O acoplamento direto criaria dependência circular conceitual: **Sessões → Histórico** em compile-time, dificultando evolução (ex.: módulo de notificações, analytics).
-
-## Justificativa da escolha
+#### Justificativa da escolha
 
 O Observer define:
 
 - **Subject** (`WorkoutSessionSubject`): `subscribe()`, `unsubscribe()`, `notify(session)`.
-- **Observer** (`HistoryObserver`): `update(session)` — adiciona ao Multiton se `session.isCompleted()`.
+- **Observer** (`HistoryObserver`): `update(session)`.
 
 Fluxo real:
 
-```
+```text
 RegisterSessionUseCase.save()
   → workoutSessionSubject.notify(session)
     → historyObserver.update(session)
       → HistoryManager.getInstance(userId).addSession(session)
 ```
 
-O `HistoryModule.onModuleInit()` inscreve o observer — configuração em um único lugar.
-
-## Modelagem
+#### Modelagem
 
 ```mermaid
 sequenceDiagram
@@ -469,26 +646,30 @@ classDiagram
     RegisterSessionUseCase --> WorkoutSessionSubject : notify após save
 ```
 
-## Implementação
+#### Implementação
 
-| Elemento                    | Papel no Observer | Caminho                                                              |
-|-----------------------------|-------------------|----------------------------------------------------------------------|
-| `SessionObserver`           | Interface         | `backend/src/domain/history/observers/session-observer.interface.ts` |
-| `WorkoutSessionSubject`     | Subject           | `backend/src/domain/history/observers/workout-session-subject.ts`  |
-| `HistoryObserver`           | ConcreteObserver  | `backend/src/domain/history/observers/history-observer.ts`         |
-| `RegisterSessionUseCase`    | Disparador        | `backend/src/application/use-cases/session/register-session.use-case.ts` |
-| Inscrição na inicialização  | Wiring            | `backend/src/infrastructure/modules/history.module.ts` (`onModuleInit`) |
-| Export do Subject           | Módulo de sessão  | `backend/src/infrastructure/modules/session.module.ts`             |
+| Elemento | Papel no Observer | Caminho |
+|---|---|---|
+| `SessionObserver` | Interface | `backend/src/domain/history/observers/session-observer.interface.ts` |
+| `WorkoutSessionSubject` | Subject | `backend/src/domain/history/observers/workout-session-subject.ts` |
+| `HistoryObserver` | ConcreteObserver | `backend/src/domain/history/observers/history-observer.ts` |
+| `RegisterSessionUseCase` | Disparador | `backend/src/application/use-cases/session/register-session.use-case.ts` |
+| Inscrição na inicialização | Wiring | `backend/src/infrastructure/modules/history.module.ts` (`onModuleInit`) |
+| Export do Subject | Módulo de sessão | `backend/src/infrastructure/modules/session.module.ts` |
 
-### Trechos centrais
+##### Trechos centrais
 
 ```typescript
-// workout-session-subject.ts
 export class WorkoutSessionSubject {
   private readonly observers: SessionObserver[] = [];
 
-  subscribe(observer: SessionObserver): void { /* ... */ }
-  unsubscribe(observer: SessionObserver): void { /* ... */ }
+  subscribe(observer: SessionObserver): void {
+    // ...
+  }
+
+  unsubscribe(observer: SessionObserver): void {
+    // ...
+  }
 
   notify(session: TrainingSession): void {
     for (const observer of this.observers) {
@@ -496,59 +677,175 @@ export class WorkoutSessionSubject {
     }
   }
 }
+```
 
-// register-session.use-case.ts — após persistir
+```typescript
 await this.sessionRepository.save(session);
 this.workoutSessionSubject.notify(session);
+```
 
-// history.module.ts
+```typescript
 onModuleInit(): void {
   this.workoutSessionSubject.subscribe(this.historyObserver);
 }
 ```
 
-## Evidência de execução
+#### Evidência de execução
 
 1. `POST /v1/sessions` com token e payload válido → `201` com `sessionId`.
-2. Imediatamente `GET /v1/history/sessions` → nova sessão aparece na lista (sem reiniciar API).
+2. Imediatamente `GET /v1/history/sessions` → nova sessão aparece na lista.
 3. Logs do Proxy confirmam leitura subsequente.
 
-Ordem sugerida no Swagger ou REST Client: login → registrar sessão → listar histórico → filtrar por datas.
+#### Rastreabilidade
 
-## Rastreabilidade
+| Artefato | Relação |
+|---|---|
+| Requisitos | RF26 — histórico atualizado após conclusão de sessão. |
+| Módulo | `domain/history/observers/` |
+| Camada | Domínio + Aplicação |
+| Padrão criacional relacionado | Multiton — destino do `update`. |
+| Padrão estrutural relacionado | Proxy — leitura do histórico após atualização. |
+| Endpoint disparador | `POST /v1/sessions` |
+| Endpoint consumidor | `GET /v1/history/sessions`, `GET /v1/history/sessions/:sessionId` |
 
-| Artefato                      | Relação                                                                 |
-|-------------------------------|-------------------------------------------------------------------------|
-| Requisitos                    | RF26 (histórico atualizado após conclusão de sessão)                    |
-| Módulo                        | `domain/history/observers/`                                             |
-| Camada                        | Domínio (Subject/Observer) + Aplicação (notify no use case)             |
-| Padrão criacional relacionado | Multiton (destino do `update`)                                          |
-| Padrão estrutural relacionado | Proxy (leitura do histórico após atualização)                             |
-| Endpoint disparador           | `POST /v1/sessions`                                                     |
-| Endpoint consumidor           | `GET /v1/history/sessions`, `GET /v1/history/sessions/:sessionId`       |
+#### Senso crítico
 
-## Senso crítico
-
-### Benefícios
+##### Benefícios
 
 - **Baixo acoplamento**: `RegisterSessionUseCase` só conhece o Subject, não o histórico.
-- **Extensível**: novos observers (métricas, push notification) via `subscribe()` sem alterar registro.
+- **Extensível**: novos observers podem ser adicionados via `subscribe()`.
 - **Alinhado ao requisito**: atualização automática do histórico após conclusão.
 
-### Limitações
+##### Limitações
 
-- **Síncrono**: `notify()` é chamada inline; observer lento impactaria latência do POST (hoje `update` só altera Map em memória).
-- **Sem persistência de eventos**: se o processo cair entre `save` e `notify`, o cache Multiton pode ficar desatualizado até próxima leitura do banco — mitigado porque `HistoryService` consulta o repositório quando necessário.
+- **Síncrono**: `notify()` é chamada inline.
+- **Sem persistência de eventos**: se o processo cair entre `save` e `notify`, o cache pode ficar desatualizado até próxima leitura do banco.
 
-### Alternativas consideradas
+##### Alternativas consideradas
 
-- **DomainEventBus existente**: adequado para eventos de aggregate; o Observer dedicado deixa explícito o vínculo sessão→histórico para a disciplina e RF26.
-- **Chamada direta ao HistoryService no use case**: mais simples, porém acoplamento forte. Rejeitado.
+- **DomainEventBus existente**: adequado para eventos de aggregate, mas o Observer dedicado explicita o vínculo sessão → histórico.
+- **Chamada direta ao HistoryService no use case**: rejeitada por acoplamento forte.
 
-## Referências
+#### Referências
 
-- GAMMA, E. et al. *Design Patterns*. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Observer, p. 293–303.
-- EVANS, E. *Domain-Driven Design*. Addison-Wesley, 2003. Cap. 11 — Domain Events (comparação conceitual com Observer).
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Observer, p. 293–303.
+- EVANS, E. _Domain-Driven Design_. Addison-Wesley, 2003. Cap. 11 — Domain Events.
+
+---
+
+## Módulo de Exercícios
+
+> **Responsável:** Daniel Teles | **Branch:** `feature/exercise_module`
+>
+> Contexto: a busca de exercícios aceita múltiplos filtros, como nome e grupo muscular, além de impor escopo por `userId` e excluir exercícios inativos. O objetivo era aplicar filtros na query sem criar condicionais inchadas no repositório.
+
+### Padrões analisados
+
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Chain of Responsibility** | Aplicar filtros encadeados na construção da query | Selecionado | Encadeamento limpo e extensível para novos filtros. |
+| Specification | Compor predicados reutilizáveis | Avaliado | Útil para regras complexas, mas requer wrapping adicional para QueryBuilder; Chain é mais direto. |
+
+### Padrão implementado — Chain of Responsibility · `ExerciseSearchChain`
+
+#### Problema arquitetural
+
+O repositório precisava montar uma query dinâmica com condições que variam conforme os filtros providos. Inserir `if`/`andWhere` repetidos no repositório torna o código difícil de estender; cada novo filtro aumentaria a complexidade ciclomática.
+
+#### Justificativa da escolha
+
+O `ExerciseSearchChain` encapsula cada etapa de filtro em um handler: escopo por `userId` + ativo, filtro por nome e filtro por grupo muscular. Handlers podem ser reordenados ou estendidos sem tocar na lógica base do repositório.
+
+#### Modelagem
+
+```mermaid
+classDiagram
+    class IExerciseSearchHandler {
+        <<interface>>
+        +setNext(handler: IExerciseSearchHandler) IExerciseSearchHandler
+        +execute(context: SearchContext) void
+    }
+
+    class BaseSearchHandler {
+        -nextHandler: IExerciseSearchHandler
+        +setNext(handler) IExerciseSearchHandler
+        +execute(context) void
+    }
+
+    class UserScopeHandler {
+        +execute(context) void
+    }
+
+    class NameFilterHandler {
+        +execute(context) void
+    }
+
+    class MuscleGroupFilterHandler {
+        +execute(context) void
+    }
+
+    IExerciseSearchHandler <|.. BaseSearchHandler
+    BaseSearchHandler <|-- UserScopeHandler
+    BaseSearchHandler <|-- NameFilterHandler
+    BaseSearchHandler <|-- MuscleGroupFilterHandler
+```
+
+#### Implementação
+
+| Elemento | Papel na Chain | Caminho |
+|---|---|---|
+| `ExerciseSearchChain` | Montagem e disparo da cadeia | `backend/src/infrastructure/database/exercise-search.chain.ts` |
+| `BaseSearchHandler` | Handler abstrato com lógica de delegação | `backend/src/infrastructure/database/exercise-search.chain.ts` |
+| `UserScopeHandler` | Aplica filtro de `userId` + `active=true` | `backend/src/infrastructure/database/exercise-search.chain.ts` |
+| `NameFilterHandler` | Aplica filtro opcional por nome | `backend/src/infrastructure/database/exercise-search.chain.ts` |
+| `MuscleGroupFilterHandler` | Aplica filtro opcional por grupo muscular | `backend/src/infrastructure/database/exercise-search.chain.ts` |
+| Repositório consumidor | Instancia e executa a chain | `backend/src/infrastructure/database/exercise.postgres-repository.ts` |
+| Use Case | Aciona o repositório com os critérios | `backend/src/application/use-cases/exercises/find-exercises.use-case.ts` |
+
+##### Trecho central
+
+```typescript
+const queryBuilder = this.repository
+  .createQueryBuilder("exercise")
+  .orderBy("exercise.name", "ASC");
+
+await new ExerciseSearchChain().execute({ criteria, queryBuilder });
+const rows = await queryBuilder.getMany();
+```
+
+#### Evidência de execução
+
+```bash
+docker compose exec api npx jest search-chain --verbose
+```
+
+#### Rastreabilidade
+
+| Artefato | Relação |
+|---|---|
+| Requisito | RF14 — consulta de exercícios por nome ou grupo muscular com ordenação e exclusão de inativos. |
+| Módulo | `infrastructure/database/` · `application/use-cases/exercises/` |
+| Camada | Infraestrutura |
+| Padrão estrutural relacionado | Decorator — os handlers da chain operam sobre o mesmo repositório decorado com cache e log. |
+
+#### Senso crítico
+
+##### Benefícios
+
+- **Menor complexidade ciclomática**: cada condição de filtro fica isolada em seu próprio handler.
+- **Extensibilidade dinâmica**: novos filtros são adicionados como novos handlers sem modificar o repositório ou os handlers existentes.
+
+##### Limitações
+
+- **Dificuldade de depuração**: rastrear onde uma query perdeu escopo pode ser trabalhoso quando muitos handlers são encadeados.
+
+##### Alternativas consideradas
+
+- **Specification Pattern**: descartado porque demandaria um acoplamento mais pesado ao TypeORM.
+
+#### Referências
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Chain of Responsibility.
 
 ---
 
@@ -558,122 +855,18 @@ Ordem sugerida no Swagger ou REST Client: login → registrar sessão → listar
 
 !!! warning "Seção pendente"
     Esta seção aguarda a contribuição do responsável pelo módulo.
-    Siga a estrutura da seção **Módulo de Onboarding** ou **Módulo de Histórico de Sessões** acima como referência:
 
-    1. **Padrões analisados** — tabela com os padrões GoF avaliados e justificativa da escolha
-    2. **Padrão implementado** — nome e identificador central (ex.: classe ou interface principal)
-    3. **Problema arquitetural** — o problema concreto que motivou o uso do padrão
-    4. **Justificativa da escolha** — por que este padrão e não as alternativas avaliadas
-    5. **Modelagem** — diagrama Mermaid (`classDiagram` ou `sequenceDiagram`)
-    6. **Implementação** — tabela de arquivos + trechos de código comentados
-    7. **Rastreabilidade** — elos com requisitos, camadas e outros padrões GoF do projeto
-    8. **Senso crítico** — benefícios, limitações e alternativas consideradas
-    9. **Referências** — bibliográficas (ABNT ou formato GoF)
+    Siga a estrutura das seções acima como referência:
 
----
-
-## Módulo de Exercicios — Chain of Responsibility
-
-> **Responsável:** Daniel | **Branch:** `feature/exercise_module`
->
-Contexto: a busca de exercícios aceita múltiplos filtros (nome, grupo muscular) além de impor escopo por `userId` e excluir exercícios inativos. Queríamos uma forma extensível de aplicar filtros na query sem criar condicionais inchadas no repositório.
-
-### Padrões analisados
-
-| Padrão                          | Possível aplicação                                | Status      | Justificativa |
-|---------------------------------|---------------------------------------------------|-------------|---------------|
-| Chain of Responsibility         | Aplicar filtros encadeados na construção da query | Selecionado | Encadeamento limpo e extensível para novos filtros |
-| Specification                   | Compor predicados reusáveis                       | Avaliado    | Útil para regras complexas, mas requer wrapping adicional para QueryBuilder |
-
-### Padrão implementado — Chain of Responsibility · `ExerciseSearchChain`
-
-## Problema arquitetural
-
-O repositório precisava montar uma query dinâmica com condições que variam conforme os filtros providos. Inserir `if`/`andWhere` repetidos no repositório torna o código difícil de estender; cada novo filtro aumentaria a complexidade.
-
-### Justificativa da escolha
-
-O `ExerciseSearchChain` encapsula cada etapa de filtro em um handler: escopo por `userId` + ativo, filtro por nome, filtro por grupo muscular. Handlers podem ser reordenados ou estendidos sem tocar na lógica base do repositório — alinhado ao princípio Open/Closed.
-
-## Implementação
-
-| Elemento            | Caminho |
-|---------------------|---------|
-| Chain               | `backend/src/infrastructure/database/exercise-search.chain.ts` |
-| Repositório consumidor | `backend/src/infrastructure/database/exercise.postgres-repository.ts` |
-| Use Case            | `backend/src/application/use-cases/exercises/find-exercises.use-case.ts` |
-
-### Trecho central
-
-```typescript
-const queryBuilder = this.repository.createQueryBuilder('exercise').orderBy('exercise.name','ASC');
-await new ExerciseSearchChain().execute({ criteria, queryBuilder });
-const rows = await queryBuilder.getMany();
-```
-
-## Rastreabilidade
-## Modelagem
-
-```mermaid
-classDiagram
-    class IExerciseSearchHandler {
-        <<interface>>
-        +setNext(handler: IExerciseSearchHandler)
-        +execute(context: SearchContext)
-    }
-    class BaseSearchHandler {
-        -nextHandler: IExerciseSearchHandler
-        +setNext()
-        +execute()
-    }
-    class UserScopeHandler {
-        +execute()
-    }
-    class NameFilterHandler {
-        +execute()
-    }
-    class MuscleGroupFilterHandler {
-        +execute()
-    }
-
-    IExerciseSearchHandler <|.. BaseSearchHandler
-    BaseSearchHandler <|-- UserScopeHandler
-    BaseSearchHandler <|-- NameFilterHandler
-    BaseSearchHandler <|-- MuscleGroupFilterHandler
-```
-
-## Evidência de execução
-
-As buscas filtradas executam com sucesso.
-Podemos validar em:
-```bash
-docker compose exec api npx jest search-chain
-```
-
-## Senso crítico
-
-### Benefícios
-
-- **Menor concorrência de `if-else`:** Reduz complexidade ciclomática.
-- **Possibilidade de Extensão Dinâmica:** Novos parsers e filtros no futuro.
-
-### Limitações
-
-- **Dificuldade de depuração:** Pode ser chatinho rastrear onde uma query perdeu escopo se muitos filtros forem sobrepostos.
-
-### Alternativas consideradas
-
-- **Pattern Specification:** Criar query objects. Foi rejeitado porque demandaria acoplar mais pesado o TypeORM. O chain manipula o Context (QueryBuilder) livremente.
-
-## Referências
-
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Chain of Responsibility.
-
-| Artefato | Relação |
-|---------|--------|
-| Requisito | RF14 — consulta de exercícios por nome ou grupo muscular com ordenação e exclusão de inativos |
-| Módulo  | `infrastructure/database` e `application/use-cases/exercises` |
-
+    1. **Padrões analisados** — tabela com os padrões GoF avaliados e justificativa da escolha.
+    2. **Padrão implementado** — nome e identificador central.
+    3. **Problema arquitetural** — problema concreto que motivou o uso do padrão.
+    4. **Justificativa da escolha** — por que este padrão e não as alternativas avaliadas.
+    5. **Modelagem** — diagrama Mermaid.
+    6. **Implementação** — tabela de arquivos e trechos de código.
+    7. **Rastreabilidade** — elos com requisitos, camadas e outros padrões GoF.
+    8. **Senso crítico** — benefícios, limitações e alternativas consideradas.
+    9. **Referências** — bibliográficas.
 
 ---
 
@@ -812,10 +1005,10 @@ DELETE /v1/users/me → body: { "password": "...", "confirmation": "CONFIRMAR" }
 
 ## Histórico de versões
 
-| Versão | Data       | Descrição                                                                              | Autor                      |
-|--------|------------|----------------------------------------------------------------------------------------|----------------------------|
-| 1.0    | 19/05/2026 | Documentação dos padrões Memento e Template Method do módulo de onboarding             | Lucas Antunes              |
-| 1.1    | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de exercícios               | Daniel Teles               |
-| 1.2    | 20/05/2026 | Documentação do padrão Observer do módulo de histórico de sessões                      | Giovanni Dornelas Ferreira |
-| 1.3    | 21/05/2026 | Adição do Módulo de Usuário: Chain of Responsibility (RF04 e RF07)                     | André Ricardo Meyer de Melo |
-
+| Versão | Data | Descrição | Autor |
+|---|---|---|---|
+| 1.0 | 19/05/2026 | Documentação dos padrões Memento e Template Method do módulo de Onboarding. | Lucas Antunes |
+| 1.1 | 20/05/2026 | Documentação dos padrões Template Method e Observer do módulo de Autenticação. | Samuel Nogueira Caetano |
+| 1.2 | 20/05/2026 | Documentação do padrão Observer do módulo de Histórico de Sessões. | Giovanni Dornelas Ferreira |
+| 1.3 | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de Exercícios. | Daniel Teles |
+| 1.4    | 21/05/2026 | Documentação do padrão Chain of Responsibility do módulo de Usuário, referente aos RF04 e RF07.   | André Ricardo Meyer de Melo |
