@@ -124,6 +124,18 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Daniel Teles | Encadeamento de restrições de busca em `ExerciseSearchChain` para permitir múltiplos testes dinâmicos de filtro. | Excelente | `backend/src/infrastructure/database/exercise-search.chain.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
+## Módulo de Usuário — RF04 e RF07
+
+**Responsável:** André Ricardo Meyer de Melo | **Branch:** `feat/modulo-usuario-4-7`
+
+| Padrão | Nome do Membro | Contribuição | Significância |
+|--------|----------------|--------------|---------------|
+| Builder | André Ricardo Meyer de Melo | `PasswordResetRequestBuilder` e `AccountDeletionRequestBuilder` — constroem comandos validados para RF04 e RF07 | Excelente |
+| Facade | André Ricardo Meyer de Melo | `PasswordResetFacade` e `AccountDeletionFacade` — orquestram cadeia, repositórios, e-mail e eventos | Excelente |
+| Chain of Responsibility | André Ricardo Meyer de Melo | Cadeia RF04 (4 handlers) e cadeia RF07 (4 handlers) com decisões de segurança embutidas | Excelente |
+
+---
+
 ## Histórico de versões
 
 | Versão | Data | Descrição | Autor |
@@ -132,3 +144,4 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | 1.1 | 20/05/2026 | Registro de participações nos padrões GoF do módulo de autenticação (Factory Method, Decorator, Facade, Template Method, Observer). | Samuel Nogueira Caetano |
 | 1.2 | 20/05/2026 | Registro de participações nos padrões GoF do módulo de histórico de sessões (Multiton, Proxy, Observer). | Giovanni Dornelas Ferreira |
 | 1.3 | 21/05/2026 | Registro de participações nos padrões GoF do módulo de exercises (Builder, Decorator, Chain of Responsibility). | Daniel Teles |
+| 1.4    | 21/05/2026 | Registro de participações nos padrões GoF do módulo de Usuário (Builder, Facade, Chain of Responsibility — RF04 e RF07).              | André Ricardo Meyer de Melo |

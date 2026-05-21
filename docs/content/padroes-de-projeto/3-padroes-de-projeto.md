@@ -71,3 +71,4 @@ Caso mais padrões precisem ser adicionados nos documentos filhos (3-1, 3-2, 3-3
 | 1.1 | 20/05/2026 | Inclusão dos padrões estruturais, criacionais e comportamentais do módulo de Autenticação na tabela de documentação base. | Samuel Nogueira Caetano |
 | 1.2 | 20/05/2026 | Inclusão dos GoFs do módulo de Histórico: Multiton, Proxy e Observer. | Giovanni Dornelas Ferreira |
 | 1.3 | 21/05/2026 | Atualização do painel de GoFs com os padrões do módulo de Exercises. | Daniel Teles |
+| 1.4 | 21/05/2026 | Inclusão dos GoFs do módulo de Usuário (Builder, Facade, Chain of Responsibility) — RF04 e RF07. | André Ricardo Meyer de Melo |

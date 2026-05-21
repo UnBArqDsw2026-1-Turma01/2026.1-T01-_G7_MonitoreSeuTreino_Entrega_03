@@ -870,6 +870,139 @@ docker compose exec api npx jest search-chain --verbose
 
 ---
 
+## Módulo de Usuário — Chain of Responsibility
+
+**Autor:** André Ricardo Meyer de Melo  
+**Funcionalidades:** RF04 (Recuperar Senha) e RF07 (Excluir Conta)
+
+### Problema
+
+Ambos os fluxos possuem etapas sequenciais onde cada passo depende do anterior e qualquer etapa pode interromper a execução ao lançar uma exceção de domínio. Sem o padrão, toda essa lógica ficaria concentrada em um único método de use case, tornando difícil adicionar, remover ou reordenar etapas.
+
+### Solução
+
+Duas cadeias independentes, cada uma com sua classe `Handler` abstrata definida localmente. Cada handler concreto processa sua etapa e chama `next()` para avançar, ou lança uma exceção para interromper.
+
+**Cadeia RF04 — Recuperar Senha:**
+
+```
+ValidateEmailFormatHandler → CheckUserExistsHandler (aborta silenciosamente se email não existe — segurança) → GenerateTokenHandler (crypto.randomBytes(32), SHA-256, TTL 15 min) → SendEmailHandler (swallows SMTP errors — endpoint sempre retorna 200)
+```
+
+**Cadeia RF07 — Excluir Conta:**
+
+```
+ValidatePasswordHandler (busca usuário + verifica bcrypt) → ValidateConfirmationPhraseHandler (exige exatamente "CONFIRMAR", case-sensitive) → RevokeSessionsHandler (hard-delete de todos os refresh tokens) → DeleteAccountHandler (hard-delete de tokens de reset + hard-delete do usuário)
+```
+
+### Diagrama
+
+```mermaid
+classDiagram
+    class Handler {
+        <<abstract>>
+        -nextHandler: Handler | null
+        +setNext(handler: Handler) Handler
+        #next(ctx) Promise~void~
+        +handle(ctx)* Promise~void~
+    }
+    class ValidateEmailFormatHandler {
+        +handle(ctx: PasswordResetChainContext) Promise~void~
+    }
+    class CheckUserExistsHandler {
+        -userRepository: UserRepository
+        +handle(ctx) Promise~void~
+    }
+    class GenerateTokenHandler {
+        -passwordResetTokenRepository: PasswordResetTokenRepository
+        +handle(ctx) Promise~void~
+    }
+    class SendEmailHandler {
+        -emailService: EmailService
+        +handle(ctx) Promise~void~
+    }
+    class ValidatePasswordHandler {
+        -userRepository: UserRepository
+        -hashService: HashService
+        +handle(ctx: AccountDeletionChainContext) Promise~void~
+    }
+    class ValidateConfirmationPhraseHandler {
+        +handle(ctx) Promise~void~
+    }
+    class RevokeSessionsHandler {
+        -refreshTokenRepository: RefreshTokenRepository
+        +handle(ctx) Promise~void~
+    }
+    class DeleteAccountHandler {
+        -userRepository: UserRepository
+        -passwordResetTokenRepository: PasswordResetTokenRepository
+        +handle(ctx) Promise~void~
+    }
+
+    Handler <|-- ValidateEmailFormatHandler
+    Handler <|-- CheckUserExistsHandler
+    Handler <|-- GenerateTokenHandler
+    Handler <|-- SendEmailHandler
+    Handler <|-- ValidatePasswordHandler
+    Handler <|-- ValidateConfirmationPhraseHandler
+    Handler <|-- RevokeSessionsHandler
+    Handler <|-- DeleteAccountHandler
+
+    ValidateEmailFormatHandler --> CheckUserExistsHandler : next
+    CheckUserExistsHandler --> GenerateTokenHandler : next
+    GenerateTokenHandler --> SendEmailHandler : next
+    ValidatePasswordHandler --> ValidateConfirmationPhraseHandler : next
+    ValidateConfirmationPhraseHandler --> RevokeSessionsHandler : next
+    RevokeSessionsHandler --> DeleteAccountHandler : next
+```
+
+### Decisão de segurança: abort silencioso no RF04
+
+O `CheckUserExistsHandler` não lança exceção quando o e-mail não existe — simplesmente retorna sem chamar `next()`. Isso garante que o endpoint `POST /v1/auth/password-reset/request` sempre responda `200 OK`, impedindo que atacantes descubram quais e-mails estão cadastrados por enumeração de resposta.
+
+### Decisão de segurança: swallow de erros SMTP
+
+O `SendEmailHandler` captura exceções do serviço de e-mail sem propagá-las. O token já foi persistido no banco — se o SMTP falhar, o endpoint ainda retorna `200`, evitando tanto a exposição de infraestrutura quanto a revelação de que o usuário existe.
+
+### Artefatos
+
+| Papel GoF | Classe | Arquivo |
+|---|---|---|
+| Handler (abstrato) | `Handler` (RF04) | `application/chains/password-reset.chain.ts` |
+| Handler (abstrato) | `Handler` (RF07) | `application/chains/account-deletion.chain.ts` |
+| ConcreteHandler | `ValidateEmailFormatHandler` | `application/chains/password-reset.chain.ts` |
+| ConcreteHandler | `CheckUserExistsHandler` | `application/chains/password-reset.chain.ts` |
+| ConcreteHandler | `GenerateTokenHandler` | `application/chains/password-reset.chain.ts` |
+| ConcreteHandler | `SendEmailHandler` | `application/chains/password-reset.chain.ts` |
+| ConcreteHandler | `ValidatePasswordHandler` | `application/chains/account-deletion.chain.ts` |
+| ConcreteHandler | `ValidateConfirmationPhraseHandler` | `application/chains/account-deletion.chain.ts` |
+| ConcreteHandler | `RevokeSessionsHandler` | `application/chains/account-deletion.chain.ts` |
+| ConcreteHandler | `DeleteAccountHandler` | `application/chains/account-deletion.chain.ts` |
+
+### Validação manual (Swagger)
+
+```
+RF04
+POST /v1/auth/password-reset/request → body: { "email": "..." } → 200
+POST /v1/auth/password-reset/confirm → body: { "token": "...", "newPassword": "..." } → 200
+
+RF07 (requer Bearer token)
+DELETE /v1/users/me → body: { "password": "...", "confirmation": "CONFIRMAR" } → 204
+```
+
+### Senso Crítico
+
+**Benefícios:**
+- Cada etapa é uma classe isolada, testável independentemente
+- Adicionar ou reordenar etapas não exige alteração das existentes (OCP)
+- Decisões de segurança ficam encapsuladas no handler responsável, não espalhadas na facade
+
+**Limitações:**
+- Dois `Handler` abstratos separados (um por cadeia) em vez de uma classe base compartilhada — escolha deliberada para evitar acoplamento entre contextos distintos, mas gera alguma duplicação estrutural
+- A cadeia é montada a cada requisição (sem reuso de instâncias) — aceitável dado o volume esperado
+
+---
+
 ## Histórico de versões
 
 | Versão | Data | Descrição | Autor |
@@ -878,3 +1011,4 @@ docker compose exec api npx jest search-chain --verbose
 | 1.1 | 20/05/2026 | Documentação dos padrões Template Method e Observer do módulo de Autenticação. | Samuel Nogueira Caetano |
 | 1.2 | 20/05/2026 | Documentação do padrão Observer do módulo de Histórico de Sessões. | Giovanni Dornelas Ferreira |
 | 1.3 | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de Exercícios. | Daniel Teles |
+| 1.4    | 21/05/2026 | Documentação do padrão Chain of Responsibility do módulo de Usuário, referente aos RF04 e RF07.   | André Ricardo Meyer de Melo |

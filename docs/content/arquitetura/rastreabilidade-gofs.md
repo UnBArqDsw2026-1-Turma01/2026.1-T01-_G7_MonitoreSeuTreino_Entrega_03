@@ -8,6 +8,24 @@ Esta página serve como índice de rastreabilidade. Para a análise completa de 
 
 ## Matriz de rastreabilidade
 
+<<<<<<< HEAD
+| Categoria          | Padrão          | Módulo     | Camada                  | Artefato principal                                                      | Problema resolvido                                                                                                  | Documento                                                                     | Endpoint(s)                   |
+|--------------------|-----------------|------------|-------------------------|-------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|-------------------------------|
+| **Criacional**     | Singleton       | Onboarding | Domain                  | `OnboardingClassificationRules`                                         | Garantir fonte única de regras de pontuação para `MaleProfileClassifier` e `FemaleProfileClassifier`                | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md)         | `POST /v1/onboarding`         |
+| **Estrutural**     | Bridge          | Onboarding | Domain                  | `OnboardingFlow` (abstração) + `ProfileClassifier` (impl.)              | Separar a hierarquia de fluxos de treino da hierarquia de classificadores por sexo, evitando explosão de subclasses | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md)         | `POST /v1/onboarding`         |
+| **Estrutural**     | Facade          | Onboarding | Presentation            | `OnboardingFacade`                                                      | Oferecer ponto único de acesso do controller aos três use cases de onboarding, isolando a camada de apresentação    | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md)         | `GET/POST/PUT /v1/onboarding` |
+| **Comportamental** | Memento         | Onboarding | Domain + Infrastructure | `TrainingProfile.createMemento()` + `OnboardingMementoVO`               | Preservar o estado completo do perfil antes de um redo sem violar o encapsulamento da entidade                      | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `PUT /v1/onboarding`          |
+| **Comportamental** | Template Method | Onboarding | Domain                  | `OnboardingFlow.execute()` com hooks `beforeClassify` / `afterClassify` | Garantir sequência imutável do algoritmo de classificação (pre → classificar → pos), extensível via hooks           | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `POST /v1/onboarding`         |
+| **Criacional**     | Multiton        | Histórico  | Domain                  | `HistoryManager.getInstance(userId)`                                    | Pool de gerenciadores por usuário; cache de sessões concluídas sem recriação a cada request                          | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md#módulo-de-histórico-de-sessões) | `GET /v1/history/sessions`    |
+| **Estrutural**     | Proxy           | Histórico  | Infrastructure          | `HistoryServiceProxy` → `HistoryService`                                | Controle de acesso, validação de período e logs antes de delegar ao serviço real                                     | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md#módulo-de-histórico-de-sessões) | `GET /v1/history/sessions`    |
+| **Comportamental** | Observer        | Histórico  | Domain + Application    | `WorkoutSessionSubject.notify()` + `HistoryObserver.update()`           | Atualizar histórico automaticamente após `POST /v1/sessions` sem acoplar use case ao módulo de histórico             | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md#módulo-de-histórico-de-sessões) | `POST /v1/sessions`           |
+| **Criacional**     | Builder         | Exercises  | Domain                  | `ExerciseBuilder`                                       | Centralizar regras de montagem e validações obrigacionas vs opcionais do agregado `Exercise` | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md)             | `POST /v1/exercises`            |
+| **Estrutural**     | Decorator       | Exercises  | Domain + Infrastructure | `LoggingExerciseRepository` + `CachingExerciseRepository` | OCP para cacheamento e logging de respostas das rotas de leitura   | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md)             | `GET/POST/PUT /v1/exercises` |
+| **Comportamental** | Chain of Resp.  | Exercises  | Infrastructure          | `ExerciseSearchChain`                                   | Encadeamento de restrições de busca `where` (ativos, name, muscleGroup) | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md)       | `GET /v1/exercises`             |
+| **Criacional**     | Builder         | Usuário    | Presentation            | `PasswordResetRequestBuilder`, `AccountDeletionRequestBuilder` | Construção validada de comandos com campos obrigatórios antes da execução da cadeia | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md) | `POST /v1/auth/password-reset/request`, `DELETE /v1/users/me` |
+| **Estrutural**     | Facade          | Usuário    | Presentation            | `PasswordResetFacade`, `AccountDeletionFacade`          | Interface única para orquestrar cadeia, repositórios, e-mail e eventos              | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md)  | `POST /v1/auth/password-reset/*`, `DELETE /v1/users/me` |
+| **Comportamental** | Chain of Resp.  | Usuário    | Application             | `password-reset.chain.ts`, `account-deletion.chain.ts`  | Etapas sequenciais com validação e interrupção em qualquer ponto — abort silencioso por segurança | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `POST /v1/auth/password-reset/request`, `POST /v1/auth/password-reset/confirm`, `DELETE /v1/users/me` |
+=======
 | Categoria | Padrão | Módulo | Camada | Artefato principal | Problema resolvido | Documento | Endpoint(s) |
 |---|---|---|---|---|---|---|---|
 | **Criacional** | Singleton | Onboarding | Domain | `OnboardingClassificationRules` | Garantir fonte única de regras de pontuação para `MaleProfileClassifier` e `FemaleProfileClassifier`. | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md) | `POST /v1/onboarding` |
@@ -26,6 +44,7 @@ Esta página serve como índice de rastreabilidade. Para a análise completa de 
 | **Comportamental** | Observer | Autenticação | Domain + Application | `DomainEventBus` + `AggregateRoot.pullDomainEvents()` | Distribuir eventos de domínio sem acoplar os casos de uso a múltiplos handlers. | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | Múltiplos |
 | **Comportamental** | Observer | Histórico | Domain + Application | `WorkoutSessionSubject.notify()` + `HistoryObserver.update()` | Atualizar o histórico automaticamente após uma sessão de treino sem acoplar o caso de uso ao módulo de histórico. | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md#módulo-de-histórico-de-sessões) | `POST /v1/sessions` |
 | **Comportamental** | Chain of Responsibility | Exercises | Infrastructure | `ExerciseSearchChain` | Encadear restrições de busca, como ativos, nome e grupo muscular. | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `GET /v1/exercises` |
+>>>>>>> dev
 
 ## Elos entre padrões
 
@@ -169,9 +188,18 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/v1/history/session
 
 ## Histórico de versões
 
+<<<<<<< HEAD
+| Versão | Data       | Descrição                                                                                | Autor         |
+|--------|------------|------------------------------------------------------------------------------------------|---------------|
+| 1.0    | 19/05/2026 | Matriz de rastreabilidade com os 5 padrões GoF do módulo de onboarding e elos entre eles | Lucas Antunes              |
+| 1.1    | 20/05/2026 | Matriz expandida com os 3 padrões GoF do módulo de Exercises                              | Daniel Teles               |
+| 1.2    | 20/05/2026 | Inclusão de Multiton, Proxy e Observer do módulo de histórico (RF26/RF27)               | Giovanni Dornelas Ferreira |
+| 1.3    | 21/05/2026 | Adição dos padrões do Módulo de Usuário na matriz de rastreabilidade                    | André Ricardo Meyer de Melo |
+=======
 | Versão | Data       | Descrição                                                                                                | Autor                      |
 | ------ | ---------- | -------------------------------------------------------------------------------------------------------- | -------------------------- |
 | 1.0    | 19/05/2026 | Matriz de rastreabilidade com os 5 padrões GoF do módulo de Onboarding e elos entre eles.                | Lucas Antunes              |
 | 1.1    | 20/05/2026 | Inclusão de 5 padrões GoF do módulo de Autenticação e adição do grafo de relacionamentos correspondente. | Samuel Nogueira Caetano    |
 | 1.2    | 20/05/2026 | Inclusão de 3 padrões GoF do módulo de Exercises e adição do grafo de relacionamentos correspondente.    | Daniel Teles               |
 | 1.3    | 20/05/2026 | Inclusão de Multiton, Proxy e Observer do módulo de Histórico (RF26/RF27).                               | Giovanni Dornelas Ferreira |
+>>>>>>> dev

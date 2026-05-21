@@ -800,6 +800,91 @@ docker compose logs api
 
 ---
 
+## Módulo de Usuário — Facade
+
+**Autor:** André Ricardo Meyer de Melo  
+**Funcionalidades:** RF04 (Recuperar Senha) e RF07 (Excluir Conta)
+
+### Problema
+
+Os fluxos de recuperação de senha e exclusão de conta orquestram múltiplos subsistemas: cadeia de responsabilidade, repositórios de token e usuário, serviço de e-mail, serviço de hash e barramento de eventos. Sem uma camada de fachada, o controller precisaria conhecer e instanciar cada um desses colaboradores, violando o princípio de responsabilidade única e acoplando a camada de apresentação à aplicação.
+
+### Solução
+
+`PasswordResetFacade` e `AccountDeletionFacade` expõem cada fluxo como um único método público. O controller chama apenas a facade — nunca handlers, use cases ou repositórios diretamente.
+
+```typescript
+// Controller RF04 — apenas 2 chamadas de facade
+await this.passwordResetFacade.requestReset(dto.email);
+await this.passwordResetFacade.confirmReset(dto.token, dto.newPassword);
+
+// Controller RF07 — apenas 1 chamada de facade
+await this.accountDeletionFacade.delete(userId, dto.password, dto.confirmation);
+```
+
+### Diagrama
+
+```mermaid
+classDiagram
+    class PasswordResetController {
+        +requestReset(dto) Promise~void~
+        +confirmReset(dto) Promise~void~
+    }
+    class PasswordResetFacade {
+        +requestReset(email: string) Promise~void~
+        +confirmReset(token, newPassword) Promise~void~
+    }
+    class UserController {
+        +deleteAccount(userId, dto) Promise~void~
+    }
+    class AccountDeletionFacade {
+        +delete(userId, password, confirmation) Promise~void~
+    }
+    class ValidateEmailFormatHandler
+    class CheckUserExistsHandler
+    class GenerateTokenHandler
+    class SendEmailHandler
+    class ValidatePasswordHandler
+    class ValidateConfirmationPhraseHandler
+    class RevokeSessionsHandler
+    class DeleteAccountHandler
+    class ConfirmPasswordResetUseCase
+
+    PasswordResetController --> PasswordResetFacade : delega
+    PasswordResetFacade --> ValidateEmailFormatHandler : monta cadeia
+    PasswordResetFacade --> CheckUserExistsHandler
+    PasswordResetFacade --> GenerateTokenHandler
+    PasswordResetFacade --> SendEmailHandler
+    PasswordResetFacade --> ConfirmPasswordResetUseCase
+
+    UserController --> AccountDeletionFacade : delega
+    AccountDeletionFacade --> ValidatePasswordHandler : monta cadeia
+    AccountDeletionFacade --> ValidateConfirmationPhraseHandler
+    AccountDeletionFacade --> RevokeSessionsHandler
+    AccountDeletionFacade --> DeleteAccountHandler
+```
+
+### Artefatos
+
+| Papel GoF | Classe | Arquivo |
+|---|---|---|
+| Facade | `PasswordResetFacade` | `presentation/facades/password-reset.facade.ts` |
+| Facade | `AccountDeletionFacade` | `presentation/facades/account-deletion.facade.ts` |
+| Client | `PasswordResetController` | `presentation/controllers/password-reset.controller.ts` |
+| Client | `UserController` | `presentation/controllers/user.controller.ts` |
+
+### Senso Crítico
+
+**Benefícios:**
+- Controller reduzido a roteamento e extração de DTO — sem lógica de negócio
+- Subsistemas (cadeia, repositórios, e-mail) podem ser substituídos sem alterar o controller
+- Segue o mesmo estilo da `AuthenticationFacade` já existente no projeto, mantendo consistência arquitetural
+
+**Limitações:**
+- A facade não valida os dados de entrada — delega isso ao Builder e aos handlers da cadeia, o que exige atenção ao rastrear onde cada validação ocorre
+
+---
+
 ## Histórico de versões
 
 | Versão | Data | Descrição | Autor |
@@ -808,3 +893,4 @@ docker compose logs api
 | 1.1 | 20/05/2026 | Documentação dos padrões Decorator e Facade do módulo de Autenticação. | Samuel Nogueira Caetano |
 | 1.2 | 20/05/2026 | Documentação do padrão Proxy do módulo de Histórico de Sessões. | Giovanni Dornelas Ferreira |
 | 1.3 | 21/05/2026 | Documentação do padrão Decorator para o repositório de Exercícios. | Daniel Teles |
+| 1.4    | 21/05/2026 | Documentação do padrão Facade do módulo de Usuário, referente aos RF04 e RF07.  | André Ricardo Meyer de Melo |
