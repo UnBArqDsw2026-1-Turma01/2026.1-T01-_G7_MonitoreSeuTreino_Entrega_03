@@ -26,6 +26,7 @@ coverage/
 .idea/
 .vscode/
 .claude/
+.antigravitycli/
 *.suo
 *.ntvs*
 *.njsproj

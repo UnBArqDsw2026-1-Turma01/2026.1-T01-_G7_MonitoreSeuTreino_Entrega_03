@@ -787,27 +787,206 @@ Exemplo de resposta da listagem:
 - GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 3 — Creational Patterns.
 - NOBLE, J.; WEIR, C. _Small Memory Software_. Prentice Hall, 2000. Cap. 4 — Object Reuse.
 
----
+## Módulo de Sessão de Treino — Builder
 
-## [Módulo: ____________] — A preencher
+> **Responsável:** Eduardo Waski | **Branch:** `feat/modulo-sessao-treino`
+>
+> Contexto: o desafio criacional consistia em construir o agregado complexo `TrainingSession` (que possui uma estrutura hierárquica contendo nós de exercício e folhas de séries via padrão Composite) de forma flexível e incremental na camada de aplicação, garantindo que o objeto final seja válido e consistente antes de ser persistido.
 
-> **Responsável:** [Nome do membro] | **Branch:** [nome da branch]
+### Padrões analisados
 
-!!! warning "Seção pendente"
-    Esta seção aguarda a contribuição do responsável pelo módulo.
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Builder** | Construção incremental e segura do agregado `TrainingSession` | Selecionado | Permite encapsular a montagem hierárquica passo a passo, fornecendo uma API fluida e centralizando a validação de consistência no método `build()`. |
+| Factory Method | Instanciação direta do agregado | Avaliado | Apropriado para objetos simples, mas insuficiente para a montagem de árvores complexas com múltiplos exercícios e séries dinâmicas. |
+| Prototype | Clonagem de uma sessão existente | Não selecionado | A criação a partir de uma rotina pré-preenchida copia parâmetros planejados do banco para novos objetos em memória, não necessitando de clonagem profunda direta. |
 
-    Siga a estrutura das seções **Módulo de Onboarding**, **Módulo de Autenticação**, **Módulo de Exercícios** ou **Módulo de Histórico de Sessões** acima como referência:
+### Padrão implementado — Builder · `TrainingSessionBuilder`
 
-    1. **Padrões analisados** — tabela com os padrões GoF avaliados e justificativa da escolha.
-    2. **Padrão implementado** — nome e identificador central, como classe ou interface principal.
-    3. **Problema arquitetural** — o problema concreto que motivou o uso do padrão.
-    4. **Justificativa da escolha** — por que este padrão e não as alternativas avaliadas.
-    5. **Modelagem** — diagrama Mermaid (`classDiagram` ou `sequenceDiagram`).
-    6. **Implementação** — tabela de arquivos e trechos de código comentados.
-    7. **Evidência de execução** — resultados de testes ou saída de comandos no container.
-    8. **Rastreabilidade** — elos com requisitos, camadas e outros padrões GoF do projeto.
-    9. **Senso crítico** — benefícios, limitações e alternativas consideradas.
-    10. **Referências** — bibliográficas.
+### Problema arquitetural
+
+A entidade de domínio `TrainingSession` é o agregado raiz do módulo de sessões. Ela não possui apenas atributos planos, mas sim uma hierarquia de componentes (`WorkoutComponent`) formada por `ExerciseNode` e `TrainingSet` (aplicação do padrão estrutural Composite).
+
+Se tentássemos instanciar a entidade diretamente por meio de um construtor único clássico, seríamos forçados a passar uma árvore complexa e aninhada de objetos em uma única chamada. Isso acarretaria os seguintes problemas:
+1. **Acoplamento excessivo**: o caso de uso (`RegisterSessionUseCase`) precisaria conhecer intimamente as estruturas internas de nós e folhas para montá-las manualmente antes de chamar o construtor da sessão.
+2. **Construtores poluídos e frágeis**: assinaturas contendo múltiplos parâmetros posicionais ou objetos de configuração extensos, fáceis de confundir em tempo de desenvolvimento.
+3. **Validação dispersa**: a garantia de que a sessão é válida (por exemplo, contendo ao menos um exercício cadastrado) ficaria sob responsabilidade da camada de aplicação ou exigiria validações complexas espalhadas pelo construtor de domínio.
+
+### Justificativa da escolha
+
+O `TrainingSessionBuilder` resolve essa complexidade ao separar a representação interna de `TrainingSession` de seu processo de construção passo a passo.
+
+- **Interface Fluida**: O Builder expõe métodos autoexplicativos como `withDate()`, `withRoutine()`, `addExercise()` e `addSetToExercise()`, permitindo encadeamento.
+- **Isolamento de Estruturas**: A montagem da árvore hierárquica (criação dos nós `ExerciseNode` e folhas `TrainingSet`) ocorre de forma interna ao Builder. O caso de uso apenas informa os identificadores e dados brutos recebidos da DTO.
+- **Validação de Invariantes Centralizada**: O método `build()` valida as invariantes de negócio antes de instanciar a classe final (ex.: garantir que exista no mínimo um exercício na sessão), impedindo a existência de um agregado em estado inconsistente na memória.
+
+### Modelagem
+
+```mermaid
+classDiagram
+    class TrainingSessionBuilder {
+        -id: string
+        -userId: string
+        -date: Date
+        -routineId: string | null
+        -exerciseNodes: Map~string, ExerciseNode~
+        +constructor(userId: string)
+        +withCustomId(id: string) this
+        +withDate(date: Date) this
+        +withRoutine(routineId: string) this
+        +addExercise(exerciseId: string, expectedSets: number, nodeId: string) this
+        +addSetToExercise(nodeId: string, targetReps: number, actualReps: number | null, weight: number | null, observations: string | null) this
+        +build() TrainingSession
+    }
+
+    class TrainingSession {
+        -components: WorkoutComponent[]
+        +addWorkoutComponent(component: WorkoutComponent) void
+    }
+
+    class ExerciseNode {
+        -children: WorkoutComponent[]
+        +add(component: WorkoutComponent) void
+    }
+
+    class TrainingSet {
+        +targetReps: number
+        +actualReps: number | null
+        +weight: number | null
+    }
+
+    TrainingSessionBuilder ..> TrainingSession : constrói
+    TrainingSessionBuilder --> ExerciseNode : gerencia e popula
+    TrainingSessionBuilder --> TrainingSet : instancia e insere
+```
+
+### Implementação
+
+| Elemento | Papel no Builder | Caminho |
+|---|---|---|
+| `TrainingSessionBuilder` | Concrete Builder | `backend/src/domain/builders/training-session.builder.ts` |
+| `TrainingSession` | Product | `backend/src/domain/entities/training-session.ts` |
+| `RegisterSessionUseCase` | Client (Director) | `backend/src/application/use-cases/session/register-session.use-case.ts` |
+
+#### Trecho central
+
+```typescript
+// training-session.builder.ts
+export class TrainingSessionBuilder {
+  private id: string;
+  private userId: string;
+  private date: Date;
+  private routineId: string | null = null;
+  private exerciseNodes: Map<string, ExerciseNode> = new Map();
+
+  constructor(userId: string) {
+    this.id = randomUUID();
+    this.userId = userId;
+    this.date = new Date();
+  }
+
+  public withDate(date: Date): this {
+    this.date = date;
+    return this;
+  }
+
+  public withRoutine(routineId: string): this {
+    this.routineId = routineId;
+    return this;
+  }
+
+  public addExercise(exerciseId: string, expectedSets: number, nodeId: string = randomUUID()): this {
+    const exerciseNode = new ExerciseNode(nodeId, exerciseId, expectedSets);
+    this.exerciseNodes.set(nodeId, exerciseNode);
+    return this;
+  }
+
+  public addSetToExercise(
+    nodeId: string,
+    targetReps: number,
+    actualReps: number | null,
+    weight: number | null,
+    observations: string | null = null
+  ): this {
+    const exerciseNode = this.exerciseNodes.get(nodeId);
+    if (!exerciseNode) {
+      throw new Error(`Exercicio com ID ${nodeId} não encontrado no buider.`);
+    }
+
+    const setId = randomUUID();
+    const trainingSet = new TrainingSet(setId, targetReps, actualReps, weight, observations);
+    exerciseNode.add(trainingSet);
+    return this;
+  }
+
+  public build(): TrainingSession {
+    if (this.exerciseNodes.size === 0) {
+      throw new Error('Uma sessão de treino deve ter pelo menos um exercício.');
+    }
+
+    const session = new TrainingSession(this.id, this.userId, this.date, SessionState.COMPLETED, this.routineId);
+
+    for (const exerciseNode of this.exerciseNodes.values()) {
+      session.addWorkoutComponent(exerciseNode);
+    }
+
+    return session;
+  }
+}
+```
+
+### Evidência de execução
+
+Os testes unitários do módulo cobrem o comportamento esperado do Builder em diferentes cenários de entrada:
+
+```text
+PASS  src/domain/entities/training-session.spec.ts
+  Workout Session Domain Modules (Builder, Composite, Iterator)
+    Builder Pattern - TrainingSessionBuilder
+      ✓ should build a valid TrainingSession with correct details (3 ms)
+      ✓ should throw an error if no exercises are added (1 ms)
+      ✓ should throw an error if adding a set to a non-existent exercise nodeId (1 ms)
+```
+
+Para rodar a suíte de testes de domínio de sessões de treino, utilize o comando abaixo:
+
+```bash
+docker compose exec api npx jest training-session --verbose
+```
+
+### Rastreabilidade
+
+| Artefato | Relação |
+|---|---|
+| Requisito | RF22 — Registrar sessão (criação estruturada do treino executado). |
+| Módulo | `domain/builders/` |
+| Camada | Domínio (lógica de montagem expressa em entidade rica). |
+| Padrão estrutural relacionado | Composite — Builder monta a árvore de `ExerciseNode` e `TrainingSet`. |
+| Padrão comportamental relacionado | Iterator — `TrainingSession` fornece um Iterator para percorrer as folhas montadas pelo Builder. |
+| Endpoint consumidor | `POST /v1/sessions` |
+| Arquivo de testes | `src/domain/entities/training-session.spec.ts` |
+
+### Senso crítico
+
+#### Benefícios
+
+- **Montagem fluida e expressiva**: Legibilidade aprimorada na camada de aplicação ao encadear chamadas de construção.
+- **Validação precoce e encapsulada**: Garante consistência do agregado raiz `TrainingSession` sem vazar lógica para os use cases.
+- **Ocultação da complexidade estrutural**: O chamador não lida diretamente com os relacionamentos pai-filho da árvore do composite.
+
+#### Limitações
+
+- **Acoplamento a IDs temporários**: O builder exige que o chamador forneça ou gerencie IDs temporários dos nós de exercício (`nodeId`) ao associar conjuntos de treino, o que expõe ligeiramente a estratégia de mapeamento ao cliente.
+- **Sobrecarga de Classes**: Para sessões extremamente simples, adiciona um nível de indireção que consome recursos cognitivos e linhas de código a mais do que um construtor convencional.
+
+#### Alternativas consideradas
+
+- **Direct Instantiation**: Criar a sessão e as subestruturas de forma aninhada via construtor. Descartado pelo excesso de aninhamento e fragilidade no tratamento de múltiplos parâmetros opcionais e dinâmicos.
+
+### Referências
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Builder, p. 97–106.
+- EVANS, E. _Domain-Driven Design: Tackling Complexity in the Heart of Software_. Addison-Wesley, 2003. Cap. 6 — Life Cycle of a Domain Object.
 
 ---
 
@@ -910,3 +1089,4 @@ classDiagram
 | 1.2 | 20/05/2026 | Documentação do padrão Builder do módulo de Exercícios, aplicado à criação de `Exercise`. | Daniel Teles |
 | 1.3 | 20/05/2026 | Documentação do padrão Multiton do módulo de Histórico de Sessões, referente aos requisitos RF26/RF27. | Giovanni Dornelas Ferreira |
 | 1.4    | 21/05/2026 | Documentação do padrão Builder do módulo de Usuário, referente aos RF04 e RF07.                    | André Ricardo Meyer de Melo |
+| 1.5 | 21/05/2026 | Documentação do padrão Builder do módulo de Sessão de Treino. | Eduardo Waski |

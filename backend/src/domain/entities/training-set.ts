@@ -6,7 +6,7 @@ export class TrainingSet implements WorkoutComponent {
     public readonly targetReps: number,
     public readonly actualReps: number | null,
     public readonly weight: number | null,
-    public readonly observations: string | null,
+    public readonly observations: string | null = null,
   ) {}
 
   public getVolume(): number {

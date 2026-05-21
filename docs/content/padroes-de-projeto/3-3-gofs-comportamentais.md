@@ -837,7 +837,7 @@ docker compose exec api npx jest search-chain --verbose
 
 ##### Limitações
 
-- **Dificuldade de depuração**: rastrear onde uma query perdeu escopo pode ser trabalhoso quando muitos handlers são encadeados.
+- **Dificuldade de depuração**: rastrear onde uma query perdeu escopo pode ser trabalhado quando muitos handlers são encadeados.
 
 ##### Alternativas consideradas
 
@@ -849,24 +849,188 @@ docker compose exec api npx jest search-chain --verbose
 
 ---
 
-## [Módulo: ____________] — A preencher
+## Módulo de Sessão de Treino — Iterator
 
-> **Responsável:** [Nome do membro] | **Branch:** [nome da branch]
+> **Responsável:** Eduardo Waski | **Branch:** `feat/modulo-sessao-treino`
+>
+> Contexto: o desafio comportamental consistia em expor e percorrer a coleção de séries (`TrainingSet`) contidas na estrutura hierárquica e ramificada do `TrainingSession` (Composite) de forma linear e simplificada, sem expor a representação física interna do composite nem forçar os clientes a implementarem algoritmos de travessia recursiva para tarefas comuns como persistência ou geração de relatórios.
 
-!!! warning "Seção pendente"
-    Esta seção aguarda a contribuição do responsável pelo módulo.
+### Padrões analisados
 
-    Siga a estrutura das seções acima como referência:
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Iterator** | Fornecer uma travessia linear e sequencial das séries de treino | Selecionado | Abstrai a complexidade de navegar recursivamente pela árvore do Composite, fornecendo aos clientes (como repositórios de persistência ou exportadores) uma interface simples e uniforme de iteração (`hasNext()` / `next()`). |
+| Visitor | Executar operações sobre cada nó e folha da árvore de treino | Avaliado | Útil se tivéssemos muitas operações distintas variando frequentemente (como imprimir, auditar, recalcular). Porém, a necessidade se resume a listar as séries em ordem linear, tornando o Iterator mais simples e direto. |
+| Command | Encapsular cada travessia como um comando | Não selecionado | Sem necessidade de enfileirar, logar ou desfazer operações de navegação. |
 
-    1. **Padrões analisados** — tabela com os padrões GoF avaliados e justificativa da escolha.
-    2. **Padrão implementado** — nome e identificador central.
-    3. **Problema arquitetural** — problema concreto que motivou o uso do padrão.
-    4. **Justificativa da escolha** — por que este padrão e não as alternativas avaliadas.
-    5. **Modelagem** — diagrama Mermaid.
-    6. **Implementação** — tabela de arquivos e trechos de código.
-    7. **Rastreabilidade** — elos com requisitos, camadas e outros padrões GoF.
-    8. **Senso crítico** — benefícios, limitações e alternativas consideradas.
-    9. **Referências** — bibliográficas.
+### Padrão implementado — Iterator · `Iterator` (Interface) · `TrainingSetIterator` (Concrete Iterator)
+
+### Problema arquitetural
+
+A entidade `TrainingSession` implementa a interface Composite contendo uma coleção de `WorkoutComponent`s, que podem ser `ExerciseNode`s (compostos) contendo outros componentes, ou `TrainingSet`s (folhas).
+
+Quando precisamos salvar essa estrutura no banco de dados relacional (via repositório) ou exportar os dados executados em formato JSON linear, o cliente precisa extrair todas as séries de forma sequencial. Sem o Iterator, o cliente seria forçado a:
+1. **Conhecer a estrutura de árvore**: Realizar checagens de tipo (`instanceof ExerciseNode` ou `TrainingSet`) e escrever loops recursivos para "achatar" a árvore de componentes em uma lista plana.
+2. **Violar a Lei de Demeter**: O cliente precisaria acessar `session.getComponents()`, depois iterar e chamar `component.getChildren()`, alcançando níveis profundos do encapsulamento do domínio.
+3. **Duplicar lógica**: Qualquer novo cliente que precisasse percorrer as séries repetiria a mesma travessia recursiva.
+
+### Justificativa da escolha
+
+O padrão **Iterator** resolve esse problema ao encapsular o algoritmo de travessia da árvore do composite em um objeto dedicado (`TrainingSetIterator`).
+
+- **Encapsulamento**: O cliente não sabe como a árvore de treinos está organizada. Ele apenas solicita à sessão um iterator através do método factory `createSetIterator()`.
+- **Simplificação do Cliente**: A navegação resume-se a um loop simples de `while(iterator.hasNext()) { const set = iterator.next(); }`.
+- **Achatamento (Flattening) sob demanda**: O `TrainingSetIterator` encapsula a recursão de achatamento de forma transparente, processando todos os nós na inicialização e expondo uma interface estritamente linear.
+
+### Modelagem
+
+```mermaid
+classDiagram
+    class Iterator~T~ {
+        <<interface>>
+        +hasNext() boolean
+        +next() T
+    }
+
+    class TrainingSetIterator {
+        -sets: TrainingSet[]
+        -position: number
+        +constructor(components: ReadonlyArray~WorkoutComponent~)
+        +hasNext() boolean
+        +next() TrainingSet
+        -flattenComponents(components: ReadonlyArray~WorkoutComponent~) void
+    }
+
+    class TrainingSession {
+        -components: WorkoutComponent[]
+        +createSetIterator() Iterator~TrainingSet~
+    }
+
+    class WorkoutComponent {
+        <<interface>>
+    }
+
+    class TrainingSet {
+        +targetReps: number
+        +actualReps: number | null
+    }
+
+    Iterator <|.. TrainingSetIterator
+    TrainingSession ..> TrainingSetIterator : cria
+    TrainingSetIterator o--> TrainingSet : armazena flat
+    TrainingSetIterator ..> WorkoutComponent : navega para extrair folhas
+```
+
+### Implementação
+
+| Elemento | Papel no Iterator | Caminho |
+|---|---|---|
+| `Iterator<T>` | Iterator (Interface) | `backend/src/domain/iterators/iterator.interface.ts` |
+| `TrainingSetIterator` | Concrete Iterator | `backend/src/domain/iterators/training-set.iterator.ts` |
+| `TrainingSession` | Aggregate (Originador) | `backend/src/domain/entities/training-session.ts` |
+
+#### Trechos centrais
+
+```typescript
+// iterator.interface.ts
+export interface Iterator<T> {
+  hasNext(): boolean;
+  next(): T;
+}
+
+// training-set.iterator.ts
+export class TrainingSetIterator implements Iterator<TrainingSet> {
+  private sets: TrainingSet[] = [];
+  private position: number = 0;
+
+  constructor(components: ReadonlyArray<WorkoutComponent>) {
+    this.flattenComponents(components);
+  }
+
+  private flattenComponents(components: ReadonlyArray<WorkoutComponent>): void {
+    for (const component of components) {
+      if (component instanceof TrainingSet) {
+        this.sets.push(component);
+      } else if (component instanceof ExerciseNode) {
+        this.flattenComponents(component.getChildren());
+      }
+    }
+  }
+
+  public hasNext(): boolean {
+    return this.position < this.sets.length;
+  }
+
+  public next(): TrainingSet {
+    if (!this.hasNext()) {
+      throw new Error('No more elements in iterator.');
+    }
+    const result = this.sets[this.position];
+    this.position++;
+    return result;
+  }
+}
+
+// training-session.ts (uso do factory method)
+export class TrainingSession extends AggregateRoot {
+  private components: WorkoutComponent[] = [];
+  // ...
+  public createSetIterator(): Iterator<TrainingSet> {
+    return new TrainingSetIterator(this.components);
+  }
+}
+```
+
+### Evidência de execução
+
+Os testes unitários na especificação do domínio exercitam o funcionamento correto do Iterator:
+
+```text
+PASS  src/domain/entities/training-session.spec.ts
+  Workout Session Domain Modules (Builder, Composite, Iterator)
+    Iterator Pattern - TrainingSetIterator
+      ✓ should iterate and flatten all training sets in order (1 ms)
+      ✓ should throw an error if next is called with no more elements (1 ms)
+```
+
+Para rodar os testes:
+
+```bash
+docker compose exec api npx jest training-session --verbose
+```
+
+### Rastreabilidade
+
+| Artefato | Relação |
+|---|---|
+| Requisitos | RF23 — Consultar sessão (leitura estruturada dos dados de séries); RF26 — Listar histórico de sessões. |
+| Módulo | `domain/iterators/` · `domain/entities/` |
+| Camada | Domínio (abstração de comportamento e travessia). |
+| Padrão criacional relacionado | Builder — `TrainingSessionBuilder` monta o composite a ser iterado. |
+| Padrão estrutural relacionado | Composite — O iterator navega pela estrutura hierárquica formada por `ExerciseNode` e `TrainingSet`. |
+| Endpoint consumidor | `POST /v1/sessions`, `GET /v1/history/sessions` |
+| Arquivo de testes | `src/domain/entities/training-session.spec.ts` |
+
+### Senso crítico
+
+#### Benefícios
+
+- **Isolamento da estrutura complexa**: Os consumidores da classe `TrainingSession` (como adaptadores ORM ou geradores de relatórios) interagem apenas com uma coleção sequencial achatada de séries, sem conhecer o grafo do Composite.
+- **Conformidade com a Lei de Demeter**: Evita encadear chamadas de navegação no cliente.
+- **Simplificação de loops**: Transforma travessias recursivas intrincadas em loops simples lineares.
+
+#### Limitações
+
+- **Estrutura estática em memória**: O iterator atual achata (`flatten`) toda a árvore no momento da sua construção. Se o composite fosse dinamicamente alterado durante a iteração (o que não ocorre no fluxo atual), o iterator não refletiria essas mudanças em tempo real.
+- **Consumo de memória temporária**: O achatamento inicial copia as referências de todos os `TrainingSet`s para um array temporário (`sets`). Para sessões gigantescas com milhares de nós, isso poderia consumir memória extra, embora em sessões de treino reais o número de séries raramente ultrapasse 50.
+
+#### Alternativas consideradas
+
+- **Travessia sob demanda (Lazy Iterator)**: Manter uma pilha (`Stack`) no iterator para percorrer os nós da árvore apenas à medida que `next()` é chamado. Rejeitado por adicionar complexidade desnecessária, já que o tamanho de uma sessão de treino em memória é sempre pequeno.
+
+### Referências
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Iterator, p. 257–271.
 
 ---
 
@@ -1012,3 +1176,4 @@ DELETE /v1/users/me → body: { "password": "...", "confirmation": "CONFIRMAR" }
 | 1.2 | 20/05/2026 | Documentação do padrão Observer do módulo de Histórico de Sessões. | Giovanni Dornelas Ferreira |
 | 1.3 | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de Exercícios. | Daniel Teles |
 | 1.4    | 21/05/2026 | Documentação do padrão Chain of Responsibility do módulo de Usuário, referente aos RF04 e RF07.   | André Ricardo Meyer de Melo |
+| 1.5 | 21/05/2026 | Documentação do padrão Iterator do módulo de Sessão de Treino. | Eduardo Waski |

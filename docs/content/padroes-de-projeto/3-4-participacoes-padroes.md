@@ -31,6 +31,15 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Daniel Teles | Modelagem do Builder para gerenciar construção de exercícios, separando a lógica inline do Use Case e melhorando a segurança da criação. | Excelente | `backend/src/domain/exercises/builders/` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
+### Builder — Módulo de Sessão de Treino
+
+**Contexto:** Implementação de `TrainingSessionBuilder` para permitir a construção incremental e consistente do agregado complexo `TrainingSession`, isolando os use cases das subestruturas internas do Composite.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|---|---|---|---|
+| Eduardo Waski | Modelagem e implementação do `TrainingSessionBuilder`, API fluida, centralização de validação de invariantes e desenvolvimento de testes unitários. | Excelente | `backend/src/domain/builders/training-session.builder.ts`<br>`backend/src/domain/entities/training-session.spec.ts` |
+| [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
 ### Multiton — Módulo de Histórico de Sessões
 
 **Contexto:** Implementação de `HistoryManager` como Multiton, mantendo um pool de gerenciadores por usuário para evitar recriação desnecessária de sessões concluídas a cada requisição.
@@ -82,6 +91,15 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Giovanni Dornelas Ferreira | Implementação do `HistoryServiceProxy`, interface `IHistoryService`, serviço real `HistoryService`, wiring em `HistoryModule`, `HistoryController` e documentação. | Excelente | `backend/src/infrastructure/services/history-service.proxy.ts`<br>`backend/src/application/services/history.service.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
+### Composite — Módulo de Sessão de Treino
+
+**Contexto:** Organização da hierarquia de treinos tratando séries (`TrainingSet` - Leaf) e exercícios (`ExerciseNode` - Composite) de forma uniforme sob a interface `WorkoutComponent`, calculando volume e repetições de forma recursiva.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|---|---|---|---|
+| Eduardo Waski | Modelagem e implementação do Composite: interface `WorkoutComponent`, classe de nó `ExerciseNode` e classe de folha `TrainingSet`, e testes de cálculo recursivo. | Excelente | `backend/src/domain/entities/workout-component.ts`<br>`backend/src/domain/entities/exercise-node.ts`<br>`backend/src/domain/entities/training-set.ts` |
+| [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
 ## GoFs Comportamentais
 
 ### Memento + Template Method — Módulo de Onboarding
@@ -124,6 +142,15 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Daniel Teles | Encadeamento de restrições de busca em `ExerciseSearchChain` para permitir múltiplos testes dinâmicos de filtro. | Excelente | `backend/src/infrastructure/database/exercise-search.chain.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
+### Iterator — Módulo de Sessão de Treino
+
+**Contexto:** Implementação do `TrainingSetIterator` para navegar pela árvore recursiva do Composite e expor uma interface de iteração sequencial e linear das séries para a persistência e relatórios.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|---|---|---|---|
+| Eduardo Waski | Implementação da interface `Iterator`, do concrete iterator `TrainingSetIterator` (achatamento recursivo na construção) e testes unitários de travessia. | Excelente | `backend/src/domain/iterators/`<br>`backend/src/domain/entities/training-session.ts` |
+| [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
 ## Módulo de Usuário — RF04 e RF07
 
 **Responsável:** André Ricardo Meyer de Melo | **Branch:** `feat/modulo-usuario-4-7`
@@ -145,3 +172,4 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | 1.2 | 20/05/2026 | Registro de participações nos padrões GoF do módulo de histórico de sessões (Multiton, Proxy, Observer). | Giovanni Dornelas Ferreira |
 | 1.3 | 21/05/2026 | Registro de participações nos padrões GoF do módulo de exercises (Builder, Decorator, Chain of Responsibility). | Daniel Teles |
 | 1.4    | 21/05/2026 | Registro de participações nos padrões GoF do módulo de Usuário (Builder, Facade, Chain of Responsibility — RF04 e RF07).              | André Ricardo Meyer de Melo |
+| 1.5 | 21/05/2026 | Registro de participações nos padrões GoF do módulo de Sessão de Treino (Builder, Composite, Iterator). | Eduardo Waski |
