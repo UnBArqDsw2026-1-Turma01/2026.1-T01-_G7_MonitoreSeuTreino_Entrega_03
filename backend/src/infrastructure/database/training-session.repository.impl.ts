@@ -5,7 +5,10 @@ import {
   ITrainingSessionRepository,
   SessionDateRangeFilter,
 } from '@domain/repositories/training-session.repository';
-import { TrainingSession, SessionState } from '@domain/entities/training-session';
+import {
+  TrainingSession,
+  SessionState,
+} from '@domain/entities/training-session';
 import { ExerciseNode } from '@domain/entities/exercise-node';
 import { TrainingSet } from '@domain/entities/training-set';
 import { TrainingSessionOrmEntity } from './session.orm-entity';
@@ -24,7 +27,9 @@ export class TrainingSessionRepositoryImpl implements ITrainingSessionRepository
     ormSession.id = session.id;
     ormSession.userId = session.userId;
     ormSession.date = session.date;
-    ormSession.state = session.isCompleted() ? SessionState.COMPLETED : SessionState.DRAFT;
+    ormSession.state = session.isCompleted()
+      ? SessionState.COMPLETED
+      : SessionState.DRAFT;
     ormSession.routineId = session.routineId;
 
     ormSession.exercises = session.getComponents().map((comp) => {
@@ -107,7 +112,10 @@ export class TrainingSessionRepositoryImpl implements ITrainingSessionRepository
   }
 
   private mapToDomain(ormSession: TrainingSessionOrmEntity): TrainingSession {
-    const state = ormSession.state === SessionState.COMPLETED ? SessionState.COMPLETED : SessionState.DRAFT;
+    const state =
+      ormSession.state === 'COMPLETED'
+        ? SessionState.COMPLETED
+        : SessionState.DRAFT;
     const session = new TrainingSession(
       ormSession.id,
       ormSession.userId,
@@ -118,8 +126,12 @@ export class TrainingSessionRepositoryImpl implements ITrainingSessionRepository
 
     if (ormSession.exercises) {
       for (const ormEx of ormSession.exercises) {
-        const exerciseNode = new ExerciseNode(ormEx.id, ormEx.exerciseId, ormEx.expectedSets);
-        
+        const exerciseNode = new ExerciseNode(
+          ormEx.id,
+          ormEx.exerciseId,
+          ormEx.expectedSets,
+        );
+
         if (ormEx.sets) {
           for (const ormSet of ormEx.sets) {
             const trainingSet = new TrainingSet(

@@ -29,6 +29,9 @@ export class ExerciseNode implements WorkoutComponent {
   }
 
   public getTotalReps(): number {
-    return this.children.reduce((total, child) => total + child.getTotalReps(), 0);
+    return this.children.reduce(
+      (total, child) => total + child.getTotalReps(),
+      0,
+    );
   }
 }

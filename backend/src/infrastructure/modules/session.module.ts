@@ -4,7 +4,10 @@ import { DomainEventBus } from '@application/events/domain-event-bus';
 import { APP_LOGGER, AppLogger } from '@application/logger/logger.interface';
 import { SessionController } from '@presentation/controllers/session.controller';
 import { RegisterSessionUseCase } from '@application/use-cases/session/register-session.use-case';
-import { TRAINING_SESSION_REPOSITORY } from '@domain/repositories/training-session.repository';
+import {
+  ITrainingSessionRepository,
+  TRAINING_SESSION_REPOSITORY,
+} from '@domain/repositories/training-session.repository';
 import { TrainingSessionRepositoryImpl } from '../database/training-session.repository.impl';
 import { TrainingSessionOrmEntity } from '../database/session.orm-entity';
 import { ExerciseNodeOrmEntity } from '../database/exercise-node.orm-entity';
@@ -31,7 +34,7 @@ import { AuthModule } from './auth.module';
     {
       provide: RegisterSessionUseCase,
       useFactory: (
-        sessionRepo,
+        sessionRepo: ITrainingSessionRepository,
         eventBus: DomainEventBus,
         logger: AppLogger,
         workoutSessionSubject: WorkoutSessionSubject,

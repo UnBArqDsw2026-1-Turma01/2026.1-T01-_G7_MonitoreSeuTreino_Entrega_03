@@ -50,9 +50,8 @@ export class HistoryService implements IHistoryService {
     } else if (manager.getSessions().length > 0) {
       sessions = manager.getSessions();
     } else {
-      sessions = await this.sessionRepository.findCompletedByUserId(
-        authenticatedUserId,
-      );
+      sessions =
+        await this.sessionRepository.findCompletedByUserId(authenticatedUserId);
       manager.loadSessions(sessions);
     }
 
@@ -65,7 +64,7 @@ export class HistoryService implements IHistoryService {
   ): Promise<SessionHistoryDetail> {
     const manager = HistoryManager.getInstance(authenticatedUserId);
 
-    let session =
+    const session =
       manager.getSessionById(sessionId) ??
       (await this.sessionRepository.findById(sessionId));
 

@@ -21,7 +21,11 @@ export class TrainingSetOrmEntity {
   @Column('text', { nullable: true })
   observations!: string | null;
 
-  @ManyToOne(() => ExerciseNodeOrmEntity, (node: ExerciseNodeOrmEntity) => node.sets, { onDelete: 'CASCADE' })
+  @ManyToOne(
+    () => ExerciseNodeOrmEntity,
+    (node: ExerciseNodeOrmEntity) => node.sets,
+    { onDelete: 'CASCADE' },
+  )
   @JoinColumn({ name: 'exerciseNodeId' })
   exerciseNode!: ExerciseNodeOrmEntity;
 }

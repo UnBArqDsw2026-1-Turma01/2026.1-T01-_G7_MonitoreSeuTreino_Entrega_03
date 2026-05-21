@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { TrainingSessionOrmEntity } from './session.orm-entity';
 import { TrainingSetOrmEntity } from './training-set.orm-entity';
 
@@ -16,10 +23,18 @@ export class ExerciseNodeOrmEntity {
   @Column('int')
   expectedSets!: number;
 
-  @ManyToOne(() => TrainingSessionOrmEntity, (session: TrainingSessionOrmEntity) => session.exercises, { onDelete: 'CASCADE' })
+  @ManyToOne(
+    () => TrainingSessionOrmEntity,
+    (session: TrainingSessionOrmEntity) => session.exercises,
+    { onDelete: 'CASCADE' },
+  )
   @JoinColumn({ name: 'sessionId' })
   session!: TrainingSessionOrmEntity;
 
-  @OneToMany(() => TrainingSetOrmEntity, (set: TrainingSetOrmEntity) => set.exerciseNode, { cascade: true, eager: true })
+  @OneToMany(
+    () => TrainingSetOrmEntity,
+    (set: TrainingSetOrmEntity) => set.exerciseNode,
+    { cascade: true, eager: true },
+  )
   sets!: TrainingSetOrmEntity[];
 }

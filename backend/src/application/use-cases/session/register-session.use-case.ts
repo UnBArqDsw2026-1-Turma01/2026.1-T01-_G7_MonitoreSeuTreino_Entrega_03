@@ -5,7 +5,10 @@ import { AppLogger, APP_LOGGER } from '@application/logger/logger.interface';
 import { ApplicationException } from '@application/exceptions/application-exceptions';
 import { TrainingSessionBuilder } from '@domain/builders/training-session.builder';
 import { WorkoutSessionSubject } from '@domain/history/observers/workout-session-subject';
-import { ITrainingSessionRepository, TRAINING_SESSION_REPOSITORY } from '@domain/repositories/training-session.repository';
+import {
+  ITrainingSessionRepository,
+  TRAINING_SESSION_REPOSITORY,
+} from '@domain/repositories/training-session.repository';
 import * as crypto from 'crypto';
 
 export interface RegisterSessionRequestDTO {
@@ -30,7 +33,10 @@ export interface RegisterSessionResponseDTO {
 }
 
 @Injectable()
-export class RegisterSessionUseCase extends UseCase<RegisterSessionRequestDTO, RegisterSessionResponseDTO> {
+export class RegisterSessionUseCase extends UseCase<
+  RegisterSessionRequestDTO,
+  RegisterSessionResponseDTO
+> {
   constructor(
     @Inject(TRAINING_SESSION_REPOSITORY)
     private readonly sessionRepository: ITrainingSessionRepository,
@@ -41,8 +47,12 @@ export class RegisterSessionUseCase extends UseCase<RegisterSessionRequestDTO, R
     super(eventBus);
   }
 
-  protected async handle(request: RegisterSessionRequestDTO): Promise<RegisterSessionResponseDTO> {
-    this.logger.log(`Iniciando registro de sessão para o usuário: ${request.userId}`);
+  protected async handle(
+    request: RegisterSessionRequestDTO,
+  ): Promise<RegisterSessionResponseDTO> {
+    this.logger.log(
+      `Iniciando registro de sessão para o usuário: ${request.userId}`,
+    );
 
     try {
       const builder = new TrainingSessionBuilder(request.userId);
@@ -51,9 +61,13 @@ export class RegisterSessionUseCase extends UseCase<RegisterSessionRequestDTO, R
       if (request.routineId) builder.withRoutine(request.routineId);
 
       for (const exerciseDto of request.exercises) {
-        const nodeId = crypto.randomUUID(); 
-        
-        builder.addExercise(exerciseDto.exerciseId, exerciseDto.expectedSets, nodeId);
+        const nodeId = crypto.randomUUID();
+
+        builder.addExercise(
+          exerciseDto.exerciseId,
+          exerciseDto.expectedSets,
+          nodeId,
+        );
 
         for (const setDto of exerciseDto.sets) {
           builder.addSetToExercise(
@@ -74,16 +88,21 @@ export class RegisterSessionUseCase extends UseCase<RegisterSessionRequestDTO, R
 
       const totalVolume = session.getSessionTotalVolume();
 
-      this.logger.log(`Sessão ${session.id} salva com sucesso. Volume total: ${totalVolume}`);
+      this.logger.log(
+        `Sessão ${session.id} salva com sucesso. Volume total: ${totalVolume}`,
+      );
 
       return {
         sessionId: session.id,
         totalVolume,
       };
-
-    } catch (error: any) {
-      this.logger.error(`Erro ao registrar sessão: ${error.message}`);
-      throw new ApplicationException(`Falha ao registrar sessão de treino`, error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Erro ao registrar sessão: ${message}`);
+      throw new ApplicationException(
+        `Falha ao registrar sessão de treino`,
+        message,
+      );
     }
   }
 }

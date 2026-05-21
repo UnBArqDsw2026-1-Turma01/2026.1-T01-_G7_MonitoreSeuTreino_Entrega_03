@@ -8,7 +8,7 @@ export class TrainingSessionBuilder {
   private userId: string;
   private date: Date;
   private routineId: string | null = null;
-  
+
   private exerciseNodes: Map<string, ExerciseNode> = new Map();
 
   constructor(userId: string) {
@@ -18,6 +18,7 @@ export class TrainingSessionBuilder {
   }
 
   public withCustomId(id: string): this {
+    this.id = id;
     return this;
   }
 
@@ -31,7 +32,11 @@ export class TrainingSessionBuilder {
     return this;
   }
 
-  public addExercise(exerciseId: string, expectedSets: number, nodeId: string = randomUUID()): this {
+  public addExercise(
+    exerciseId: string,
+    expectedSets: number,
+    nodeId: string = randomUUID(),
+  ): this {
     const exerciseNode = new ExerciseNode(nodeId, exerciseId, expectedSets);
     this.exerciseNodes.set(nodeId, exerciseNode);
     return this;
@@ -45,14 +50,20 @@ export class TrainingSessionBuilder {
     observations: string | null = null,
   ): this {
     const exerciseNode = this.exerciseNodes.get(nodeId);
-    
+
     if (!exerciseNode) {
       throw new Error(`Exercicio com ID ${nodeId} não encontrado no buider.`);
     }
 
     const setId = randomUUID();
-    const trainingSet = new TrainingSet(setId, targetReps, actualReps, weight, observations);
-    
+    const trainingSet = new TrainingSet(
+      setId,
+      targetReps,
+      actualReps,
+      weight,
+      observations,
+    );
+
     exerciseNode.add(trainingSet);
 
     return this;
@@ -71,7 +82,7 @@ export class TrainingSessionBuilder {
       this.routineId,
     );
 
-    for (const [_, exerciseNode] of this.exerciseNodes) {
+    for (const exerciseNode of this.exerciseNodes.values()) {
       session.addWorkoutComponent(exerciseNode);
     }
 

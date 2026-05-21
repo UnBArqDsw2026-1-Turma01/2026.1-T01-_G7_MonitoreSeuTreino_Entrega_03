@@ -13,7 +13,7 @@ export class TrainingSet implements WorkoutComponent {
     if (!this.actualReps) {
       return 0;
     }
-    
+
     if (this.weight && this.weight > 0) {
       return this.actualReps * this.weight;
     }

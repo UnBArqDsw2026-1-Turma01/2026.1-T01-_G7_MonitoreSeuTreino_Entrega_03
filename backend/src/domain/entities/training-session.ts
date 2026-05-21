@@ -36,7 +36,7 @@ export class TrainingSession extends AggregateRoot {
 
   public markAsCompleted(): void {
     this.state = SessionState.COMPLETED;
-    // TODO: adicionar o push do evento 
+    // TODO: adicionar o push do evento
   }
 
   public getSessionTotalVolume(): number {

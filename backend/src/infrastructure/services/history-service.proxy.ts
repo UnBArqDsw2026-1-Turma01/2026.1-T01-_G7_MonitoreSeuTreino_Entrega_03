@@ -62,12 +62,18 @@ export class HistoryServiceProxy implements IHistoryService {
 
   private assertAuthenticated(userId: string): void {
     if (!userId?.trim()) {
-      throw new ForbiddenException('Acesso ao histórico requer usuário autenticado.');
+      throw new ForbiddenException(
+        'Acesso ao histórico requer usuário autenticado.',
+      );
     }
   }
 
   private validateDateRange(filter?: DateRangeFilter): void {
-    if (filter?.startDate && filter?.endDate && filter.startDate > filter.endDate) {
+    if (
+      filter?.startDate &&
+      filter?.endDate &&
+      filter.startDate > filter.endDate
+    ) {
       throw new ValidationException(
         'Intervalo de datas inválido: data inicial posterior à data final.',
       );

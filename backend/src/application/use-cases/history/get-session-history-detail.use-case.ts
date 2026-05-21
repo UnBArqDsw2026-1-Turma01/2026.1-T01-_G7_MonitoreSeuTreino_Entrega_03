@@ -17,7 +17,9 @@ export class GetSessionHistoryDetailUseCase {
     private readonly historyService: IHistoryService,
   ) {}
 
-  async execute(input: GetSessionHistoryDetailInput): Promise<SessionHistoryDetail> {
+  async execute(
+    input: GetSessionHistoryDetailInput,
+  ): Promise<SessionHistoryDetail> {
     return this.historyService.getSessionDetail(input.userId, input.sessionId);
   }
 }

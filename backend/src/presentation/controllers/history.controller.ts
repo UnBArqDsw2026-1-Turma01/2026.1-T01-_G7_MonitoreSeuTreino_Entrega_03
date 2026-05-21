@@ -32,13 +32,14 @@ export class HistoryController {
 
   @Get()
   @ApiOperation({
-    summary: 'RF26/RF27 — Listar histórico de sessões concluídas (opcional: filtro por período)',
+    summary:
+      'RF26/RF27 — Listar histórico de sessões concluídas (opcional: filtro por período)',
   })
-  @ApiResponse({ status: 200, description: 'Lista ordenada por data decrescente' })
-  async list(
-    @Req() req: Request,
-    @Query() query: FilterSessionHistoryQuery,
-  ) {
+  @ApiResponse({
+    status: 200,
+    description: 'Lista ordenada por data decrescente',
+  })
+  async list(@Req() req: Request, @Query() query: FilterSessionHistoryQuery) {
     const userId = req.user!.userId;
 
     const summaries = await this.listSessionHistory.execute({
@@ -51,7 +52,9 @@ export class HistoryController {
   }
 
   @Get(':sessionId')
-  @ApiOperation({ summary: 'RF26 — Detalhes completos de uma sessão do histórico' })
+  @ApiOperation({
+    summary: 'RF26 — Detalhes completos de uma sessão do histórico',
+  })
   @ApiResponse({ status: 200, description: 'Detalhes da sessão' })
   @ApiResponse({ status: 404, description: 'Sessão não encontrada' })
   async getDetail(

@@ -1,7 +1,6 @@
 import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm';
 import { ExerciseNodeOrmEntity } from './exercise-node.orm-entity';
 
-
 @Entity('training_sessions')
 export class TrainingSessionOrmEntity {
   @PrimaryColumn('uuid')
@@ -19,6 +18,10 @@ export class TrainingSessionOrmEntity {
   @Column({ type: 'uuid', nullable: true })
   routineId!: string | null;
 
-  @OneToMany(() => ExerciseNodeOrmEntity, (node: ExerciseNodeOrmEntity) => node.session, { cascade: true, eager: true })
+  @OneToMany(
+    () => ExerciseNodeOrmEntity,
+    (node: ExerciseNodeOrmEntity) => node.session,
+    { cascade: true, eager: true },
+  )
   exercises!: ExerciseNodeOrmEntity[];
 }

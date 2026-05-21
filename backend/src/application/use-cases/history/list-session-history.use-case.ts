@@ -18,7 +18,9 @@ export class ListSessionHistoryUseCase {
     private readonly historyService: IHistoryService,
   ) {}
 
-  async execute(input: ListSessionHistoryInput): Promise<SessionHistorySummary[]> {
+  async execute(
+    input: ListSessionHistoryInput,
+  ): Promise<SessionHistorySummary[]> {
     return this.historyService.listCompletedSessions(input.userId, {
       startDate: input.startDate ? new Date(input.startDate) : undefined,
       endDate: input.endDate ? new Date(input.endDate) : undefined,
