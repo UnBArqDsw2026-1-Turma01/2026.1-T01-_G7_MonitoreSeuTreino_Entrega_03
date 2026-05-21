@@ -28,23 +28,23 @@ O módulo de Exercícios permite que o usuário crie, visualize e gerencie seus 
 
 Ao criar um exercício, o sistema assegura a criação do agregado com os seguintes dados:
 
-| Campo           | Tipo                  | Obrigatoriedade | Descrição |
-| --------------- | --------------------- | --------------- | --------- |
-| id              | UUID                  | Obrigatório     | Identificador único. |
-| userId          | UUID                  | Obrigatório     | Dono do exercício. Apenas este usuário o enxerga. |
-| name            | String (Value Object) | Obrigatório     | Nome do exercício (Ex: Supino Reto). |
-| muscleGroup     | String (Value Object) | Opcional        | Grupo muscular principal (Ex: Peito, Dorsal). |
-| active          | Booleano              | Obrigatório     | Flag controle de status do exercício. |
+| Campo       | Tipo                  | Obrigatoriedade | Descrição                                         |
+| ----------- | --------------------- | --------------- | ------------------------------------------------- |
+| id          | UUID                  | Obrigatório     | Identificador único.                              |
+| userId      | UUID                  | Obrigatório     | Dono do exercício. Apenas este usuário o enxerga. |
+| name        | String (Value Object) | Obrigatório     | Nome do exercício (Ex: Supino Reto).              |
+| muscleGroup | String (Value Object) | Opcional        | Grupo muscular principal (Ex: Peito, Dorsal).     |
+| active      | Booleano              | Obrigatório     | Flag controle de status do exercício.             |
 
 ---
 
 ## Endpoints
 
-| Método | Rota                | Função                                          |
-| ------ | ------------------- | ----------------------------------------------- |
-| GET    | `/v1/exercises`      | Filtrar e listar exercícios do usuário logado   |
-| POST   | `/v1/exercises`      | Criar (cadastrar) um novo exercício             |
-| PUT    | `/v1/exercises/:id`  | Atualizar/Inativar (soft-delete) um exercício |
+| Método | Rota                | Função                                        |
+| ------ | ------------------- | --------------------------------------------- |
+| GET    | `/v1/exercises`     | Filtrar e listar exercícios do usuário logado |
+| POST   | `/v1/exercises`     | Criar (cadastrar) um novo exercício           |
+| PUT    | `/v1/exercises/:id` | Atualizar/Inativar (soft-delete) um exercício |
 
 Todas as rotas exigem autenticação via Bearer Token.
 
@@ -57,14 +57,14 @@ Painel ou Menu Front-end
       ↓
 Acesso à página "Exercícios" (/exercises)
       ↓
-(A) Consulta e barra de pesquisa 
+(A) Consulta e barra de pesquisa
       → Filtra por nome / grupo
       → Retorna dados (com camada de Cache)
 
-(B) Clicar em "CADASTRAR NOVO EXERCÍCIO" 
+(B) Clicar em "CADASTRAR NOVO EXERCÍCIO"
       → Abre Modal
       → Preenche ("Nome", "Grupo muscular")
-      → Confirma (POST) 
+      → Confirma (POST)
       → Lista recarregada
 
 (C) Operações no Card de Exercício

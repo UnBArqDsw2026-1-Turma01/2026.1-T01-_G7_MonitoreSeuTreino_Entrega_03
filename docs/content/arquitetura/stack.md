@@ -9,7 +9,7 @@ Documentar as tecnologias adotadas no projeto MonitoreSeuTreino, suas justificat
 ### Backend
 
 | Categoria      | Tecnologia       | Versão | Justificativa                                                                                                   |
-|----------------|------------------|--------|-----------------------------------------------------------------------------------------------------------------|
+| -------------- | ---------------- | ------ | --------------------------------------------------------------------------------------------------------------- |
 | Linguagem      | TypeScript       | 5+     | Tipagem estática que viabiliza value objects, interfaces e contratos de domínio sem overhead de runtime         |
 | Framework      | NestJS           | 10+    | Container IoC nativo (providers, modules) que complementa a Clean Architecture sem ditar as regras de domínio   |
 | ORM            | TypeORM          | 0.3+   | Mapeamento objeto-relacional com suporte a entidades separadas das entidades de domínio                         |
@@ -20,7 +20,7 @@ Documentar as tecnologias adotadas no projeto MonitoreSeuTreino, suas justificat
 ### Frontend
 
 | Categoria         | Tecnologia      | Versão | Justificativa                                                                                       |
-|-------------------|-----------------|--------|-----------------------------------------------------------------------------------------------------|
+| ----------------- | --------------- | ------ | --------------------------------------------------------------------------------------------------- |
 | Linguagem         | TypeScript      | 5+     | Tipagem nos contratos de API, rotas e stores                                                        |
 | Framework         | React           | 18+    | Componentes declarativos com hooks; ecossistema amplo e suporte a lazy loading de rotas             |
 | Bundler           | Vite            | 5+     | Build rápido em dev (HMR) e otimizado em produção; compatível com Docker via `server.host: 0.0.0.0` |
@@ -33,7 +33,7 @@ Documentar as tecnologias adotadas no projeto MonitoreSeuTreino, suas justificat
 ### Infraestrutura
 
 | Categoria       | Tecnologia      | Versão | Justificativa                                                                            |
-|-----------------|-----------------|--------|------------------------------------------------------------------------------------------|
+| --------------- | --------------- | ------ | ---------------------------------------------------------------------------------------- |
 | Containerização | Docker          | 24+    | Paridade entre ambientes dev e prod; cada serviço isolado em container próprio           |
 | Orquestração    | Docker Compose  | v2.20+ | Orquestra db, api, web e docs com healthchecks e dependências explícitas                 |
 | Automação       | Make            | 4+     | Interface unificada para comandos do projeto (`make up`, `make test`, `make db-migrate`) |
@@ -42,24 +42,24 @@ Documentar as tecnologias adotadas no projeto MonitoreSeuTreino, suas justificat
 
 ## Relação da stack com os padrões GoF
 
-| Padrão GoF          | Como a stack viabiliza a implementação                                                                                     |
-|---------------------|----------------------------------------------------------------------------------------------------------------------------|
-| **Singleton**       | TypeScript permite construtor `private` e campo estático `private static instance` sem dependência de framework            |
-| **Bridge**          | Interfaces TypeScript + classes abstratas definem contrato independente de implementação; injeção manual no use case       |
-| **Facade**          | NestJS providers + `@Injectable()` permitem injetar o facade no controller sem expor os use cases individuais ao container |
-| **Memento**         | Value Objects imutáveis (TypeScript `readonly`) garantem que o memento não seja mutado após a captura                      |
-| **Template Method** | Classes abstratas TypeScript com métodos `protected` implementam os hooks sem precisar de framework adicional              |
-| **Multiton**        | `Map<string, T>` estático em TypeScript; construtor `private` por instância de pool; sem dependência de framework           |
-| **Proxy**           | NestJS `useFactory` injeta `HistoryServiceProxy` no token `HISTORY_SERVICE`; interface TypeScript compartilhada com o real |
-| **Observer**        | Subject/Observer em classes `@Injectable()`; inscrição em `OnModuleInit` do `HistoryModule`                                |
-| **Builder**         | TypeScript e tipagem estática garantem construção fluente com `build()` antes de persistir a entidade                         |
-| **Decorator**       | Interfaces TypeScript e herança permitem interceptar repositórios TypeORM na instanciação NestJS                            |
-| **Chain of Resp.**  | QueryBuilder do TypeORM (`SelectQueryBuilder`) como contexto passado pelos elos da cadeia de busca                           |
+| Padrão GoF | Como a stack viabiliza a implementação |
+|---|---|
+| **Singleton** | TypeScript permite construtor `private` e campo estático `private static instance` sem dependência de framework. |
+| **Bridge** | Interfaces TypeScript e classes abstratas definem contrato independente de implementação; injeção manual no use case. |
+| **Facade** | NestJS providers e `@Injectable()` permitem injetar o facade no controller sem expor os use cases individuais ao container. |
+| **Memento** | Value Objects imutáveis com TypeScript `readonly` garantem que o memento não seja mutado após a captura. |
+| **Template Method** | Classes abstratas TypeScript com métodos `protected` implementam os hooks sem precisar de framework adicional. |
+| **Multiton** | `Map<string, T>` estático em TypeScript e construtor `private` permitem controlar instâncias por chave sem dependência de framework. |
+| **Proxy** | NestJS `useFactory` injeta `HistoryServiceProxy` no token `HISTORY_SERVICE`, compartilhando a mesma interface TypeScript do serviço real. |
+| **Observer** | Subject/Observer em classes `@Injectable()` permitem inscrição em `OnModuleInit` do `HistoryModule`. |
+| **Builder** | TypeScript e tipagem estática apoiam a construção fluente com `build()` antes de persistir a entidade. |
+| **Decorator** | Interfaces TypeScript e herança permitem envolver repositórios TypeORM na instanciação pelo NestJS. |
+| **Chain of Responsibility** | QueryBuilder do TypeORM (`SelectQueryBuilder`) atua como contexto passado pelos elos da cadeia de busca. |
 
 ## Histórico de versões
 
-| Versão | Data       | Descrição                                                       | Autor                      |
-|--------|------------|-----------------------------------------------------------------|----------------------------|
-| 1.0    | 19/05/2026 | Documentação da stack com relação aos padrões GoF implementados | Lucas Antunes              |
-| 1.1    | 21/05/2026 | Adição dos padrões GoF do módulo de Exercícios                  | Daniel Teles               |
-| 1.2    | 20/05/2026 | Relação da stack com Multiton, Proxy e Observer (histórico)     | Giovanni Dornelas Ferreira |
+| Versão | Data | Descrição | Autor |
+|---|---|---|---|
+| 1.0 | 19/05/2026 | Documentação da stack com relação aos padrões GoF implementados. | Lucas Antunes |
+| 1.1 | 21/05/2026 | Adição dos padrões GoF do módulo de Exercícios. | Daniel Teles |
+| 1.2 | 20/05/2026 | Relação da stack com Multiton, Proxy e Observer do módulo de Histórico. | Giovanni Dornelas Ferreira |
