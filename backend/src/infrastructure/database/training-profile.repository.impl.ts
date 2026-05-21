@@ -7,9 +7,7 @@ import { InfrastructureException } from '@infrastructure/exceptions/infrastructu
 import { TrainingProfileOrmEntity } from './training-profile.orm-entity';
 
 @Injectable()
-export class TrainingProfileRepositoryImpl
-  implements TrainingProfileRepository
-{
+export class TrainingProfileRepositoryImpl implements TrainingProfileRepository {
   constructor(
     @InjectRepository(TrainingProfileOrmEntity)
     private readonly repository: Repository<TrainingProfileOrmEntity>,

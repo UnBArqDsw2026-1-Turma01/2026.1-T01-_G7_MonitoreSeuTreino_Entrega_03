@@ -399,8 +399,115 @@ const result = flow.execute(answers);               // Template Method: sequênc
 
 ---
 
+## Módulo de Exercicios — Chain of Responsibility
+
+> **Responsável:** Daniel | **Branch:** `feature/exercise_module`
+>
+Contexto: a busca de exercícios aceita múltiplos filtros (nome, grupo muscular) além de impor escopo por `userId` e excluir exercícios inativos. Queríamos uma forma extensível de aplicar filtros na query sem criar condicionais inchadas no repositório.
+
+### Padrões analisados
+
+| Padrão                          | Possível aplicação                                | Status      | Justificativa |
+|---------------------------------|---------------------------------------------------|-------------|---------------|
+| Chain of Responsibility         | Aplicar filtros encadeados na construção da query | Selecionado | Encadeamento limpo e extensível para novos filtros |
+| Specification                   | Compor predicados reusáveis                       | Avaliado    | Útil para regras complexas, mas requer wrapping adicional para QueryBuilder |
+
+### Padrão implementado — Chain of Responsibility · `ExerciseSearchChain`
+
+## Problema arquitetural
+
+O repositório precisava montar uma query dinâmica com condições que variam conforme os filtros providos. Inserir `if`/`andWhere` repetidos no repositório torna o código difícil de estender; cada novo filtro aumentaria a complexidade.
+
+### Justificativa da escolha
+
+O `ExerciseSearchChain` encapsula cada etapa de filtro em um handler: escopo por `userId` + ativo, filtro por nome, filtro por grupo muscular. Handlers podem ser reordenados ou estendidos sem tocar na lógica base do repositório — alinhado ao princípio Open/Closed.
+
+## Implementação
+
+| Elemento            | Caminho |
+|---------------------|---------|
+| Chain               | `backend/src/infrastructure/database/exercise-search.chain.ts` |
+| Repositório consumidor | `backend/src/infrastructure/database/exercise.postgres-repository.ts` |
+| Use Case            | `backend/src/application/use-cases/exercises/find-exercises.use-case.ts` |
+
+### Trecho central
+
+```typescript
+const queryBuilder = this.repository.createQueryBuilder('exercise').orderBy('exercise.name','ASC');
+await new ExerciseSearchChain().execute({ criteria, queryBuilder });
+const rows = await queryBuilder.getMany();
+```
+
+## Rastreabilidade
+## Modelagem
+
+```mermaid
+classDiagram
+    class IExerciseSearchHandler {
+        <<interface>>
+        +setNext(handler: IExerciseSearchHandler)
+        +execute(context: SearchContext)
+    }
+    class BaseSearchHandler {
+        -nextHandler: IExerciseSearchHandler
+        +setNext()
+        +execute()
+    }
+    class UserScopeHandler {
+        +execute()
+    }
+    class NameFilterHandler {
+        +execute()
+    }
+    class MuscleGroupFilterHandler {
+        +execute()
+    }
+
+    IExerciseSearchHandler <|.. BaseSearchHandler
+    BaseSearchHandler <|-- UserScopeHandler
+    BaseSearchHandler <|-- NameFilterHandler
+    BaseSearchHandler <|-- MuscleGroupFilterHandler
+```
+
+## Evidência de execução
+
+As buscas filtradas executam com sucesso.
+Podemos validar em:
+```bash
+docker compose exec api npx jest search-chain
+```
+
+## Senso crítico
+
+### Benefícios
+
+- **Menor concorrência de `if-else`:** Reduz complexidade ciclomática.
+- **Possibilidade de Extensão Dinâmica:** Novos parsers e filtros no futuro.
+
+### Limitações
+
+- **Dificuldade de depuração:** Pode ser chatinho rastrear onde uma query perdeu escopo se muitos filtros forem sobrepostos.
+
+### Alternativas consideradas
+
+- **Pattern Specification:** Criar query objects. Foi rejeitado porque demandaria acoplar mais pesado o TypeORM. O chain manipula o Context (QueryBuilder) livremente.
+
+## Referências
+
+- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 5 — Behavioral Patterns, Chain of Responsibility.
+
+| Artefato | Relação |
+|---------|--------|
+| Requisito | RF14 — consulta de exercícios por nome ou grupo muscular com ordenação e exclusão de inativos |
+| Módulo  | `infrastructure/database` e `application/use-cases/exercises` |
+
+
+---
+
 ## Histórico de versões
 
 | Versão | Data       | Descrição                                                                              | Autor         |
 |--------|------------|----------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Documentação dos padrões Memento e Template Method do módulo de onboarding             | Lucas Antunes |
+| 1.1    | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de exercícios               | Daniel Teles       |
+

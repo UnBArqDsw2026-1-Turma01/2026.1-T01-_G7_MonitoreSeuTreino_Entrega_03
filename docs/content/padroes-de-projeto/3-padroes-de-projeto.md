@@ -19,9 +19,9 @@ A tabela abaixo consolida todos os padrões implementados. Cada seção dos docu
 | **Estrutural**   | Facade          | Onboarding     | Lucas Antunes | `OnboardingFacade`                                 | `GET/POST/PUT /v1/onboarding`     |
 | **Comportamental** | Memento       | Onboarding     | Lucas Antunes | `TrainingProfile.createMemento()` + `OnboardingMementoVO` | `PUT /v1/onboarding`       |
 | **Comportamental** | Template Method | Onboarding  | Lucas Antunes | `OnboardingFlow.execute()`                         | `POST /v1/onboarding`             |
-| Criacional       | [A definir]     | [Módulo]       | [Nome]        | —                                                  | —                                 |
-| Estrutural       | [A definir]     | [Módulo]       | [Nome]        | —                                                  | —                                 |
-| Comportamental   | [A definir]     | [Módulo]       | [Nome]        | —                                                  | —                                 |
+| **Criacional**   | Builder         | Exercises      | Daniel Teles       | `ExerciseBuilder`                                  | `POST /v1/exercises`              |
+| **Estrutural**   | Decorator       | Exercises      | Daniel Teles       | `CachingExerciseRepository` / `Logging...` | `GET/POST/PUT /v1/exercises`      |
+| **Comportamental** | Chain of Resp.  | Exercises    | Daniel Teles       | `ExerciseSearchChain`                              | `GET /v1/exercises`               |
 
 ## Organização do módulo
 
@@ -60,3 +60,4 @@ Cada documento de GoF (3-1, 3-2, 3-3) contém uma seção **"[Módulo: _________
 | Versão | Data       | Descrição                                                                                           | Autor         |
 |--------|------------|-----------------------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Estruturação do módulo de padrões de projeto com todos os GoFs do módulo de onboarding documentados | Lucas Antunes |
+| 1.1    | 21/05/2026 | Atualização do painel de GoFs com o módulo de exercícios | Daniel Teles |
