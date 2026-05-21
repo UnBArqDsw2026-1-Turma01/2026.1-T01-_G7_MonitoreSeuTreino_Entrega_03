@@ -28,3 +28,24 @@ export class UserDeactivatedEvent implements DomainEvent {
     public readonly occurredAt: Date,
   ) {}
 }
+
+export class PasswordResetRequestedEvent implements DomainEvent {
+  constructor(
+    public readonly userId: string,
+    public readonly occurredAt: Date,
+  ) {}
+}
+
+export class PasswordResetCompletedEvent implements DomainEvent {
+  constructor(
+    public readonly userId: string,
+    public readonly occurredAt: Date,
+  ) {}
+}
+
+export class AccountDeletedEvent implements DomainEvent {
+  constructor(
+    public readonly userId: string,
+    public readonly occurredAt: Date,
+  ) {}
+}
