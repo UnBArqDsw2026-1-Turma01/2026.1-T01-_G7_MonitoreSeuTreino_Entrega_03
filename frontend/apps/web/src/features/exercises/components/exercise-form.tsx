@@ -16,7 +16,7 @@ export function ExerciseForm({ defaultValues, isSubmitting = false, submitLabel 
   const inputCls = 'w-full bg-transparent border-b border-[#2d244a] py-2 text-white placeholder-[#4a4266] outline-none tracking-wide focus:border-[#ccff00] transition text-sm';
 
   return (
-    <form onSubmit={handleSubmit((v) => onSubmit(v as any))} className="space-y-6">
+    <form onSubmit={handleSubmit((v) => onSubmit(v as CreateExercisePayload | UpdateExercisePayload))} className="space-y-6">
       <div className="space-y-1">
         <label className="text-[#00e5ff] text-[10px] font-bold tracking-widest uppercase block">Nome do exercício</label>
         <input {...register('name')} className={inputCls} placeholder="Ex: Supino Reto" />

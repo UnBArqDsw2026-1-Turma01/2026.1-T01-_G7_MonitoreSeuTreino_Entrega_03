@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createExercise, updateExercise, deactivateExercise } from '../services/exercises-api';
 import { ExerciseList } from '../components/exercise-list';
 import { ExerciseForm } from '../components/exercise-form';
-import type { Exercise } from '../types/exercises.types';
+import type { Exercise, CreateExercisePayload, UpdateExercisePayload } from '../types/exercises.types';
 
 function NavItem({ icon, label, active = false }: { icon: React.ReactNode; label: string; active?: boolean }) {
   return (
@@ -66,7 +66,7 @@ export function ExercisesPage() {
                 </button>
               </div>
               <div className="p-6">
-                <ExerciseForm isSubmitting={createMut.isLoading} onSubmit={(v) => createMut.mutate(v as any)} submitLabel="CONFIRMAR" onCancel={() => setShowCreate(false)} />
+                <ExerciseForm isSubmitting={createMut.isLoading} onSubmit={(v) => createMut.mutate(v as CreateExercisePayload)} submitLabel="CONFIRMAR" onCancel={() => setShowCreate(false)} />
               </div>
             </div>
           </div>
@@ -86,7 +86,7 @@ export function ExercisesPage() {
                 </button>
               </div>
               <div className="p-6">
-                <ExerciseForm defaultValues={editing} isSubmitting={updateMut.isLoading} onSubmit={(v) => updateMut.mutate({ ...(v as any), id: editing.id })} submitLabel="CONFIRMAR" onCancel={() => setEditing(null)} />
+                <ExerciseForm defaultValues={editing} isSubmitting={updateMut.isLoading} onSubmit={(v) => updateMut.mutate({ ...(v as UpdateExercisePayload), id: editing.id })} submitLabel="CONFIRMAR" onCancel={() => setEditing(null)} />
               </div>
             </div>
           </div>
