@@ -9,8 +9,10 @@ import { OnboardingHistoryOrmEntity } from '../database/onboarding-history.orm-e
 import { TrainingProfileOrmEntity } from '../database/training-profile.orm-entity';
 import { RoutineOrmEntity } from '../database/routine.orm-entity';
 import { SessionOrmEntity } from '../database/session.orm-entity';
+import { ExerciseOrmEntity } from '../database/exercise.orm-entity';
 import { winstonConfig } from '../logger/winston.config';
 import { AuthModule } from './auth.module';
+import { ExerciseModule } from './exercise.module';
 import { OnboardingModule } from './onboarding.module';
 import { RoutineModule } from '../../routine.module';
 
@@ -35,11 +37,13 @@ import { RoutineModule } from '../../routine.module';
           OnboardingHistoryOrmEntity,
           RoutineOrmEntity,
           SessionOrmEntity,
+          ExerciseOrmEntity,
         ],
         synchronize: config.get('NODE_ENV') === 'development',
       }),
     }),
     AuthModule,
+    ExerciseModule,
     OnboardingModule,
     RoutineModule,
   ],

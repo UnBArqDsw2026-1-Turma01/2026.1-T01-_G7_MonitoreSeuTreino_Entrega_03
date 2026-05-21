@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { logout } from '../../auth/services/auth-api';
 import { getOnboardingStatus } from '../../onboarding/services/onboarding-api';
 import { TRAINING_LEVEL_LABELS } from '../../onboarding/types/onboarding.types';
 import { BottomNavigation } from '../../../shared/components/bottom-navigation';
+import { AppHeader } from '../../../shared/components/app-header';
 
 
 export function DashboardPage() {
@@ -25,17 +25,7 @@ export function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0d0b1e] flex flex-col pb-20">
-      <header className="flex items-center justify-between px-5 py-4 border-b border-[rgba(139,127,168,0.15)]">
-        <span className="text-[#ccff00] font-black text-xl tracking-tight">G7_MonitoreSeuTreino</span>
-        <div className="flex items-center gap-4">
-          <button onClick={logout} className="text-[#8b7fa8] text-xs font-bold tracking-widest uppercase hover:text-white transition">
-            Sair
-          </button>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M13 2L4.5 13.5H11L10 22L20.5 10H14L13 2Z" fill="#ccff00" />
-          </svg>
-        </div>
-      </header>
+      <AppHeader title="G7_MonitoreSeuTreino" />
 
       <main className="flex-1 px-5 py-8 max-w-2xl mx-auto w-full space-y-6">
         <div>

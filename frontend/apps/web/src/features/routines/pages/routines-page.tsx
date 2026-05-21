@@ -11,14 +11,14 @@ import {
 import type { Routine } from '../services/routine-api';
 import { BottomNavigation } from '../../../shared/components/bottom-navigation';
 import { useAuthStore } from '../../auth/store/auth-store';
+import { searchExercises } from '../../exercises/services/exercises-api';
+import { AppHeader } from '../../../shared/components/app-header';
+import App from 'next/app';
 
 const getUserIdFromToken = (token: string | null) => {
   if (!token) return null;
   try {
-    // JWT é composto por 3 partes: header.payload.signature
-    // O payload é a segunda parte (índice 1)
     const payload = JSON.parse(atob(token.split('.')[1]));
-    // Geralmente o ID fica no campo 'sub' (subject) ou 'userId'
     return payload.sub || payload.userId || payload.id;
   } catch (error) {
     console.error("Erro ao decodificar token", error);
@@ -26,28 +26,34 @@ const getUserIdFromToken = (token: string | null) => {
   }
 };
 
-
 export function RoutinesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoutine, setSelectedRoutine] = useState<any>(null);
+
+  // ESTADOS PARA EXPANSÃO E ABAS
+  const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(null);
+  const [activeDivisionIndex, setActiveDivisionIndex] = useState(0);
+
   const queryClient = useQueryClient();
   const { token } = useAuthStore();
   const userId = getUserIdFromToken(token);
-
-  console.log("DEBUG: userId obtido do token:", userId); // <- Adicione isso
 
   if (!userId) {
      return <p className="text-center mt-10">Você não está autenticado. Por favor, faça login.</p>;
   }
 
-  // Busca as fichas no Backend
-const { data: routines = [], isLoading } = useQuery({
+  const { data: routines = [], isLoading: isLoadingRoutines } = useQuery({
     queryKey: ['routines', userId],
     queryFn: () => fetchRoutines(userId!),
     enabled: !!userId,
   });
 
-  // Prototype: Duplicar ficha
+  const { data: exercises = [] } = useQuery({
+    queryKey: ['exercises'],
+    queryFn: () => searchExercises(),
+    enabled: !!userId,
+  });
+
   const cloneMutation = useMutation({
     mutationFn: (id: string) => cloneRoutine(id, userId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['routines'] }),
@@ -73,6 +79,21 @@ const { data: routines = [], isLoading } = useQuery({
     setIsModalOpen(true);
   };
 
+  const getExerciseName = (exerciseId: string) => {
+    const exercise = exercises.find((ex: any) => ex.id === exerciseId);
+    return exercise ? exercise.name : 'Exercício não encontrado';
+  };
+
+  // LOGICA REFINADA DE EXPANSÃO
+  const toggleExpand = (routineId: string) => {
+    if (expandedRoutineId === routineId) {
+      setExpandedRoutineId(null); // Fecha se clicar no mesmo
+    } else {
+      setExpandedRoutineId(routineId); // Abre o novo
+      setActiveDivisionIndex(0); // Reseta a aba para a primeira divisão (Treino A)
+    }
+  };
+
   const currentRoutine = routines.find(r => r.isActive);
   const otherRoutines = routines.filter(r => !r.isActive);
 
@@ -81,16 +102,71 @@ const { data: routines = [], isLoading } = useQuery({
     return routine.divisions.reduce((total, div) => total + (div.exercises?.length || 0), 0);
   };
 
+  // COMPONENTE INTERNO: Agora com "Abas" (Tabs)
+  const RenderExpandedDetails = ({ routine }: { routine: Routine }) => {
+    if (expandedRoutineId !== routine.id) return null;
+
+    const activeDiv = routine.divisions[activeDivisionIndex];
+
+    return (
+      <div
+        className="mt-4 pt-4 border-t border-[rgba(139,127,168,0.15)] animate-in slide-in-from-top-2 duration-200"
+        onClick={(e) => e.stopPropagation()} // Impede que clicar nas abas feche o card
+      >
+        {/* Navegação entre Divisões (Treino A, B, C...) */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-3 custom-scrollbar">
+          {routine.divisions.map((div, idx) => (
+            <button
+              key={idx}
+              onClick={(e) => { e.stopPropagation(); setActiveDivisionIndex(idx); }}
+              className={`px-3 py-1 text-[10px] font-bold rounded-lg whitespace-nowrap transition-colors ${
+                activeDivisionIndex === idx
+                  ? 'bg-[#ccff00] text-black shadow-[0_0_10px_rgba(204,255,0,0.2)]'
+                  : 'border border-[rgba(139,127,168,0.3)] text-[#8b7fa8] hover:text-white'
+              }`}
+            >
+              {div.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Lista de Exercícios apenas da Divisão Ativa */}
+        <div className="space-y-2">
+          {!activeDiv || activeDiv.exercises.length === 0 ? (
+            <p className="text-xs text-[#8b7fa8]">Nenhum exercício cadastrado.</p>
+          ) : (
+            activeDiv.exercises.map((ex, exIdx) => (
+              <div key={exIdx} className="bg-[#1a1530] rounded-lg p-3 flex justify-between items-center border border-[rgba(139,127,168,0.3)]">
+                <span className="text-sm font-bold text-white">{getExerciseName(ex.exerciseId)}</span>
+                <div className="text-right">
+                  <span className="block text-[9px] text-[#8b7fa8] uppercase font-bold tracking-wider">Séries x Reps</span>
+                  <span className="text-sm font-black text-[#00e5ff]">{ex.targetSets} x {ex.targetReps}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ÍCONE CHEVRON REUTILIZÁVEL (Setinha)
+  const ChevronIcon = ({ isExpanded }: { isExpanded: boolean }) => (
+    <svg
+      className={`w-4 h-4 text-[#8b7fa8] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+
   return (
     <div className="min-h-screen bg-[#0d0b1e] flex flex-col pb-20 font-sans text-white">
-      <header className="flex items-center justify-between px-5 py-4 border-b border-[rgba(139,127,168,0.15)]">
-        <span className="text-[#ccff00] font-black text-xl tracking-tight">Fichas de Treino</span>
-      </header>
+      <AppHeader title="Fichas de Treino" />
 
       <main className="flex-1 px-5 py-6 max-w-2xl mx-auto w-full space-y-8">
-
-        {isLoading ? (
-           <p className="text-center text-gray-500 mt-10">Carregando fichas...</p>
+        {isLoadingRoutines ? (
+           <p className="text-center text-[#8b7fa8] mt-10">Carregando fichas...</p>
         ) : routines.length === 0 ? (
           <section>
             <h2 className="text-2xl font-black uppercase tracking-tight mb-4">SUAS FICHAS</h2>
@@ -100,65 +176,86 @@ const { data: routines = [], isLoading } = useQuery({
           </section>
         ) : (
           <>
+            {/* FICHA ATUAL */}
             {currentRoutine && (
               <section>
-                <h2 className="text-sm font-bold text-gray-500 tracking-widest uppercase mb-4">FICHA ATUAL</h2>
-                <div className="bg-[#1E1A2D] rounded-2xl p-5 border border-[rgba(139,127,168,0.15)] relative overflow-hidden">
+                <h2 className="text-sm font-bold text-[#8b7fa8] tracking-widest uppercase mb-4">FICHA ATUAL</h2>
+                <div
+                  onClick={() => toggleExpand(currentRoutine.id)}
+                  className="bg-[#1E1A2D] rounded-2xl p-5 border border-[rgba(139,127,168,0.15)] relative overflow-hidden cursor-pointer hover:border-[rgba(204,255,0,0.3)] transition-colors group"
+                >
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ccff00]"></div>
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-center mb-2">
                     <span className="bg-[#ccff00] text-black text-[10px] font-bold px-2 py-1 rounded">ACTIVE</span>
+                    {/* AQUI ESTÁ A SETINHA DISCRETA */}
+                    <ChevronIcon isExpanded={expandedRoutineId === currentRoutine.id} />
                   </div>
                   <h3 className="text-xl font-black uppercase leading-tight mb-1">{currentRoutine.name}</h3>
                   <div className="flex items-center justify-between mt-4">
-                    <span className="text-gray-400 text-xs font-bold">↗ {countExercises(currentRoutine)} EXERCÍCIOS</span>
+                    <span className="text-[#8b7fa8] text-xs font-bold">↗ {countExercises(currentRoutine)} EXERCÍCIOS</span>
                     <button
-                      onClick={() => inactivateMutation.mutate(currentRoutine.id)}
+                      onClick={(e) => { e.stopPropagation(); inactivateMutation.mutate(currentRoutine.id); }}
                       className="text-red-400 text-xs font-bold uppercase hover:text-red-300"
                     >
                       ⊘ INATIVAR
                     </button>
                   </div>
+
+                  <RenderExpandedDetails routine={currentRoutine} />
                 </div>
               </section>
             )}
 
+            {/* OUTRAS FICHAS */}
             {otherRoutines.length > 0 && (
               <section>
-                <h2 className="text-sm font-bold text-gray-500 tracking-widest uppercase mb-4 mt-8">OUTRAS FICHAS</h2>
+                <h2 className="text-sm font-bold text-[#8b7fa8] tracking-widest uppercase mb-4 mt-8">OUTRAS FICHAS</h2>
                 <div className="space-y-4">
                   {otherRoutines.map((routine) => (
-                    <div key={routine.id} className="bg-[#1E1A2D] rounded-2xl p-5 border border-[rgba(139,127,168,0.15)]">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-lg font-black uppercase">{routine.name}</h3>
-                        <button
-                          onClick={() => activateMutation.mutate(routine.id)}
-                          className="border border-[rgba(139,127,168,0.3)] text-gray-300 text-[10px] font-bold px-3 py-1.5 rounded uppercase hover:text-white"
-                        >
-                          ATIVAR
-                        </button>
+                    <div
+                      key={routine.id}
+                      onClick={() => toggleExpand(routine.id)}
+                      className="bg-[#1E1A2D] rounded-2xl p-5 border border-[rgba(139,127,168,0.15)] cursor-pointer hover:border-[rgba(204,255,0,0.3)] transition-colors group"
+                    >
+                      <div className="flex justify-between items-center mb-3">
+                         <h3 className="text-lg font-black uppercase">{routine.name}</h3>
+                         <div className="flex items-center gap-3">
+                           <button
+                             onClick={(e) => { e.stopPropagation(); activateMutation.mutate(routine.id); }}
+                             className="border border-[rgba(139,127,168,0.3)] text-gray-300 text-[10px] font-bold px-3 py-1.5 rounded uppercase hover:text-white"
+                           >
+                             ATIVAR
+                           </button>
+                           {/* AQUI ESTÁ A SETINHA DISCRETA */}
+                           <ChevronIcon isExpanded={expandedRoutineId === routine.id} />
+                         </div>
                       </div>
 
                       <div className="flex items-center justify-end gap-4 mt-2">
-                        {/* BOTÃO DUPLICAR - PROTOTYPE PATTERN */}
                         <button
-                          onClick={() => cloneMutation.mutate(routine.id)}
+                          onClick={(e) => { e.stopPropagation(); cloneMutation.mutate(routine.id); }}
                           className="text-[#ccff00] text-[10px] font-bold uppercase hover:text-white flex items-center gap-1"
                         >
                           ⧉ DUPLICAR
                         </button>
                         <button
-                          onClick={() => handleOpenModal(routine)}
+                          onClick={(e) => { e.stopPropagation(); handleOpenModal(routine); }}
                           className="text-gray-300 text-[10px] font-bold uppercase hover:text-white flex items-center gap-1"
                         >
                           ✎ EDITAR
                         </button>
                         <button
-                          onClick={() => window.confirm('Excluir?') && deleteMutation.mutate(routine.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm('Excluir?')) deleteMutation.mutate(routine.id);
+                          }}
                           className="text-red-400 text-[10px] font-bold uppercase hover:text-red-300 flex items-center gap-1"
                         >
                           🗑 EXCLUIR
                         </button>
                       </div>
+
+                      <RenderExpandedDetails routine={routine} />
                     </div>
                   ))}
                 </div>
@@ -181,7 +278,7 @@ const { data: routines = [], isLoading } = useQuery({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={selectedRoutine}
-        userId={userId} // <--- ADICIONE ESTA PROP
+        userId={userId}
       />
 
     <BottomNavigation />

@@ -28,6 +28,13 @@ export const appRouter = createBrowserRouter([
         },
       },
       {
+        path: '/exercises',
+        lazy: async () => {
+          const { ExercisesPage } = await import('../../features/exercises/pages/exercises-page');
+          return { Component: ExercisesPage };
+        },
+      },
+      {
         path: '/routines',
         element: <RoutinesPage />,
       },

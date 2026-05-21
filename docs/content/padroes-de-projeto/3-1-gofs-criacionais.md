@@ -178,6 +178,114 @@ sudo docker compose exec api npx jest onboarding-classification-rules --verbose
 
 ---
 
+## Módulo de Exercicios
+
+> **Responsável:** Daniel | **Branch:** `feature/exercise_module`
+>
+Contexto: criar exercícios vinculados a um usuário de forma segura e validada, sem expor lógica de construção do agregado (validação de nome, grupo muscular opcional). O objetivo foi centralizar a construção do agregado e manter os use cases enxutos.
+
+### Padrões analisados
+
+| Padrão   | Possível aplicação                            | Status      | Justificativa |
+|----------|-----------------------------------------------|-------------|---------------|
+| Builder  | Construção de `Exercise` com validações e campos opcionais | Selecionado | Simplifica a criação no use case e garante VOs válidos antes de persistir |
+| Factory  | Criar a entidade via factory                   | Avaliado    | Menor benefício quando VOs exigem validação complexa; Builder dá clareza fluente |
+
+### Padrão implementado — Builder · `ExerciseBuilder`
+
+## Problema arquitetural
+
+O `CreateExerciseUseCase` precisava construir um `Exercise` garantindo: `userId` obrigatório, `name` válido e `muscleGroup` opcional validado como VO. Colocar essa validação inline no use case poluiria a aplicação e duplicaria lógica em outros pontos consumidores.
+
+### Justificativa da escolha
+
+O `Builder` concentra a lógica de construção (`withUserId`, `withName`, `withMuscleGroup`, `build`) permitindo que o use case crie uma instância pronta para persistir com uma chamada fluente. Além disso, o Builder facilita a inclusão futura de presets e validações sem alterar o contrato do use case.
+
+## Implementação
+
+| Elemento       | Caminho |
+|----------------|---------|
+| Builder        | `backend/src/domain/exercises/builders/exercise.builder.ts` |
+| Entidade       | `backend/src/domain/exercises/entities/exercise.entity.ts` |
+| Value Objects  | `backend/src/domain/exercises/value-objects/exercise-name.vo.ts`, `backend/src/domain/exercises/value-objects/muscle-group.vo.ts` |
+| Use Case       | `backend/src/application/use-cases/exercises/create-exercise.use-case.ts` |
+
+### Trecho central
+
+```typescript
+// uso no use case
+const exercise = new ExerciseBuilder()
+  .withUserId(cmd.userId)
+  .withName(cmd.name)
+  .withMuscleGroup(cmd.muscleGroup)
+  .build();
+
+await this.exerciseRepository.save(exercise);
+```
+
+## Rastreabilidade
+## Modelagem
+
+```mermaid
+classDiagram
+    class ExerciseBuilder {
+        -userId: string
+        -name: string
+        -muscleGroup: string
+        +withUserId(userId: string) ExerciseBuilder
+        +withName(name: string) ExerciseBuilder
+        +withMuscleGroup(muscleGroup: string) ExerciseBuilder
+        +build() Exercise
+    }
+    
+    class Exercise {
+        +id: string
+        +userId: string
+        +name: ExerciseName
+        +muscleGroup: MuscleGroup
+        +active: boolean
+    }
+    
+    ExerciseBuilder ..> Exercise : creates
+```
+
+## Evidência de execução
+
+Os testes do repositório/builder e a criação via e2e verificam que os exercícios são sempre válidos e não podem ser instanciados com atributos incorretos devido ao builder ter regras.
+
+```bash
+docker compose exec api npx jest create-exercise
+```
+
+## Senso crítico
+
+### Benefícios
+
+- **Imutabilidade e Segurança:** Garante que o agregado `Exercise` sempre nasça em um estado válido.
+- **Leitura Fluente:** Melhora a leitura dos casos de uso, onde a criação passo a passo fica evidente e clara (withName, withMuscleGroup, etc).
+- **Desacoplamento:** Remove a responsabilidade do construtor da Entidade de lidar com valores default espalhados ou dependências adicionais, delegando para o Builder.
+
+### Limitações
+
+- **Verboso:** Para objetos com poucos atributos, criar um builder pode parecer um boilerplate desnecessário.
+- **Complexidade do Construtor:** Caso a entidade cresça muito, o builder terá muitos métodos.
+
+### Alternativas consideradas
+
+- **Static Factory Method:** `Exercise.create({ ... })`. Foi descartado porque a criação se tornaria uma única assinatura muito grande, perdendo-se a modularidade da validação passo a passo (opcional, como muscleGroup).
+
+## Referências
+
+- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Builder.
+
+| Artefato | Relação |
+|---------|--------|
+| Requisito | RF13 — cadastrar exercício com nome obrigatório e grupo muscular opcional |
+| Use Case  | `CreateExerciseUseCase` |
+| Camada    | `domain/exercises` (Builder + VOs)
+
+---
+
 ## [Módulo: ____________] — A preencher
 
 > **Responsável:** [Nome do membro] | **Branch:** [nome da branch]
@@ -197,8 +305,12 @@ sudo docker compose exec api npx jest onboarding-classification-rules --verbose
     9. **Senso crítico** — benefícios, limitações e alternativas consideradas
     10. **Referências** — bibliográficas (ABNT ou formato GoF)
 
+---
+
 ## Histórico de versões
 
 | Versão | Data       | Descrição                                                                          | Autor         |
 |--------|------------|------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Documentação do padrão Singleton do módulo de onboarding (regras de classificação) | Lucas Antunes |
+| 1.1    | 20/05/2026 | Documentação do padrão Builder para o módulo de exercises (criação de Exercise) | Daniel Teles |
+

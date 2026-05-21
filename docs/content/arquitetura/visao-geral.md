@@ -81,12 +81,13 @@ graph TD
 |--------------|--------------------------------------------------|------------------------------------------------|--------------|
 | Autenticação | `auth/` (JWT, refresh token, guards)             | `features/auth/` (login, cadastro)             | Implementado |
 | Onboarding   | `onboarding/` (perfil, histórico, classificação) | `features/onboarding/` (formulário, resultado) | Implementado |
+| Exercícios   | `exercises/` (criação, edição, listagem)         | `features/exercises/` (listagem, modais)       | Implementado |
 | Dashboard    | —                                                | `features/dashboard/` (tela inicial)           | Parcial      |
 | Treinos      | —                                                | —                                              | Planejado    |
 
 ## Relação com os padrões GoF
 
-Os padrões foram aplicados exclusivamente dentro do módulo de **Onboarding** nesta entrega. A tabela abaixo localiza cada padrão na arquitetura:
+Os padrões foram aplicados dentro dos módulos de **Onboarding** e **Exercícios** nesta entrega. A tabela abaixo localiza cada padrão na arquitetura:
 
 | Padrão          | Camada                  | Localização                                               | Problema resolvido                                                    |
 |-----------------|-------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
@@ -95,9 +96,13 @@ Os padrões foram aplicados exclusivamente dentro do módulo de **Onboarding** n
 | Facade          | Presentation            | `presentation/facades/`                                   | Isolar o controller do subsistema interno de use cases                |
 | Memento         | Domain + Infrastructure | `domain/onboarding/entities/`, `infrastructure/database/` | Preservar estado anterior do perfil antes de um redo                  |
 | Template Method | Domain                  | `domain/onboarding/bridge/` (OnboardingFlow)              | Garantir sequência imutável do algoritmo de classificação             |
+| Builder         | Domain                  | `domain/exercises/builders/`                              | Centralizar validações e montagem de parâmetros opcionais             |
+| Decorator       | Domain + Infrastructure | `infrastructure/modules/` e `infrastructure/database/`    | Inclusão transparente de logs e cache sobre o repositório base        |
+| Chain of Resp.  | Infrastructure          | `infrastructure/database/` (ExerciseSearchChain)          | Construção dinâmica das validações encadeadas da pipeline de busca    |
 
 ## Histórico de versões
 
 | Versão | Data       | Descrição                                                                          | Autor         |
 |--------|------------|------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Visão geral da arquitetura com localização dos padrões GoF do módulo de onboarding | Lucas Antunes |
+| 1.1    | 21/05/2026 | Adição do módulo de exercícios à lista de módulos e GoFs                           | Daniel Teles        |

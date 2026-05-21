@@ -359,6 +359,118 @@ export class OnboardingController {
 
 ---
 
+## Módulo de Exercicios — Decorator
+
+> **Responsável:** Daniel | **Branch:** `feature/exercise_module`
+>
+Contexto: melhorar observabilidade e desempenho do repositório de `Exercise` sem alterar o repositório base. Queríamos registrar falhas e operações, além de adicionar cache em memória para leituras frequentes.
+
+### Padrões analisados
+
+| Padrão     | Possível aplicação                                               | Status      | Justificativa |
+|------------|------------------------------------------------------------------|-------------|---------------|
+| Decorator  | Envolver `ExerciseRepository` com logging e caching              | Selecionado | Permite adicionar comportamento sem modificar implementação base (Open/Closed) |
+| Proxy      | Controle de acesso ou lazy loading                               | Avaliado    | Proxy cobre autenticação/controle, mas logging e cache são melhor tratados por decorators separados |
+
+### Padrão implementado — Decorator · `LoggingExerciseRepository` + `CachingExerciseRepository`
+
+## Problema arquitetural
+
+Operações de leitura sobre `exercises` são frequentes e precisam ser auditáveis (logs) e rápidas. Modificar `ExercisePostgresRepository` diretamente para inserir logs e cache acoplaria a persistência a preocupações transversais.
+
+### Justificativa da escolha
+
+O padrão Decorator permite empilhar comportamentos em camadas: a implementação base (`ExercisePostgresRepository`) permanece focada em persistência; `CachingExerciseRepository` adiciona cache e `LoggingExerciseRepository` adiciona logs e tratamento de erros com contexto. A composição é feita no módulo (`ExerciseModule`) seguindo o mesmo estilo já usado para `UserRepository`.
+
+## Implementação
+
+| Elemento                 | Caminho |
+|--------------------------|---------|
+| Repositório base         | `backend/src/infrastructure/database/exercise.postgres-repository.ts` |
+| Decorator — Caching      | `backend/src/infrastructure/database/caching-exercise.repository.ts` |
+| Decorator — Logging      | `backend/src/infrastructure/database/logging-exercise.repository.ts` |
+| Módulo — composição       | `backend/src/infrastructure/modules/exercise.module.ts` |
+
+### Trecho central
+
+```typescript
+// composition in module
+const base = new ExercisePostgresRepository(ormRepo);
+const cached = new CachingExerciseRepository(base);
+const logging = new LoggingExerciseRepository(cached, logger);
+// exported as EXERCISE_REPOSITORY -> logging
+```
+
+## Rastreabilidade
+## Modelagem
+
+```mermaid
+classDiagram
+    class IExerciseRepository {
+        <<interface>>
+        +save(exercise: Exercise)
+        +findById(id: string)
+        +search(criteria: any)
+    }
+    class ExercisePostgresRepository {
+        +save()
+        +findById()
+        +search()
+    }
+    class CachingExerciseRepository {
+        -delegate: IExerciseRepository
+        +save()
+        +findById()
+        +search()
+    }
+    class LoggingExerciseRepository {
+        -delegate: IExerciseRepository
+        +save()
+        +findById()
+        +search()
+    }
+    
+    IExerciseRepository <|.. ExercisePostgresRepository
+    IExerciseRepository <|.. CachingExerciseRepository
+    IExerciseRepository <|.. LoggingExerciseRepository
+```
+
+## Evidência de execução
+
+Os logs aparecem no console (stdout) do docker indicando o tempo de execução e o sucesso das chamadas. O cache invalida ou usa dados em memória conforme necessário.
+
+```bash
+docker compose logs api
+```
+
+## Senso crítico
+
+### Benefícios
+
+- **Responsabilidade Única (SRP):** Logs e banco de dados ficam separados.
+- **Open/Closed (OCP):** Podemos adicionar mais decorators futuramente sem tocar no repositório base.
+- **Transparência:** Para o UseCase e Controller, eles apenas enxergam a interface `IExerciseRepository`.
+
+### Limitações
+
+- **Múltiplas camadas (Nesting):** Criar e envelopar objetos múltiplas vezes gera uma cadeia de chamadas empilhada.
+- **Tratamento de Exceções:** Algumas dificuldades aparecem se um Decorator suprimir um erro incorretamente, disfarçando o problema original para o `NestJS`.
+
+### Alternativas consideradas
+
+- **Interceptors no NestJS** ou **AOP**: Foram descartados porque amarrariam a lógica de cache e logging estritamente ao framework invés de manter encapsulado nas portas do Domain (ports and adapters).
+
+## Referências
+
+- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Decorator.
+
+| Artefato | Relação |
+|---------|--------|
+| Requisito | RF13, RF14 — performance e logs em operações de exercício |
+| Módulo  | `infrastructure/database` e `infrastructure/modules/exercise.module.ts` |
+
+---
+
 ## [Módulo: ____________] — A preencher
 
 > **Responsável:** [Nome do membro] | **Branch:** [nome da branch]
@@ -377,8 +489,12 @@ export class OnboardingController {
     8. **Senso crítico** — benefícios, limitações e alternativas consideradas
     9. **Referências** — bibliográficas (ABNT ou formato GoF)
 
+---
+
 ## Histórico de versões
 
 | Versão | Data       | Descrição                                                             | Autor         |
 |--------|------------|-----------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Documentação dos padrões Bridge e Facade do módulo de onboarding      | Lucas Antunes |
+| 1.1    | 20/05/2026 | Documentação do padrão Decorator para repositório de Exercises       | Daniel Teles|
+

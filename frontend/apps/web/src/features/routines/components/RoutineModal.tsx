@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { updateRoutine, createRoutine, type Division } from '../services/routine-api';
+
+import { searchExercises } from '../../exercises/services/exercises-api';
 
 export function RoutineModal({
   isOpen,
@@ -18,6 +20,12 @@ export function RoutineModal({
   const [activeDivisionIndex, setActiveDivisionIndex] = useState(0);
 
   const queryClient = useQueryClient();
+
+  const { data: availableExercises = [], isLoading: isLoadingExercises } = useQuery({
+    queryKey: ['exercises'],
+    queryFn: () => searchExercises(),
+    enabled: isOpen,
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -161,12 +169,24 @@ export function RoutineModal({
                     🗑
                   </button>
 
-                  <input
-                    value={ex.exerciseId}
-                    onChange={(e) => handleExerciseChange(exIndex, 'exerciseId', e.target.value)}
-                    placeholder="Nome do Exercício"
-                    className="bg-transparent text-[#ccff00] font-black text-base outline-none w-[85%] mb-1 placeholder-[#8b7fa8]/50"
-                  />
+                  {/* 2. O Dropdown substituindo o Input antigo */}
+                  {isLoadingExercises ? (
+                    <p className="text-[#8b7fa8] text-[10px] uppercase mb-2">Carregando exercícios...</p>
+                  ) : (
+                    <select
+                      value={ex.exerciseId}
+                      onChange={(e) => handleExerciseChange(exIndex, 'exerciseId', e.target.value)}
+                      className="bg-transparent text-[#ccff00] font-black text-base outline-none w-[85%] mb-1 pb-1 border-b border-[rgba(139,127,168,0.3)] appearance-none cursor-pointer"
+                    >
+                      <option value="" disabled className="text-gray-500 bg-[#1a1530]">Selecione um exercício...</option>
+                      {availableExercises.map((exercise: any) => (
+                        <option key={exercise.id} value={exercise.id} className="text-white bg-[#1a1530]">
+                          {exercise.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
                   <span className="block text-[9px] font-bold text-[#8b7fa8] uppercase tracking-widest mb-4">Exercício {String(exIndex + 1).padStart(2, '0')}</span>
 
                   <div className="flex gap-3">
