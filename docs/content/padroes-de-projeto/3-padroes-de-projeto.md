@@ -12,31 +12,31 @@ Documentar os padrões de projeto GoF (Gang of Four) aplicados no desenvolviment
 
 A tabela abaixo consolida todos os padrões implementados. Cada seção dos documentos filhos está identificada pelo módulo responsável.
 
-|**Categoria**|**Padrão**|**Módulo**|**Responsável**|**Classe / Artefato central**|**Endpoint relacionado**|
-|---|---|---|---|---|---|
-|**Criacional**|Singleton|Onboarding|Lucas Antunes| `OnboardingClassificationRules` | `POST /v1/onboarding` |
-|**Criacional**|Factory Method|Autenticação|Samuel Nogueira Caetano| `User.create()`, `RefreshToken.create()` | `POST /v1/auth/signup`, `POST /v1/auth/login` |
-|**Criacional**|Builder|Exercises|Daniel Teles| `ExerciseBuilder` | `POST /v1/exercises` |
-|**Estrutural**|Bridge|Onboarding|Lucas Antunes| `OnboardingFlow` + `ProfileClassifier` | `POST /v1/onboarding` |
-|**Estrutural**|Facade|Onboarding|Lucas Antunes| `OnboardingFacade` | `GET/POST/PUT /v1/onboarding` |
-|**Estrutural**|Decorator|Autenticação|Samuel Nogueira Caetano| `CachingUserRepository`, `LoggingUserRepository` |Diversos (via infraestrutura)|
-|**Estrutural**|Facade|Autenticação|Samuel Nogueira Caetano| `AuthenticationFacade` | `POST /v1/auth/login`, `POST /v1/auth/logout` |
-|**Estrutural**|Decorator|Exercises|Daniel Teles| `CachingExerciseRepository`, `LoggingExerciseRepository` | `GET/POST/PUT /v1/exercises` |
-|**Comportamental**|Memento|Onboarding|Lucas Antunes| `TrainingProfile.createMemento()` + `OnboardingMementoVO` | `PUT /v1/onboarding` |
-|**Comportamental**|Template Method|Onboarding|Lucas Antunes| `OnboardingFlow.execute()` | `POST /v1/onboarding` |
-|**Comportamental**|Template Method|Autenticação|Samuel Nogueira Caetano| `UseCase<TInput, TOutput>.execute()` |Diversos (todos os Casos de Uso)|
-|**Comportamental**|Observer|Autenticação|Samuel Nogueira Caetano| `DomainEventBus`, `AggregateRoot.pullDomainEvents()` |Diversos (pós-mutação de dados)|
-|**Comportamental**|Chain of Responsibility|Exercises|Daniel Teles| `ExerciseSearchChain` | `GET /v1/exercises` |
+| **Categoria**      | **Padrão**              | **Módulo**   | **Responsável**         | **Classe / Artefato central**                             | **Endpoint relacionado**                      |
+| ------------------ | ----------------------- | ------------ | ----------------------- | --------------------------------------------------------- | --------------------------------------------- |
+| **Criacional**     | Singleton               | Onboarding   | Lucas Antunes           | `OnboardingClassificationRules`                           | `POST /v1/onboarding`                         |
+| **Criacional**     | Factory Method          | Autenticação | Samuel Nogueira Caetano | `User.create()`, `RefreshToken.create()`                  | `POST /v1/auth/signup`, `POST /v1/auth/login` |
+| **Criacional**     | Builder                 | Exercises    | Daniel Teles            | `ExerciseBuilder`                                         | `POST /v1/exercises`                          |
+| **Estrutural**     | Bridge                  | Onboarding   | Lucas Antunes           | `OnboardingFlow` + `ProfileClassifier`                    | `POST /v1/onboarding`                         |
+| **Estrutural**     | Facade                  | Onboarding   | Lucas Antunes           | `OnboardingFacade`                                        | `GET/POST/PUT /v1/onboarding`                 |
+| **Estrutural**     | Decorator               | Autenticação | Samuel Nogueira Caetano | `CachingUserRepository`, `LoggingUserRepository`          | Diversos (via infraestrutura)                 |
+| **Estrutural**     | Facade                  | Autenticação | Samuel Nogueira Caetano | `AuthenticationFacade`                                    | `POST /v1/auth/login`, `POST /v1/auth/logout` |
+| **Estrutural**     | Decorator               | Exercises    | Daniel Teles            | `CachingExerciseRepository`, `LoggingExerciseRepository`  | `GET/POST/PUT /v1/exercises`                  |
+| **Comportamental** | Memento                 | Onboarding   | Lucas Antunes           | `TrainingProfile.createMemento()` + `OnboardingMementoVO` | `PUT /v1/onboarding`                          |
+| **Comportamental** | Template Method         | Onboarding   | Lucas Antunes           | `OnboardingFlow.execute()`                                | `POST /v1/onboarding`                         |
+| **Comportamental** | Template Method         | Autenticação | Samuel Nogueira Caetano | `UseCase<TInput, TOutput>.execute()`                      | Diversos (todos os Casos de Uso)              |
+| **Comportamental** | Observer                | Autenticação | Samuel Nogueira Caetano | `DomainEventBus`, `AggregateRoot.pullDomainEvents()`      | Diversos (pós-mutação de dados)               |
+| **Comportamental** | Chain of Responsibility | Exercises    | Daniel Teles            | `ExerciseSearchChain`                                     | `GET /v1/exercises`                           |
 
 ## Organização do módulo
 
-|**Seção**|**Descrição**|
-|---|---|
-| [3.1 GoFs Criacionais](https://www.google.com/search?q=3-1-gofs-criacionais.md) |Padrões que tratam da criação de objetos — **Singleton** (Módulo Onboarding) e **Factory Method** (Módulo Autenticação); demais seções abertas para contribuição.|
-| [3.2 GoFs Estruturais](https://www.google.com/search?q=3-2-gofs-estruturais.md) |Padrões de composição de classes e objetos — **Bridge** e **Facade** (Módulo Onboarding), **Decorator** e **Facade** (Módulo Autenticação).|
-| [3.3 GoFs Comportamentais](https://www.google.com/search?q=3-3-gofs-comportamentais.md) |Padrões de interação e distribuição de responsabilidade — **Memento** e **Template Method** (Módulo Onboarding), **Template Method** e **Observer** (Módulo Autenticação).|
-| [3.4 Participações](https://www.google.com/search?q=3-4-participacoes-padroes.md) |Registro individual das contribuições de cada membro, com significância e comprobatórios por padrão implementado.|
-| [3.5 Iniciativas Extras](https://www.google.com/search?q=3-5-iniciativas-extras.md) |Iniciativas além do escopo mínimo — testes de integração, documentação de API, organização de arquivos por padrão de módulo.|
+| **Seção**                                                                               | **Descrição**                                                                                                                                                              |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [3.1 GoFs Criacionais](https://www.google.com/search?q=3-1-gofs-criacionais.md)         | Padrões que tratam da criação de objetos — **Singleton** (Módulo Onboarding) e **Factory Method** (Módulo Autenticação); demais seções abertas para contribuição.          |
+| [3.2 GoFs Estruturais](https://www.google.com/search?q=3-2-gofs-estruturais.md)         | Padrões de composição de classes e objetos — **Bridge** e **Facade** (Módulo Onboarding), **Decorator** e **Facade** (Módulo Autenticação).                                |
+| [3.3 GoFs Comportamentais](https://www.google.com/search?q=3-3-gofs-comportamentais.md) | Padrões de interação e distribuição de responsabilidade — **Memento** e **Template Method** (Módulo Onboarding), **Template Method** e **Observer** (Módulo Autenticação). |
+| [3.4 Participações](https://www.google.com/search?q=3-4-participacoes-padroes.md)       | Registro individual das contribuições de cada membro, com significância e comprobatórios por padrão implementado.                                                          |
+| [3.5 Iniciativas Extras](https://www.google.com/search?q=3-5-iniciativas-extras.md)     | Iniciativas além do escopo mínimo — testes de integração, documentação de API, organização de arquivos por padrão de módulo.                                               |
 
 ## Critérios adotados
 
@@ -62,9 +62,8 @@ Caso mais padrões precisem ser adicionados nos documentos filhos (3-1, 3-2, 3-3
 
 ## Histórico de versões
 
-|**Versão**|**Data**|**Descrição**|**Autor**|
-|---|---|---|---|
-|1.0|19/05/2026|Estruturação do módulo de padrões de projeto com todos os GoFs do módulo de onboarding documentados|Lucas Antunes|
-|1.1|20/05/2026|Inclusão dos padrões estruturais, criacionais e comportamentais do módulo de Autenticação na tabela de documentação base|Samuel Nogueira Caetano|
-|1.2|21/05/2026|Atualização do painel de GoFs com os padrões do módulo de Exercises|Daniel Teles|
-
+| **Versão** | **Data**   | **Descrição**                                                                                                            | **Autor**               |
+| ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| 1.0        | 19/05/2026 | Estruturação do módulo de padrões de projeto com todos os GoFs do módulo de onboarding documentados                      | Lucas Antunes           |
+| 1.1        | 20/05/2026 | Inclusão dos padrões estruturais, criacionais e comportamentais do módulo de Autenticação na tabela de documentação base | Samuel Nogueira Caetano |
+| 1.2        | 21/05/2026 | Atualização do painel de GoFs com os padrões do módulo de Exercises                                                      | Daniel Teles            |

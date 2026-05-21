@@ -78,13 +78,13 @@ graph TD
 
 ## Módulos implementados
 
-| **Módulo**   | **Backend**                                              | **Frontend**                                       | **Status**   |
-| ------------ | -------------------------------------------------------- | -------------------------------------------------- | ------------ |
-| Autenticação | `auth/` (JWT, refresh token, eventos, decorators, guards)| `features/auth/` (login, cadastro)                 | Implementado |
-| Onboarding   | `onboarding/` (perfil, histórico, classificação)         | `features/onboarding/` (formulário, resultado)     | Implementado |
-| Exercícios   | `exercises/` (criação, edição, listagem)                 | `features/exercises/` (listagem, modais)           | Implementado |
-| Dashboard    | —                                                        | `features/dashboard/` (tela inicial)               | Parcial      |
-| Treinos      | —                                                        | —                                                  | Planejado    |
+| **Módulo**   | **Backend**                                               | **Frontend**                                   | **Status**   |
+| ------------ | --------------------------------------------------------- | ---------------------------------------------- | ------------ |
+| Autenticação | `auth/` (JWT, refresh token, eventos, decorators, guards) | `features/auth/` (login, cadastro)             | Implementado |
+| Onboarding   | `onboarding/` (perfil, histórico, classificação)          | `features/onboarding/` (formulário, resultado) | Implementado |
+| Exercícios   | `exercises/` (criação, edição, listagem)                  | `features/exercises/` (listagem, modais)       | Implementado |
+| Dashboard    | —                                                         | `features/dashboard/` (tela inicial)           | Parcial      |
+| Treinos      | —                                                         | —                                              | Planejado    |
 
 ## Relação com os padrões GoF
 

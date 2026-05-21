@@ -146,7 +146,10 @@ export class TrainingProfile {
 
 // redo-onboarding.use-case.ts — Caretaker
 export class RedoOnboardingUseCase {
-  async execute(userId: string, answers: OnboardingAnswers): Promise<TrainingProfile> {
+  async execute(
+    userId: string,
+    answers: OnboardingAnswers,
+  ): Promise<TrainingProfile> {
     const profile = await this.profileRepository.findByUserId(userId);
     if (!profile) throw new NotFoundException("Perfil não encontrado");
 
@@ -308,7 +311,9 @@ export abstract class OnboardingFlow {
 
 // domain/onboarding/bridge/strength-onboarding-flow.ts
 export class StrengthOnboardingFlow extends OnboardingFlow {
-  constructor(classifier: ProfileClassifier) { super(classifier); }
+  constructor(classifier: ProfileClassifier) {
+    super(classifier);
+  }
   protected override beforeClassify(_answers: OnboardingAnswers): void {}
   protected override afterClassify(_result: ClassificationResult): void {}
 }
@@ -462,12 +467,16 @@ export abstract class UseCase<TInput, TOutput> {
   private collectAggregates(result: unknown): AggregateRoot[] {
     if (result instanceof AggregateRoot) return [result];
     if (Array.isArray(result))
-      return result.filter((v): v is AggregateRoot => v instanceof AggregateRoot);
+      return result.filter(
+        (v): v is AggregateRoot => v instanceof AggregateRoot,
+      );
     if (result !== null && typeof result === "object") {
       return Object.values(result).flatMap((value) => {
         if (value instanceof AggregateRoot) return [value];
         if (Array.isArray(value))
-          return value.filter((v): v is AggregateRoot => v instanceof AggregateRoot);
+          return value.filter(
+            (v): v is AggregateRoot => v instanceof AggregateRoot,
+          );
         return [];
       });
     }
@@ -476,13 +485,20 @@ export abstract class UseCase<TInput, TOutput> {
 }
 
 // rotate-refresh-token.use-case.ts — uso do hook registerAggregate()
-export class RotateRefreshTokenUseCase extends UseCase<RotateTokenCommand, RotateTokenResult> {
+export class RotateRefreshTokenUseCase extends UseCase<
+  RotateTokenCommand,
+  RotateTokenResult
+> {
   protected async handle(cmd: RotateTokenCommand): Promise<RotateTokenResult> {
     const invalidated = existingToken.invalidate();
     this.registerAggregate(invalidated);
     await this.refreshTokenRepository.update(invalidated);
 
-    const newRefreshToken = RefreshToken.create(user.id, newTokenHash, expiresAt);
+    const newRefreshToken = RefreshToken.create(
+      user.id,
+      newTokenHash,
+      expiresAt,
+    );
     this.registerAggregate(newRefreshToken);
     await this.refreshTokenRepository.insert(newRefreshToken);
 
@@ -676,9 +692,9 @@ export abstract class AggregateRoot {
 
 ### Padrões analisados
 
-| Padrão                  | Possível aplicação                                | Status      | Justificativa                                                                               |
-| ----------------------- | ------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------- |
-| Chain of Responsibility | Aplicar filtros encadeados na construção da query | Selecionado | Encadeamento limpo e extensível para novos filtros                                          |
+| Padrão                  | Possível aplicação                                | Status      | Justificativa                                                                                    |
+| ----------------------- | ------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| Chain of Responsibility | Aplicar filtros encadeados na construção da query | Selecionado | Encadeamento limpo e extensível para novos filtros                                               |
 | Specification           | Compor predicados reutilizáveis                   | Avaliado    | Útil para regras complexas, mas requer wrapping adicional para QueryBuilder; Chain é mais direto |
 
 ### Padrão implementado — Chain of Responsibility · `ExerciseSearchChain`
@@ -727,22 +743,22 @@ classDiagram
 
 #### Implementação
 
-| Elemento               | Papel na Chain                            | Caminho                                                                        |
-| ---------------------- | ----------------------------------------- | ------------------------------------------------------------------------------ |
-| `ExerciseSearchChain`  | Montagem e disparo da cadeia              | `backend/src/infrastructure/database/exercise-search.chain.ts`                 |
-| `BaseSearchHandler`    | Handler abstrato com lógica de delegação  | `backend/src/infrastructure/database/exercise-search.chain.ts`                 |
-| `UserScopeHandler`     | Aplica filtro de `userId` + `active=true` | `backend/src/infrastructure/database/exercise-search.chain.ts`                 |
-| `NameFilterHandler`    | Aplica filtro opcional por nome           | `backend/src/infrastructure/database/exercise-search.chain.ts`                 |
-| `MuscleGroupFilterHandler` | Aplica filtro opcional por grupo muscular | `backend/src/infrastructure/database/exercise-search.chain.ts`             |
-| Repositório consumidor | Instancia e executa a chain               | `backend/src/infrastructure/database/exercise.postgres-repository.ts`          |
-| Use Case               | Aciona o repositório com os critérios     | `backend/src/application/use-cases/exercises/find-exercises.use-case.ts`       |
+| Elemento                   | Papel na Chain                            | Caminho                                                                  |
+| -------------------------- | ----------------------------------------- | ------------------------------------------------------------------------ |
+| `ExerciseSearchChain`      | Montagem e disparo da cadeia              | `backend/src/infrastructure/database/exercise-search.chain.ts`           |
+| `BaseSearchHandler`        | Handler abstrato com lógica de delegação  | `backend/src/infrastructure/database/exercise-search.chain.ts`           |
+| `UserScopeHandler`         | Aplica filtro de `userId` + `active=true` | `backend/src/infrastructure/database/exercise-search.chain.ts`           |
+| `NameFilterHandler`        | Aplica filtro opcional por nome           | `backend/src/infrastructure/database/exercise-search.chain.ts`           |
+| `MuscleGroupFilterHandler` | Aplica filtro opcional por grupo muscular | `backend/src/infrastructure/database/exercise-search.chain.ts`           |
+| Repositório consumidor     | Instancia e executa a chain               | `backend/src/infrastructure/database/exercise.postgres-repository.ts`    |
+| Use Case                   | Aciona o repositório com os critérios     | `backend/src/application/use-cases/exercises/find-exercises.use-case.ts` |
 
 ##### Trecho central
 
 ```typescript
 const queryBuilder = this.repository
-  .createQueryBuilder('exercise')
-  .orderBy('exercise.name', 'ASC');
+  .createQueryBuilder("exercise")
+  .orderBy("exercise.name", "ASC");
 
 await new ExerciseSearchChain().execute({ criteria, queryBuilder });
 const rows = await queryBuilder.getMany();
@@ -758,12 +774,12 @@ docker compose exec api npx jest search-chain --verbose
 
 #### Rastreabilidade
 
-| Artefato                      | Relação                                                                                      |
-| ----------------------------- | -------------------------------------------------------------------------------------------- |
+| Artefato                      | Relação                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------- |
 | Requisito                     | RF14 — consulta de exercícios por nome ou grupo muscular com ordenação e exclusão de inativos |
-| Módulo                        | `infrastructure/database/` · `application/use-cases/exercises/`                              |
-| Camada                        | Infraestrutura                                                                               |
-| Padrão estrutural relacionado | Decorator — os handlers da chain operam sobre o mesmo repositório decorado com cache e log   |
+| Módulo                        | `infrastructure/database/` · `application/use-cases/exercises/`                               |
+| Camada                        | Infraestrutura                                                                                |
+| Padrão estrutural relacionado | Decorator — os handlers da chain operam sobre o mesmo repositório decorado com cache e log    |
 
 #### Senso crítico
 

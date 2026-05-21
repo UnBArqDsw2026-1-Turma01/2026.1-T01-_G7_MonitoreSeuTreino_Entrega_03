@@ -6,21 +6,21 @@ Mapear cada padrão GoF implementado ao seu artefato de código, camada de arqui
 
 ## Matriz de rastreabilidade
 
-| Categoria          | Padrão          | Módulo       | Camada                  | Artefato principal                                                      | Problema resolvido                                                                                                    | Documento                | Endpoint(s)                                |
-|--------------------|-----------------|--------------|-------------------------|-------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|--------------------------|--------------------------------------------|
-| **Criacional**     | Singleton       | Onboarding   | Domain                  | `OnboardingClassificationRules`                                         | Garantir fonte única de regras de pontuação para `MaleProfileClassifier` e `FemaleProfileClassifier`                  | 3.1 GoFs Criacionais     | `POST /v1/onboarding`                      |
+| Categoria          | Padrão          | Módulo       | Camada                  | Artefato principal                                                      | Problema resolvido                                                                                                    | Documento                | Endpoint(s)                                    |
+| ------------------ | --------------- | ------------ | ----------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------------------- |
+| **Criacional**     | Singleton       | Onboarding   | Domain                  | `OnboardingClassificationRules`                                         | Garantir fonte única de regras de pontuação para `MaleProfileClassifier` e `FemaleProfileClassifier`                  | 3.1 GoFs Criacionais     | `POST /v1/onboarding`                          |
 | **Criacional**     | Factory Method  | Autenticação | Domain                  | `User.create()` / `RefreshToken.create()`                               | Isolar lógicas de criação genuína (com eventos e UUIDs) das lógicas de reconstituição (hidratação via DB)             | 3.1 GoFs Criacionais     | `POST /v1/auth/signup` e `POST /v1/auth/login` |
-| **Criacional**     | Builder         | Exercises    | Domain                  | `ExerciseBuilder`                                                       | Centralizar regras de montagem e validações obrigatórias vs opcionais do agregado `Exercise`                          | 3.1 GoFs Criacionais     | `POST /v1/exercises`                       |
-| **Estrutural**     | Bridge          | Onboarding   | Domain                  | `OnboardingFlow` (abstração) + `ProfileClassifier` (impl.)              | Separar a hierarquia de fluxos de treino da hierarquia de classificadores por sexo, evitando explosão de subclasses   | 3.2 GoFs Estruturais     | `POST /v1/onboarding`                      |
-| **Estrutural**     | Facade          | Onboarding   | Presentation            | `OnboardingFacade`                                                      | Oferecer ponto único de acesso do controller aos três use cases de onboarding, isolando a camada de apresentação      | 3.2 GoFs Estruturais     | `GET/POST/PUT /v1/onboarding`              |
+| **Criacional**     | Builder         | Exercises    | Domain                  | `ExerciseBuilder`                                                       | Centralizar regras de montagem e validações obrigatórias vs opcionais do agregado `Exercise`                          | 3.1 GoFs Criacionais     | `POST /v1/exercises`                           |
+| **Estrutural**     | Bridge          | Onboarding   | Domain                  | `OnboardingFlow` (abstração) + `ProfileClassifier` (impl.)              | Separar a hierarquia de fluxos de treino da hierarquia de classificadores por sexo, evitando explosão de subclasses   | 3.2 GoFs Estruturais     | `POST /v1/onboarding`                          |
+| **Estrutural**     | Facade          | Onboarding   | Presentation            | `OnboardingFacade`                                                      | Oferecer ponto único de acesso do controller aos três use cases de onboarding, isolando a camada de apresentação      | 3.2 GoFs Estruturais     | `GET/POST/PUT /v1/onboarding`                  |
 | **Estrutural**     | Facade          | Autenticação | Presentation            | `AuthenticationFacade`                                                  | Isolar a lógica de roteamento e decisão do AuthController perante os múltiplos Casos de Uso de login e sessão         | 3.2 GoFs Estruturais     | `POST /v1/auth/login` e `POST /v1/auth/logout` |
-| **Estrutural**     | Decorator       | Autenticação | Infrastructure          | `CachingUserRepository` e `LoggingUserRepository`                       | Empilhar transversalmente recursos de Log e Cache em memória ao acesso a banco, sem sujar as lógicas do Repositório   | 3.2 GoFs Estruturais     | Múltiplos (via infra)                      |
-| **Estrutural**     | Decorator       | Exercises    | Domain + Infrastructure | `LoggingExerciseRepository` + `CachingExerciseRepository`               | OCP para cacheamento e logging de respostas das rotas de leitura                                                      | 3.2 GoFs Estruturais     | `GET/POST/PUT /v1/exercises`               |
-| **Comportamental** | Memento         | Onboarding   | Domain + Infrastructure | `TrainingProfile.createMemento()` + `OnboardingMementoVO`               | Preservar o estado completo do perfil antes de um redo sem violar o encapsulamento da entidade                        | 3.3 GoFs Comportamentais | `PUT /v1/onboarding`                       |
-| **Comportamental** | Template Method | Onboarding   | Domain                  | `OnboardingFlow.execute()` com hooks `beforeClassify` / `afterClassify` | Garantir sequência imutável do algoritmo de classificação (pre → classificar → pos), extensível via hooks             | 3.3 GoFs Comportamentais | `POST /v1/onboarding`                      |
-| **Comportamental** | Template Method | Autenticação | Application             | `UseCase<TInput, TOutput>.execute()`                                    | Centralizar o ciclo de vida (execução e publicação automática de eventos) sem duplicação de lógica entre casos de uso | 3.3 GoFs Comportamentais | Múltiplos                                  |
-| **Comportamental** | Observer        | Autenticação | Domain + Application    | `DomainEventBus` + `AggregateRoot.pullDomainEvents()`                   | Permitir que o sistema distribua eventos de domínio lateralmente sem acoplar os casos de uso a N handlers de resposta | 3.3 GoFs Comportamentais | Múltiplos                                  |
-| **Comportamental** | Chain of Resp.  | Exercises    | Infrastructure          | `ExerciseSearchChain`                                                   | Encadeamento de restrições de busca `where` (ativos, name, muscleGroup)                                               | 3.3 GoFs Comportamentais | `GET /v1/exercises`                        |
+| **Estrutural**     | Decorator       | Autenticação | Infrastructure          | `CachingUserRepository` e `LoggingUserRepository`                       | Empilhar transversalmente recursos de Log e Cache em memória ao acesso a banco, sem sujar as lógicas do Repositório   | 3.2 GoFs Estruturais     | Múltiplos (via infra)                          |
+| **Estrutural**     | Decorator       | Exercises    | Domain + Infrastructure | `LoggingExerciseRepository` + `CachingExerciseRepository`               | OCP para cacheamento e logging de respostas das rotas de leitura                                                      | 3.2 GoFs Estruturais     | `GET/POST/PUT /v1/exercises`                   |
+| **Comportamental** | Memento         | Onboarding   | Domain + Infrastructure | `TrainingProfile.createMemento()` + `OnboardingMementoVO`               | Preservar o estado completo do perfil antes de um redo sem violar o encapsulamento da entidade                        | 3.3 GoFs Comportamentais | `PUT /v1/onboarding`                           |
+| **Comportamental** | Template Method | Onboarding   | Domain                  | `OnboardingFlow.execute()` com hooks `beforeClassify` / `afterClassify` | Garantir sequência imutável do algoritmo de classificação (pre → classificar → pos), extensível via hooks             | 3.3 GoFs Comportamentais | `POST /v1/onboarding`                          |
+| **Comportamental** | Template Method | Autenticação | Application             | `UseCase<TInput, TOutput>.execute()`                                    | Centralizar o ciclo de vida (execução e publicação automática de eventos) sem duplicação de lógica entre casos de uso | 3.3 GoFs Comportamentais | Múltiplos                                      |
+| **Comportamental** | Observer        | Autenticação | Domain + Application    | `DomainEventBus` + `AggregateRoot.pullDomainEvents()`                   | Permitir que o sistema distribua eventos de domínio lateralmente sem acoplar os casos de uso a N handlers de resposta | 3.3 GoFs Comportamentais | Múltiplos                                      |
+| **Comportamental** | Chain of Resp.  | Exercises    | Infrastructure          | `ExerciseSearchChain`                                                   | Encadeamento de restrições de busca `where` (ativos, name, muscleGroup)                                               | 3.3 GoFs Comportamentais | `GET /v1/exercises`                            |
 
 ## Elos entre padrões
 
@@ -38,7 +38,7 @@ graph LR
 ```
 
 | Relação                  | Descrição                                                                                                        |
-|--------------------------|------------------------------------------------------------------------------------------------------------------|
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | Singleton → Bridge       | `MaleProfileClassifier` e `FemaleProfileClassifier` consomem `getInstance()` para obter as regras                |
 | Bridge ↔ Template Method | O Template Method vive dentro da abstração do Bridge (`OnboardingFlow`) — os padrões co-habitam o mesmo artefato |
 | Facade → Template Method | O Facade aciona `SubmitOnboardingUseCase`, que instancia o flow e chama `execute()` (template method)            |
@@ -56,13 +56,13 @@ graph LR
     Decorator["Decorator\nCaching/LoggingUserRepository"] -->|consumido por| TemplateMethodAuth
 ```
 
-| Relação                     | Descrição                                                                                                              |
-|-----------------------------|------------------------------------------------------------------------------------------------------------------------|
-| Facade → Template Method    | O `AuthenticationFacade` invoca o `execute()` engessado da classe base `UseCase` para disparar os fluxos de negócio   |
-| Template Method → Factory   | Dentro da etapa mutável (`handle`), os Casos de Uso invocam os *Factories* (ex: `User.create()`) gerando as Entidades  |
-| Factory → Observer          | As *Factories* de criação genuína encadeiam internamente um `pushEvent()` na entidade, alimentando a infra de Observers|
-| Template Method → Observer  | O passo invariante final do `UseCase.execute()` extrai os eventos (`pullDomainEvents`) e os despacha no `DomainEventBus`|
-| Decorator → Template Method | As dependências repassadas para o Caso de Uso são, por via do contêiner, os repositórios envoltórios (Cache e Logging) |
+| Relação                     | Descrição                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Facade → Template Method    | O `AuthenticationFacade` invoca o `execute()` engessado da classe base `UseCase` para disparar os fluxos de negócio      |
+| Template Method → Factory   | Dentro da etapa mutável (`handle`), os Casos de Uso invocam os _Factories_ (ex: `User.create()`) gerando as Entidades    |
+| Factory → Observer          | As _Factories_ de criação genuína encadeiam internamente um `pushEvent()` na entidade, alimentando a infra de Observers  |
+| Template Method → Observer  | O passo invariante final do `UseCase.execute()` extrai os eventos (`pullDomainEvents`) e os despacha no `DomainEventBus` |
+| Decorator → Template Method | As dependências repassadas para o Caso de Uso são, por via do contêiner, os repositórios envoltórios (Cache e Logging)   |
 
 ### Grafo de Relacionamentos — Módulo de Exercises
 
@@ -73,31 +73,31 @@ graph LR
     ChainResp["ChainOfResponsibility\nExerciseSearchChain"] -->|usado por| PostgresRepository
 ```
 
-| Relação             | Descrição                                                                                                                   |
-|---------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| Builder → Use Case  | O `CreateExerciseUseCase` aciona o Builder para compilar todas as validações obrigatórias antes da persistência             |
-| Decorator → Infra   | O módulo do NestJS interliga e resolve a inversão de dependências injetando os decorators no wrapper do repositório          |
-| C.O.R → Infra       | O método de busca (`search`) constrói a base query e delega as filtragens dinâmicas à Chain of Responsibility               |
+| Relação            | Descrição                                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Builder → Use Case | O `CreateExerciseUseCase` aciona o Builder para compilar todas as validações obrigatórias antes da persistência     |
+| Decorator → Infra  | O módulo do NestJS interliga e resolve a inversão de dependências injetando os decorators no wrapper do repositório |
+| C.O.R → Infra      | O método de busca (`search`) constrói a base query e delega as filtragens dinâmicas à Chain of Responsibility       |
 
 ## Cobertura de testes por padrão
 
 A bateria de testes unitários automatizados foi desenvolvida para assegurar o funcionamento dos padrões independentemente do framework externo.
 
-| Módulo       | Padrão          | Arquivo de teste                                                                      | Casos cobertos |
-|--------------|-----------------|---------------------------------------------------------------------------------------|----------------|
-| Onboarding   | Singleton       | `domain/onboarding/rules/onboarding-classification-rules.singleton.spec.ts`           | 5              |
-| Onboarding   | Bridge          | `domain/onboarding/bridge/classifiers.spec.ts`                                        | 6              |
-| Onboarding   | Facade          | `presentation/controllers/onboarding.controller.spec.ts` (integração via controller)  | 7              |
-| Onboarding   | Memento         | `domain/onboarding/entities/training-profile.spec.ts`                                 | 5              |
-| Onboarding   | Template Method | Coberto pelos testes de Bridge (`classifiers.spec.ts`)                                | 6              |
-| Autenticação | Factory Method  | `domain/entities/user.entity.spec.ts` e `domain/entities/refresh-token.entity.spec.ts`| 7              |
-| Autenticação | Decorator       | `caching-user.repository.spec.ts` e `logging-user.repository.spec.ts`                 | 5              |
-| Autenticação | Facade          | `presentation/facades/authentication.facade.spec.ts`                                  | 3              |
-| Autenticação | Template Method | `application/use-cases/base.use-case.spec.ts`                                         | 4              |
-| Autenticação | Observer        | `application/events/domain-event-bus.spec.ts` e `domain/entities/aggregate-root.spec.ts` | 5           |
-| Exercises    | Builder         | `domain/exercises/builders/exercise.builder.spec.ts`                                  | 3              |
-| Exercises    | Decorator       | `infrastructure/database/exercise.repository.spec.ts`                                 | 0              |
-| Exercises    | Chain of Resp.  | `infrastructure/database/exercise-search.chain.spec.ts`                               | 2              |
+| Módulo       | Padrão          | Arquivo de teste                                                                         | Casos cobertos |
+| ------------ | --------------- | ---------------------------------------------------------------------------------------- | -------------- |
+| Onboarding   | Singleton       | `domain/onboarding/rules/onboarding-classification-rules.singleton.spec.ts`              | 5              |
+| Onboarding   | Bridge          | `domain/onboarding/bridge/classifiers.spec.ts`                                           | 6              |
+| Onboarding   | Facade          | `presentation/controllers/onboarding.controller.spec.ts` (integração via controller)     | 7              |
+| Onboarding   | Memento         | `domain/onboarding/entities/training-profile.spec.ts`                                    | 5              |
+| Onboarding   | Template Method | Coberto pelos testes de Bridge (`classifiers.spec.ts`)                                   | 6              |
+| Autenticação | Factory Method  | `domain/entities/user.entity.spec.ts` e `domain/entities/refresh-token.entity.spec.ts`   | 7              |
+| Autenticação | Decorator       | `caching-user.repository.spec.ts` e `logging-user.repository.spec.ts`                    | 5              |
+| Autenticação | Facade          | `presentation/facades/authentication.facade.spec.ts`                                     | 3              |
+| Autenticação | Template Method | `application/use-cases/base.use-case.spec.ts`                                            | 4              |
+| Autenticação | Observer        | `application/events/domain-event-bus.spec.ts` e `domain/entities/aggregate-root.spec.ts` | 5              |
+| Exercises    | Builder         | `domain/exercises/builders/exercise.builder.spec.ts`                                     | 3              |
+| Exercises    | Decorator       | `infrastructure/database/exercise.repository.spec.ts`                                    | 0              |
+| Exercises    | Chain of Resp.  | `infrastructure/database/exercise-search.chain.spec.ts`                                  | 2              |
 
 Para executar localmente ambas as suítes (Onboarding e Auth) diretamente pelo container:
 
@@ -113,7 +113,7 @@ sudo docker compose exec api npx jest onboarding auth user.entity refresh-token 
 ## Histórico de versões
 
 | Versão | Data       | Descrição                                                                                               | Autor                   |
-|--------|------------|---------------------------------------------------------------------------------------------------------|-------------------------|
-| 1.0    | 19/05/2026 | Matriz de rastreabilidade com os 5 padrões GoF do módulo de Onboarding e elos entre eles               | Lucas Antunes           |
+| ------ | ---------- | ------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1.0    | 19/05/2026 | Matriz de rastreabilidade com os 5 padrões GoF do módulo de Onboarding e elos entre eles                | Lucas Antunes           |
 | 1.1    | 20/05/2026 | Inclusão de 5 padrões GoF do Módulo de Autenticação e adição do grafo de relacionamentos correspondente | Samuel Nogueira Caetano |
 | 1.2    | 20/05/2026 | Inclusão de 3 padrões GoF do Módulo de Exercises e adição do grafo de relacionamentos correspondente    | Daniel Teles            |

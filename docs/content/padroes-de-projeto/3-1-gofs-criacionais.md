@@ -174,8 +174,8 @@ sudo docker compose exec api npx jest onboarding-classification-rules --verbose
 
 ### Referências
 
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Singleton, p. 127–136.
-- MARTIN, R. C. *Clean Architecture*. Prentice Hall, 2017. Cap. 22 — The Clean Architecture.
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Singleton, p. 127–136.
+- MARTIN, R. C. _Clean Architecture_. Prentice Hall, 2017. Cap. 22 — The Clean Architecture.
 
 ---
 
@@ -213,7 +213,7 @@ O padrão Factory Method resolve o problema arquitetural ao encapsular o constru
 - `create(...)` — para criação de novas entidades, contendo a geração automática de identidades, data de criação e o push do evento no array interno.
 - `reconstitute(...)` — para hidratação segura a partir do repositório, recebendo o estado primitivo exato do banco de dados e suspendendo qualquer efeito colateral.
 
-A imposição do construtor privado torna essa distinção obrigatória pelo compilador e pelo runtime, impedindo falhas por esquecimento técnico. A alternativa de utilizar um construtor público parametrizado por uma flag booleana (`isNew: boolean`) foi rejeitada por configurar o anti-padrão *flag argument*, o qual reduz a legibilidade da API e transfere uma responsabilidade crítica de controle de estado para o chamador externo.
+A imposição do construtor privado torna essa distinção obrigatória pelo compilador e pelo runtime, impedindo falhas por esquecimento técnico. A alternativa de utilizar um construtor público parametrizado por uma flag booleana (`isNew: boolean`) foi rejeitada por configurar o anti-padrão _flag argument_, o qual reduz a legibilidade da API e transfere uma responsabilidade crítica de controle de estado para o chamador externo.
 
 ### Modelagem
 
@@ -425,7 +425,7 @@ sudo docker compose exec api npx jest user.entity refresh-token.entity --verbose
 | Padrão comportamental relacionado | Template Method — a rotina base `UseCase.execute()` gerencia o ciclo coordenado que drena os eventos produzidos pelas factories.                   |
 | Padrão estrutural relacionado     | Decorator — a estrutura composta de `CachingUserRepository` e `LoggingUserRepository` envolve o acesso base que invoca o método de reconstituição. |
 | Endpoints afetados                | `POST /v1/auth/signup` (aciona `User.create()`) e `POST /v1/auth/login` (aciona `RefreshToken.create()`).                                          |
-| Arquivos de teste de cobertura    | `domain/entities/user.entity.spec.ts` · `domain/entities/refresh-token.entity.spec.ts`                                                            |
+| Arquivos de teste de cobertura    | `domain/entities/user.entity.spec.ts` · `domain/entities/refresh-token.entity.spec.ts`                                                             |
 
 ### Senso crítico
 
@@ -447,9 +447,9 @@ sudo docker compose exec api npx jest user.entity refresh-token.entity --verbose
 
 ### Referências
 
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Factory Method, p. 107–116.
-- EVANS, E. *Domain-Driven Design: Tackling Complexity in the Heart of Software*. Addison-Wesley, 2003. Cap. 5 — A Model Expressed in Software (Entities, Factories).
-- VERNON, V. *Implementing Domain-Driven Design*. Addison-Wesley, 2013. Cap. 7 — Aggregates.
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Factory Method, p. 107–116.
+- EVANS, E. _Domain-Driven Design: Tackling Complexity in the Heart of Software_. Addison-Wesley, 2003. Cap. 5 — A Model Expressed in Software (Entities, Factories).
+- VERNON, V. _Implementing Domain-Driven Design_. Addison-Wesley, 2013. Cap. 7 — Aggregates.
 
 ---
 
@@ -461,10 +461,10 @@ sudo docker compose exec api npx jest user.entity refresh-token.entity --verbose
 
 ### Padrões analisados
 
-| Padrão           | Possível aplicação                                                  | Status      | Justificativa                                                                                    |
-| ---------------- | ------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
-| **Builder**      | Construção de `Exercise` com validações e campos opcionais          | Selecionado | Simplifica a criação no use case e garante VOs válidos antes de persistir                        |
-| Factory Method   | Criar a entidade via factory estática                               | Avaliado    | Menor benefício quando VOs exigem validação complexa; Builder oferece clareza fluente por etapas |
+| Padrão         | Possível aplicação                                         | Status      | Justificativa                                                                                    |
+| -------------- | ---------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| **Builder**    | Construção de `Exercise` com validações e campos opcionais | Selecionado | Simplifica a criação no use case e garante VOs válidos antes de persistir                        |
+| Factory Method | Criar a entidade via factory estática                      | Avaliado    | Menor benefício quando VOs exigem validação complexa; Builder oferece clareza fluente por etapas |
 
 ### Padrão implementado — Builder · `ExerciseBuilder`
 
@@ -503,12 +503,12 @@ classDiagram
 
 ### Implementação
 
-| Elemento      | Caminho                                                                             |
-| ------------- | ----------------------------------------------------------------------------------- |
-| Builder       | `backend/src/domain/exercises/builders/exercise.builder.ts`                         |
-| Entidade      | `backend/src/domain/exercises/entities/exercise.entity.ts`                          |
+| Elemento      | Caminho                                                                                 |
+| ------------- | --------------------------------------------------------------------------------------- |
+| Builder       | `backend/src/domain/exercises/builders/exercise.builder.ts`                             |
+| Entidade      | `backend/src/domain/exercises/entities/exercise.entity.ts`                              |
 | Value Objects | `backend/src/domain/exercises/value-objects/exercise-name.vo.ts` · `muscle-group.vo.ts` |
-| Use Case      | `backend/src/application/use-cases/exercises/create-exercise.use-case.ts`           |
+| Use Case      | `backend/src/application/use-cases/exercises/create-exercise.use-case.ts`               |
 
 #### Trecho central
 
@@ -533,14 +533,14 @@ docker compose exec api npx jest create-exercise --verbose
 
 ### Rastreabilidade
 
-| Artefato                      | Relação                                                                              |
-| ----------------------------- | ------------------------------------------------------------------------------------ |
-| Requisito                     | RF13 — cadastrar exercício com nome obrigatório e grupo muscular opcional            |
-| Use Case                      | `CreateExerciseUseCase`                                                              |
-| Módulo                        | `domain/exercises` (Builder + VOs)                                                   |
-| Camada                        | Domínio                                                                              |
+| Artefato                      | Relação                                                                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Requisito                     | RF13 — cadastrar exercício com nome obrigatório e grupo muscular opcional                                                                        |
+| Use Case                      | `CreateExerciseUseCase`                                                                                                                          |
+| Módulo                        | `domain/exercises` (Builder + VOs)                                                                                                               |
+| Camada                        | Domínio                                                                                                                                          |
 | Padrão estrutural relacionado | Decorator — `CachingExerciseRepository` e `LoggingExerciseRepository` envolvem o repositório base que persiste o agregado produzido pelo Builder |
-| Arquivo de testes             | `domain/exercises/builders/exercise.builder.spec.ts`                                 |
+| Arquivo de testes             | `domain/exercises/builders/exercise.builder.spec.ts`                                                                                             |
 
 ### Senso crítico
 
@@ -561,7 +561,7 @@ docker compose exec api npx jest create-exercise --verbose
 
 ### Referências
 
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Builder.
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Builder.
 
 ---
 
@@ -590,8 +590,8 @@ Siga a estrutura da seção **Módulo de Onboarding** acima como referência:
 
 # Histórico de versões
 
-| Versão | Data       | Descrição                                                                                  | Autor                   |
-| ------ | ---------- | ------------------------------------------------------------------------------------------ | ----------------------- |
-| 1.0    | 19/05/2026 | Documentação do padrão Singleton do módulo de Onboarding (regras de classificação)         | Lucas Antunes           |
-| 1.1    | 20/05/2026 | Documentação do padrão Factory Method do módulo de Autenticação (`User` e `RefreshToken`)  | Samuel Nogueira Caetano |
-| 1.2    | 20/05/2026 | Documentação do padrão Builder para o módulo de Exercises (criação de `Exercise`)          | Daniel Teles            |
+| Versão | Data       | Descrição                                                                                 | Autor                   |
+| ------ | ---------- | ----------------------------------------------------------------------------------------- | ----------------------- |
+| 1.0    | 19/05/2026 | Documentação do padrão Singleton do módulo de Onboarding (regras de classificação)        | Lucas Antunes           |
+| 1.1    | 20/05/2026 | Documentação do padrão Factory Method do módulo de Autenticação (`User` e `RefreshToken`) | Samuel Nogueira Caetano |
+| 1.2    | 20/05/2026 | Documentação do padrão Builder para o módulo de Exercises (criação de `Exercise`)         | Daniel Teles            |
