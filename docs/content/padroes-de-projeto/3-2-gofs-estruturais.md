@@ -203,8 +203,8 @@ sudo docker compose exec api npx jest classifiers --verbose
 
 ##### Referências (Bridge)
 
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Bridge, p. 151–161.
-- SHALLOWAY, A.; TROTT, J. *Design Patterns Explained*. Addison-Wesley, 2004. Cap. 11 — The Bridge Pattern.
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Bridge, p. 151–161.
+- SHALLOWAY, A.; TROTT, J. _Design Patterns Explained_. Addison-Wesley, 2004. Cap. 11 — The Bridge Pattern.
 
 ---
 
@@ -219,7 +219,7 @@ Além do Bridge, o módulo de onboarding implementa o padrão **Facade** na cama
 O `OnboardingController` precisaria conhecer e instanciar três use cases distintos (`GetMyOnboardingUseCase`, `SubmitOnboardingUseCase`, `RedoOnboardingUseCase`) além de coordenar suas dependências. Isso criaria dois problemas:
 
 1. **Acoplamento da apresentação à aplicação**: o controller passaria a depender dos contratos internos de cada use case — qualquer refatoração (renomear, dividir ou fundir use cases) quebraria o controller diretamente.
-2. **Responsabilidade de orquestração no lugar errado**: a camada de apresentação não deve saber *como* o subsistema de onboarding é organizado internamente; ela deve apenas saber *o que* pedir.
+2. **Responsabilidade de orquestração no lugar errado**: a camada de apresentação não deve saber _como_ o subsistema de onboarding é organizado internamente; ela deve apenas saber _o que_ pedir.
 
 ##### Justificativa da escolha
 
@@ -361,12 +361,12 @@ export class OnboardingController {
 
 ##### Referências (Facade)
 
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Facade, p. 185–193.
-- EVANS, E. *Domain-Driven Design*. Addison-Wesley, 2003. Cap. 4 — Isolating the Domain (Application Layer).
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Facade, p. 185–193.
+- EVANS, E. _Domain-Driven Design_. Addison-Wesley, 2003. Cap. 4 — Isolating the Domain (Application Layer).
 
 ### Módulo de Autenticação
 
-> **Responsável:** Samuel Nogueira Caetano | **Branch:** ``
+> **Responsável:** Samuel Nogueira Caetano | **Branch:** `main (integrada a partir da feat/modulo-autenticacao)`
 >
 > Contexto: o desafio estrutural central era que **o repositório de usuários precisa acumular comportamentos transversais (cache e log) sem alterar a implementação de persistência**, e que **o controller de autenticação não deve conhecer a estrutura interna dos use cases** que compõem o fluxo de autenticação.
 
@@ -393,7 +393,7 @@ O `UserPostgresRepository` realiza I/O real com o banco em cada chamada. A aplic
 
 Sem o Decorator, as alternativas seriam:
 
-1. **Herança**: `CachingUserPostgresRepository extends UserPostgresRepository`. Problema: acopla o cache à implementação concreta de Postgres; trocar o banco exige reescrever o cache. Além disso, combinar cache *e* log por herança exigiria uma terceira classe que herda de ambos — impossível em TypeScript (sem mixins).
+1. **Herança**: `CachingUserPostgresRepository extends UserPostgresRepository`. Problema: acopla o cache à implementação concreta de Postgres; trocar o banco exige reescrever o cache. Além disso, combinar cache _e_ log por herança exigiria uma terceira classe que herda de ambos — impossível em TypeScript (sem mixins).
 2. **Lógica embutida no repositório**: colocar `if (cache.has(id)) return cache.get(id)` e `logger.log(...)` diretamente em `UserPostgresRepository`. Problema: viola o Single Responsibility Principle; a classe passa a acumular três responsabilidades distintas.
 
 O Decorator resolve isso mantendo as três classes com responsabilidades isoladas e compondo-as em camadas, todas honrando a mesma interface `UserRepository`.
@@ -592,13 +592,13 @@ export class LoggingUserRepository implements UserRepository {
 
 ###### Alternativas consideradas
 
-- **Herança com mixin**: `class LoggingCachingUserPostgresRepository extends UserPostgresRepository`. Resolveria o problema imediato, mas criaria uma classe monolítica e impossibilitaria compor apenas cache *ou* apenas log de forma independente. Rejeitado.
+- **Herança com mixin**: `class LoggingCachingUserPostgresRepository extends UserPostgresRepository`. Resolveria o problema imediato, mas criaria uma classe monolítica e impossibilitaria compor apenas cache _ou_ apenas log de forma independente. Rejeitado.
 - **Middleware de repositório via Proxy dinâmico** (ES6 `Proxy`): permitiria interceptar chamadas sem declarar cada método. Rejeitado por tornar o código implícito e dificultar a rastreabilidade estática em TypeScript — não há garantia de tipo em tempo de compilação para os métodos interceptados.
 
 ##### Referências (Decorator)
 
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Decorator, p. 175–184.
-- MARTIN, R. C. *Agile Software Development: Principles, Patterns, and Practices*. Prentice Hall, 2002. Cap. 14 — The Open/Closed Principle.
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Decorator, p. 175–184.
+- MARTIN, R. C. _Agile Software Development: Principles, Patterns, and Practices_. Prentice Hall, 2002. Cap. 14 — The Open/Closed Principle.
 
 ---
 
@@ -788,8 +788,8 @@ export class AuthController {
 
 ##### Referências (Facade)
 
-- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Facade, p. 185–193.
-- EVANS, E. *Domain-Driven Design*. Addison-Wesley, 2003. Cap. 4 — Isolating the Domain (Application Layer).
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Facade, p. 185–193.
+- EVANS, E. _Domain-Driven Design_. Addison-Wesley, 2003. Cap. 4 — Isolating the Domain (Application Layer).
 
 ---
 

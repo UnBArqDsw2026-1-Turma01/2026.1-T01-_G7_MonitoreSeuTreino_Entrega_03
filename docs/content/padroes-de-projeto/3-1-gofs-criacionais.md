@@ -183,7 +183,7 @@ sudo docker compose exec api npx jest onboarding-classification-rules --verbose
 
 ### Módulo de Autenticação
 
-**Responsável:** Samuel Nogueira Caetano | **Branch:** ``
+**Responsável:** Samuel Nogueira Caetano | **Branch:** `main (integrada a partir da feat/modulo-autenticacao)`
 
 **Contexto:** o desafio criacional era separar a **lógica de construção** das entidades de domínio (`User` e `RefreshToken`) da lógica de uso, garantindo que eventos de domínio só fossem emitidos em criações legítimas — e nunca durante reconstituições a partir do banco de dados — sem expor construtores públicos que permitissem contornar essa distinção.
 

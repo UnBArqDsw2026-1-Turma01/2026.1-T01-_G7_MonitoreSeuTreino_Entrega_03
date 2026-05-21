@@ -385,7 +385,7 @@ const result = flow.execute(answers); // Template Method: sequência garantida
 
 ## Módulo de Autenticação
 
-> **Responsável:** Samuel Nogueira Caetano | **Branch:** ``
+> **Responsável:** Samuel Nogueira Caetano | **Branch:** `main (integrada a partir da feat/modulo-autenticacao)`
 >
 > Contexto: os desafios comportamentais centrais eram que **todos os use cases precisam executar a mesma sequência de ciclo de vida** (executar lógica → publicar eventos de domínio) sem duplicar essa orquestração, e que **os eventos gerados pelas entidades precisam ser propagados para handlers desacoplados** sem que o emissor conheça os consumidores.
 
