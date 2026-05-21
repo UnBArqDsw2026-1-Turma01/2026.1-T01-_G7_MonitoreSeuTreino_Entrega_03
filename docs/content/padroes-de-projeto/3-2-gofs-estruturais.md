@@ -777,26 +777,206 @@ docker compose logs api
 
 - GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Decorator.
 
----
+## Módulo de Sessão de Treino — Composite
 
-## [Módulo: ____________] — A preencher
+> **Responsável:** Eduardo Waski | **Branch:** `feat/modulo-sessao-treino`
+>
+> Contexto: o desafio estrutural consistia em modelar e organizar a sessão de treino de forma a permitir diferentes composições de exercícios e séries (como exercícios isolados, e futuramente bi-sets, tri-sets ou circuitos) sem acoplar a classe da sessão à lógica interna de cálculo de métricas físicas como volume total e repetições acumuladas.
 
-> **Responsável:** [Nome do membro] | **Branch:** [nome da branch]
+### Padrões analisados
 
-!!! warning "Seção pendente"
-    Esta seção aguarda a contribuição do responsável pelo módulo.
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Composite** | Representar a estrutura do treino (exercícios e séries) de forma unificada | Selecionado | Permite tratar exercícios (`ExerciseNode`) e suas séries individuais (`TrainingSet`) sob uma mesma interface (`WorkoutComponent`), facilitando o cálculo de métricas agregadas como volume e repetições de forma recursiva e transparente. |
+| Decorator | Adicionar dinamicamente comportamentos aos exercícios ou séries | Avaliado | Não há necessidade de estender ou modificar dinamicamente o comportamento de exercícios no nível de domínio; a lógica é estritamente de composição estrutural. |
+| Adapter | Adaptar objetos externos para a estrutura de sessão | Não selecionado | A tradução de dados externos para o domínio é resolvida na camada de aplicação via DTOs e mapeadores simples. |
 
-    Siga a estrutura das seções acima como referência:
+### Padrão implementado — Composite · `WorkoutComponent` (Interface) · `ExerciseNode` (Composite) · `TrainingSet` (Leaf)
 
-    1. **Padrões analisados** — tabela com os padrões GoF avaliados e justificativa da escolha.
-    2. **Padrão implementado** — nome e identificador central.
-    3. **Problema arquitetural** — problema concreto que motivou o uso do padrão.
-    4. **Justificativa da escolha** — por que este padrão e não as alternativas avaliadas.
-    5. **Modelagem** — diagrama Mermaid.
-    6. **Implementação** — tabela de arquivos e trechos de código.
-    7. **Rastreabilidade** — elos com requisitos, camadas e outros padrões GoF.
-    8. **Senso crítico** — benefícios, limitações e alternativas consideradas.
-    9. **Referências** — bibliográficas.
+### Problema arquitetural
+
+Uma sessão de treino possui uma estrutura inerentemente hierárquica: uma sessão contém múltiplos exercícios, e cada exercício contém uma ou mais séries executadas. Além disso, no fisiculturismo e treinamento de força, é comum agrupar exercícios em estruturas complexas, tais como superséries (executar dois exercícios alternadamente sem descanso) ou circuitos.
+
+Se modelássemos essa estrutura de forma plana ou acoplada, surgiriam problemas críticos de design:
+1. **Acoplamento a tipos específicos**: A classe principal `TrainingSession` precisaria conhecer explicitamente e gerenciar listas separadas para exercícios simples, superséries e séries individuais.
+2. **Propagação manual de dados**: O cálculo do volume total da sessão (`getSessionTotalVolume()`) exigiria laços de repetição e condicionais aninhados complexos (ex.: `if (isSuperset) { ... } else if (isSingle) { ... }`) na classe da sessão, violando o Princípio de Responsabilidade Única (SRP) e o Princípio Open/Closed (OCP).
+
+### Justificativa da escolha
+
+O padrão **Composite** resolve essa questão ao definir a interface comum `WorkoutComponent` que unifica o comportamento de componentes folha (séries individuais) e componentes compostos (exercícios).
+
+- **Componente (`WorkoutComponent`)**: Interface base que declara os métodos comuns de cálculo físico: `getVolume()` e `getTotalReps()`.
+- **Folha (`TrainingSet`)**: Representa uma série executada. Implementa a interface base realizando o cálculo real de volume (`reps * weight`).
+- **Composto (`ExerciseNode`)**: Representa um exercício (que agrupa séries/folhas). Implementa os métodos da interface delegando a execução para a sua lista interna de filhos (`children: WorkoutComponent[]`) e somando os resultados.
+
+Isso permite que a `TrainingSession` enxergue apenas uma coleção genérica de `WorkoutComponent`s. Ao invocar `getSessionTotalVolume()`, a sessão apenas delega o cálculo a cada componente de primeiro nível, o qual propaga a chamada recursivamente caso seja um nó composto, de forma totalmente transparente para o cliente.
+
+### Modelagem
+
+```mermaid
+classDiagram
+    class WorkoutComponent {
+        <<interface>>
+        +getVolume() number
+        +getTotalReps() number
+    }
+
+    class TrainingSet {
+        +id: string
+        +targetReps: number
+        +actualReps: number | null
+        +weight: number | null
+        +observations: string | null
+        +getVolume() number
+        +getTotalReps() number
+    }
+
+    class ExerciseNode {
+        -children: WorkoutComponent[]
+        +id: string
+        +exerciseId: string
+        +expectedSets: number
+        +add(component: WorkoutComponent) void
+        +remove(component: WorkoutComponent) void
+        +getChildren() ReadonlyArray~WorkoutComponent~
+        +getVolume() number
+        +getTotalReps() number
+    }
+
+    class TrainingSession {
+        -components: WorkoutComponent[]
+        +addWorkoutComponent(component: WorkoutComponent) void
+        +getSessionTotalVolume() number
+    }
+
+    WorkoutComponent <|.. TrainingSet : Leaf
+    WorkoutComponent <|.. ExerciseNode : Composite
+    ExerciseNode o-- WorkoutComponent : children
+    TrainingSession o-- WorkoutComponent : components
+```
+
+### Implementação
+
+| Elemento | Papel no Composite | Caminho |
+|---|---|---|
+| `WorkoutComponent` | Component (Interface) | `backend/src/domain/entities/workout-component.ts` |
+| `TrainingSet` | Leaf | `backend/src/domain/entities/training-set.ts` |
+| `ExerciseNode` | Composite | `backend/src/domain/entities/exercise-node.ts` |
+| `TrainingSession` | Client | `backend/src/domain/entities/training-session.ts` |
+
+#### Trechos centrais
+
+```typescript
+// workout-component.ts
+export interface WorkoutComponent {
+  getVolume(): number;
+  getTotalReps(): number;
+}
+
+// training-set.ts (Leaf)
+export class TrainingSet implements WorkoutComponent {
+  constructor(
+    public readonly id: string,
+    public readonly targetReps: number,
+    public readonly actualReps: number | null,
+    public readonly weight: number | null,
+    public readonly observations: string | null,
+  ) {}
+
+  public getVolume(): number {
+    if (!this.actualReps) return 0;
+    if (this.weight && this.weight > 0) {
+      return this.actualReps * this.weight;
+    }
+    return this.actualReps; // fallback para peso corporal
+  }
+
+  public getTotalReps(): number {
+    return this.actualReps || 0;
+  }
+}
+
+// exercise-node.ts (Composite)
+export class ExerciseNode implements WorkoutComponent {
+  private readonly children: WorkoutComponent[] = [];
+
+  constructor(
+    public readonly id: string,
+    public readonly exerciseId: string,
+    public readonly expectedSets: number,
+  ) {}
+
+  public add(component: WorkoutComponent): void {
+    this.children.push(component);
+  }
+
+  public remove(component: WorkoutComponent): void {
+    const index = this.children.indexOf(component);
+    if (index !== -1) this.children.splice(index, 1);
+  }
+
+  public getVolume(): number {
+    return this.children.reduce((total, child) => total + child.getVolume(), 0);
+  }
+
+  public getTotalReps(): number {
+    return this.children.reduce((total, child) => total + child.getTotalReps(), 0);
+  }
+}
+```
+
+### Evidência de execução
+
+Os testes unitários do módulo comprovam a corretude matemática da soma recursiva de volumes e repetições:
+
+```text
+PASS  src/domain/entities/training-session.spec.ts
+  Workout Session Domain Modules (Builder, Composite, Iterator)
+    Composite Pattern - WorkoutComponent, ExerciseNode, TrainingSet
+      ✓ should calculate volume and reps for TrainingSet (Leaf) (1 ms)
+      ✓ should calculate aggregated volume and reps for ExerciseNode (Composite) (1 ms)
+      ✓ should calculate total session volume via Composite traversal (1 ms)
+```
+
+Para executar localmente via container Docker:
+
+```bash
+docker compose exec api npx jest training-session --verbose
+```
+
+### Rastreabilidade
+
+| Artefato | Relação |
+|---|---|
+| Requisitos | RF22 — Registrar sessão; RF23 — Consultar sessão; RF28 — Exibir resumo semanal (cálculo de constância e volume). |
+| Módulo | `domain/entities/` |
+| Camada | Domínio (representação das entidades e invariantes estruturais). |
+| Padrão criacional relacionado | Builder — `TrainingSessionBuilder` monta a hierarquia. |
+| Padrão comportamental relacionado | Iterator — percorre recursivamente o Composite para fins de indexação/listagem linear. |
+| Endpoint consumidor | `POST /v1/sessions` |
+| Arquivo de testes | `src/domain/entities/training-session.spec.ts` |
+
+### Senso crítico
+
+#### Benefícios
+
+- **Uniformidade no tratamento**: O cliente trata folhas (séries) e compostos (exercícios) de forma idêntica via interface comum.
+- **Princípio Open/Closed (OCP)**: Adicionar novos agrupamentos complexos no futuro (como superséries contendo subexercícios) exige apenas a criação de um novo `WorkoutComponent` composto, sem alterar a classe `TrainingSession`.
+- **Simplicidade Aritmética**: A recursividade do padrão elimina if-else complexos para calcular volume total.
+
+#### Limitações
+
+- **Dificuldade em restringir operações na compilação**: O design clássico do Composite declara métodos de alteração de filhos (`add()`, `remove()`) na classe composta, o que pode forçar typecasts ou checagens em runtime (`instanceof`) se o cliente tiver apenas uma referência da interface genérica `WorkoutComponent` e precisar alterar a árvore.
+- **Representação em Banco de Dados**: Mapear uma árvore composite pura para tabelas relacionais do PostgreSQL exige tabelas separadas ou tabelas com relacionamentos auto-referenciados, aumentando a complexidade das queries de infraestrutura (TypeORM).
+
+#### Alternativas consideradas
+
+- **Modelagem Plana (Flat Table)**: Ter apenas uma classe `TrainingSession` contendo uma lista plana de `TrainingSet`s com uma propriedade referenciando o `exerciseId`. Descartado por limitar severamente a extensibilidade para modelar estruturas de treinos compostos e por espalhar lógicas de agrupamento pela aplicação.
+
+### Referências
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 4 — Structural Patterns, Composite, p. 163–173.
+- VERNON, V. _Implementing Domain-Driven Design_. Addison-Wesley, 2013. Cap. 7 — Aggregates.
 
 ---
 
@@ -894,3 +1074,4 @@ classDiagram
 | 1.2 | 20/05/2026 | Documentação do padrão Proxy do módulo de Histórico de Sessões. | Giovanni Dornelas Ferreira |
 | 1.3 | 21/05/2026 | Documentação do padrão Decorator para o repositório de Exercícios. | Daniel Teles |
 | 1.4    | 21/05/2026 | Documentação do padrão Facade do módulo de Usuário, referente aos RF04 e RF07.  | André Ricardo Meyer de Melo |
+| 1.5 | 21/05/2026 | Documentação do padrão Composite do módulo de Sessão de Treino. | Eduardo Waski |

@@ -20,17 +20,20 @@ import { BearerTokenGuard } from '../guards/bearer-token.guard';
 @ApiTags('users')
 @Controller('v1/users')
 export class UserController {
-  constructor(
-    private readonly accountDeletionFacade: AccountDeletionFacade,
-  ) {}
+  constructor(private readonly accountDeletionFacade: AccountDeletionFacade) {}
 
   @Delete('me')
   @HttpCode(204)
   @UseGuards(BearerTokenGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Permanently delete the authenticated user account' })
+  @ApiOperation({
+    summary: 'Permanently delete the authenticated user account',
+  })
   @ApiResponse({ status: 204, description: 'Account deleted successfully' })
-  @ApiResponse({ status: 400, description: 'Incorrect password or wrong confirmation phrase' })
+  @ApiResponse({
+    status: 400,
+    description: 'Incorrect password or wrong confirmation phrase',
+  })
   @ApiResponse({ status: 401, description: 'Unauthenticated' })
   async deleteAccount(
     @Req() req: Request,
