@@ -2,15 +2,23 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateRoutine, createRoutine, type Division } from '../services/routine-api';
 
-export function RoutineModal({ isOpen, onClose, initialData }: { isOpen: boolean; onClose: () => void; initialData?: any }) {
+export function RoutineModal({
+  isOpen,
+  onClose,
+  initialData,
+  userId
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData?: any;
+  userId: string;
+}) {
   const [routineName, setRoutineName] = useState('');
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [activeDivisionIndex, setActiveDivisionIndex] = useState(0);
 
   const queryClient = useQueryClient();
-  const userId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 
-  // O Segredo do React: Reseta o estado toda vez que o modal abre ou fecha
   useEffect(() => {
     if (isOpen) {
       setRoutineName(initialData?.name || '');
@@ -27,29 +35,31 @@ export function RoutineModal({ isOpen, onClose, initialData }: { isOpen: boolean
   };
 
   const updateMutation = useMutation({
-  mutationFn: () => updateRoutine(initialData.id, userId, routineName, divisions),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['routines'] });
-    handleClose();
-  }
-});
+    mutationFn: () => updateRoutine(initialData.id, userId, routineName, divisions),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routines'] });
+      handleClose();
+    }
+  });
 
   const createMutation = useMutation({
     mutationFn: () => createRoutine(routineName, userId, divisions),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['routines'] }); handleClose(); }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routines'] });
+      handleClose();
+    }
   });
 
   const handleAddDivision = () => {
-    const nextLetter = String.fromCharCode(65 + divisions.length); // A, B, C...
+    const nextLetter = String.fromCharCode(65 + divisions.length);
     setDivisions([...divisions, { name: `TREINO ${nextLetter}`, exercises: [] }]);
     setActiveDivisionIndex(divisions.length);
   };
 
   const handleRemoveDivision = (idxToRemove: number) => {
-    if (divisions.length <= 1) return; // Obriga a ter pelo menos 1 divisão
+    if (divisions.length <= 1) return;
     const newDivisions = divisions.filter((_, idx) => idx !== idxToRemove);
 
-    // Renomeia as divisões restantes para manter a ordem A, B, C correta
     const renamedDivisions = newDivisions.map((div, idx) => ({
       ...div,
       name: `TREINO ${String.fromCharCode(65 + idx)}`

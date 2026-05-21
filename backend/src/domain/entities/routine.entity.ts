@@ -60,7 +60,7 @@ export class Routine extends AggregateRoot {
     return routine;
   }
 
-  static reconstitute(data: {
+static reconstitute(data: {
     id: string;
     userId: string;
     name: string;

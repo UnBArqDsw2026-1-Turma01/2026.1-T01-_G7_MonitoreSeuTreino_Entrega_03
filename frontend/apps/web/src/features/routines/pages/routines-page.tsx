@@ -10,17 +10,41 @@ import {
 } from '../services/routine-api';
 import type { Routine } from '../services/routine-api';
 import { BottomNavigation } from '../../../shared/components/bottom-navigation';
+import { useAuthStore } from '../../auth/store/auth-store';
+
+const getUserIdFromToken = (token: string | null) => {
+  if (!token) return null;
+  try {
+    // JWT é composto por 3 partes: header.payload.signature
+    // O payload é a segunda parte (índice 1)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // Geralmente o ID fica no campo 'sub' (subject) ou 'userId'
+    return payload.sub || payload.userId || payload.id;
+  } catch (error) {
+    console.error("Erro ao decodificar token", error);
+    return null;
+  }
+};
+
 
 export function RoutinesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoutine, setSelectedRoutine] = useState<any>(null);
   const queryClient = useQueryClient();
-  const userId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+  const { token } = useAuthStore();
+  const userId = getUserIdFromToken(token);
+
+  console.log("DEBUG: userId obtido do token:", userId); // <- Adicione isso
+
+  if (!userId) {
+     return <p className="text-center mt-10">Você não está autenticado. Por favor, faça login.</p>;
+  }
 
   // Busca as fichas no Backend
-  const { data: routines = [], isLoading } = useQuery({
-    queryKey: ['routines'],
-    queryFn: fetchRoutines,
+const { data: routines = [], isLoading } = useQuery({
+    queryKey: ['routines', userId],
+    queryFn: () => fetchRoutines(userId!),
+    enabled: !!userId,
   });
 
   // Prototype: Duplicar ficha
@@ -157,6 +181,7 @@ export function RoutinesPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={selectedRoutine}
+        userId={userId} // <--- ADICIONE ESTA PROP
       />
 
     <BottomNavigation />

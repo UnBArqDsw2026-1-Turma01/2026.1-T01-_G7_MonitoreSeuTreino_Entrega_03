@@ -19,11 +19,12 @@ export interface Routine {
   isActive: boolean;
 }
 
-export async function fetchRoutines(): Promise<Routine[]> {
-  const { data } = await apiClient.get('/routines');
+export async function fetchRoutines(userId: string): Promise<Routine[]> {
+  const { data } = await apiClient.get('/routines', {
+    params: { userId }
+  });
   return data;
 }
-
 export async function createRoutine(name: string, userId: string, divisions: Division[]): Promise<void> {
   await apiClient.post(`/routines`, { name, userId, divisions });
 }
