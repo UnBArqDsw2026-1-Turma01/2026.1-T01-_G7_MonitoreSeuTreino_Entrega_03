@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ITrainingSessionRepository } from '@domain/repositories/training-session.repository';
+import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import {
+  ITrainingSessionRepository,
+  SessionDateRangeFilter,
+} from '@domain/repositories/training-session.repository';
 import { TrainingSession, SessionState } from '@domain/entities/training-session';
 import { ExerciseNode } from '@domain/entities/exercise-node';
 import { TrainingSet } from '@domain/entities/training-set';
@@ -70,6 +73,32 @@ export class TrainingSessionRepositoryImpl implements ITrainingSessionRepository
   async findByUserId(userId: string): Promise<TrainingSession[]> {
     const ormSessions = await this.ormRepository.find({
       where: { userId },
+      relations: ['exercises', 'exercises.sets'],
+      order: { date: 'DESC' },
+    });
+
+    return ormSessions.map((orm) => this.mapToDomain(orm));
+  }
+
+  async findCompletedByUserId(
+    userId: string,
+    filter?: SessionDateRangeFilter,
+  ): Promise<TrainingSession[]> {
+    const where: Record<string, unknown> = {
+      userId,
+      state: SessionState.COMPLETED,
+    };
+
+    if (filter?.startDate && filter?.endDate) {
+      where.date = Between(filter.startDate, filter.endDate);
+    } else if (filter?.startDate) {
+      where.date = MoreThanOrEqual(filter.startDate);
+    } else if (filter?.endDate) {
+      where.date = LessThanOrEqual(filter.endDate);
+    }
+
+    const ormSessions = await this.ormRepository.find({
+      where,
       relations: ['exercises', 'exercises.sets'],
       order: { date: 'DESC' },
     });

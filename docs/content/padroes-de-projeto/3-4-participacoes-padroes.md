@@ -13,6 +13,7 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Nome do Membro | Contribuição | Significância | Comprobatórios |
 |----------------|--------------|---------------|----------------|
 | Lucas Antunes | Modelagem do Singleton, implementação de `calculateScore()` e sub-métodos de pontuação por critério (experiência, frequência, técnica, consistência), testes unitários (5 casos), documentação | Excelente | `backend/src/domain/onboarding/rules/` |
+| Giovanni Dornelas Ferreira | Multiton `HistoryManager`, integração com `HistoryService` e `HistoryObserver`, repositório `findCompletedByUserId`, RF26/RF27, documentação | Excelente | `backend/src/domain/history/history-manager.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
 ---
@@ -28,6 +29,7 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Nome do Membro | Contribuição | Significância | Comprobatórios |
 |----------------|--------------|---------------|----------------|
 | Lucas Antunes | Bridge: abstração `OnboardingFlow`, `StrengthOnboardingFlow`, interface `ProfileClassifier`, `MaleProfileClassifier`, `FemaleProfileClassifier`, testes (6 casos). Facade: `OnboardingFacade`, integração com `OnboardingController` | Excelente | `backend/src/domain/onboarding/bridge/`, `backend/src/presentation/facades/` |
+| Giovanni Dornelas Ferreira | Proxy `HistoryServiceProxy`, interface `IHistoryService`, serviço real `HistoryService`, wiring em `HistoryModule`, `HistoryController`, documentação | Excelente | `backend/src/infrastructure/services/history-service.proxy.ts`, `backend/src/application/services/history.service.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
 ---
@@ -43,6 +45,28 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Nome do Membro | Contribuição | Significância | Comprobatórios |
 |----------------|--------------|---------------|----------------|
 | Lucas Antunes | Memento: `OnboardingMementoVO`, `createMemento()` em `TrainingProfile`, `RedoOnboardingUseCase` (caretaker), `onboarding_history` (ORM + repositório), testes (5 casos). Template Method: `execute()` em `OnboardingFlow`, hooks protegidos, `StrengthOnboardingFlow` | Excelente | `backend/src/domain/onboarding/entities/`, `backend/src/domain/onboarding/value-objects/`, `backend/src/domain/onboarding/bridge/`, `backend/src/infrastructure/database/` |
+| Giovanni Dornelas Ferreira | Observer: `WorkoutSessionSubject`, `HistoryObserver`, `SessionObserver`, integração em `RegisterSessionUseCase.notify()`, inscrição em `HistoryModule.onModuleInit`, documentação | Excelente | `backend/src/domain/history/observers/`, `backend/src/application/use-cases/session/register-session.use-case.ts` |
+| [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
+---
+
+### Multiton + Proxy + Observer — Módulo de Histórico de Sessões (visão integrada)
+
+**Contexto:** Implementação dos requisitos RF26 (listar histórico de sessões concluídas com detalhes) e RF27 (filtrar por período), com três padrões GoF que se complementam: Multiton mantém cache por usuário; Observer atualiza o cache ao registrar sessão; Proxy controla acesso e auditoria nas leituras.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|----------------|--------------|---------------|----------------|
+| Giovanni Dornelas Ferreira | Módulo completo de histórico (domain, application, infrastructure, presentation), ativação de `SessionModule`/`HistoryModule` no `AppModule`, correção do `TrainingSessionBuilder`, documentação Wiki | Excelente | Branch `feat/modulo-historico`, `backend/src/domain/history/`, `backend/src/infrastructure/modules/history.module.ts`, [3.1](../padroes-de-projeto/3-1-gofs-criacionais.md#módulo-de-histórico-de-sessões) |
+| [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
+---
+
+## [Módulo / padrão: ____________] — A preencher
+
+> Use esta seção ou adicione novas subseções para outros módulos da equipe.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|----------------|--------------|---------------|----------------|
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
 ---
@@ -52,3 +76,4 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Versão | Data       | Descrição                                                                                                                    | Autor         |
 |--------|------------|------------------------------------------------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Registro de participações nos padrões GoF do módulo de onboarding (Singleton, Bridge, Facade, Memento, Template Method)      | Lucas Antunes |
+| 1.1    | 20/05/2026 | Participações no módulo de histórico (Multiton, Proxy, Observer) — RF26/RF27                                                | Giovanni Dornelas Ferreira |

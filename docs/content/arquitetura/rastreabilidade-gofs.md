@@ -13,18 +13,30 @@ Mapear cada padrão GoF implementado ao seu artefato de código, camada de arqui
 | **Estrutural**     | Facade          | Onboarding | Presentation            | `OnboardingFacade`                                                      | Oferecer ponto único de acesso do controller aos três use cases de onboarding, isolando a camada de apresentação    | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md)         | `GET/POST/PUT /v1/onboarding` |
 | **Comportamental** | Memento         | Onboarding | Domain + Infrastructure | `TrainingProfile.createMemento()` + `OnboardingMementoVO`               | Preservar o estado completo do perfil antes de um redo sem violar o encapsulamento da entidade                      | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `PUT /v1/onboarding`          |
 | **Comportamental** | Template Method | Onboarding | Domain                  | `OnboardingFlow.execute()` com hooks `beforeClassify` / `afterClassify` | Garantir sequência imutável do algoritmo de classificação (pre → classificar → pos), extensível via hooks           | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `POST /v1/onboarding`         |
+| **Criacional**     | Multiton        | Histórico  | Domain                  | `HistoryManager.getInstance(userId)`                                    | Pool de gerenciadores por usuário; cache de sessões concluídas sem recriação a cada request                          | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md#módulo-de-histórico-de-sessões) | `GET /v1/history/sessions`    |
+| **Estrutural**     | Proxy           | Histórico  | Infrastructure          | `HistoryServiceProxy` → `HistoryService`                                | Controle de acesso, validação de período e logs antes de delegar ao serviço real                                     | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md#módulo-de-histórico-de-sessões) | `GET /v1/history/sessions`    |
+| **Comportamental** | Observer        | Histórico  | Domain + Application    | `WorkoutSessionSubject.notify()` + `HistoryObserver.update()`           | Atualizar histórico automaticamente após `POST /v1/sessions` sem acoplar use case ao módulo de histórico             | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md#módulo-de-histórico-de-sessões) | `POST /v1/sessions`           |
 
 ## Elos entre padrões
 
-Os cinco padrões não são independentes — formam uma rede de responsabilidades complementares:
+Os padrões formam duas redes complementares — **Onboarding** e **Histórico**:
 
 ```mermaid
 graph LR
-    Singleton["Singleton\nOnboardingClassificationRules"] -->|usado por| Bridge
-    Bridge["Bridge\nOnboardingFlow + ProfileClassifier"] -->|compõe| TemplateMethod
-    TemplateMethod["Template Method\nOnboardingFlow.execute()"] -->|acionado via| Facade
-    Facade["Facade\nOnboardingFacade"] -->|orquestra| Memento
-    Memento["Memento\nTrainingProfile.createMemento()"] -->|snapshot de| Bridge
+    subgraph Onboarding
+        Singleton["Singleton"] --> Bridge
+        Bridge --> TemplateMethod["Template Method"]
+        TemplateMethod --> Facade
+        Facade --> Memento
+    end
+
+    subgraph Histórico
+        Observer["Observer\nWorkoutSessionSubject"] --> Multiton["Multiton\nHistoryManager"]
+        Multiton --> Proxy["Proxy\nHistoryServiceProxy"]
+    end
+
+    Observer -.->|disparado por| POST["POST /v1/sessions"]
+    Proxy -.->|lê via| GET["GET /v1/history/sessions"]
 ```
 
 | Relação                  | Descrição                                                                                                        |
@@ -34,6 +46,9 @@ graph LR
 | Facade → Template Method | O Facade aciona `SubmitOnboardingUseCase`, que instancia o flow e chama `execute()` (template method)            |
 | Facade → Memento         | O Facade aciona `RedoOnboardingUseCase`, que chama `createMemento()` antes de sobrescrever o perfil              |
 | Memento ← Bridge         | O snapshot capturado pelo Memento é o `ClassificationResult` produzido pelo classificador (Bridge)               |
+| Observer → Multiton      | `HistoryObserver.update()` chama `HistoryManager.getInstance(userId).addSession()`                               |
+| Multiton → Proxy         | `HistoryService` (real) usa o Multiton; use cases acessam via `HistoryServiceProxy`                              |
+| POST sessions → Observer | `RegisterSessionUseCase` chama `notify()` após `save()` — RF26 atualização automática                            |
 
 ## Cobertura de testes por padrão
 
@@ -44,6 +59,9 @@ graph LR
 | Facade          | `presentation/controllers/onboarding.controller.spec.ts` (integração via controller) | 7              |
 | Memento         | `domain/onboarding/entities/training-profile.spec.ts`                                | 5              |
 | Template Method | coberto pelos testes de Bridge (`classifiers.spec.ts`)                               | 6              |
+| Multiton        | evidência manual — fluxo POST session + GET history (Swagger / REST Client)          | —              |
+| Proxy           | evidência manual — logs `[HistoryProxy]` e validação de intervalo de datas         | —              |
+| Observer        | evidência manual — sessão aparece em GET history imediatamente após POST           | —              |
 
 Execute todos os testes do módulo de onboarding no container:
 
@@ -51,10 +69,19 @@ Execute todos os testes do módulo de onboarding no container:
 sudo docker compose exec api npx jest onboarding --verbose
 ```
 
+Validação manual do módulo de histórico (API em execução):
+
+```bash
+# 1. Login e registrar sessão (ver Swagger tag sessions)
+# 2. Listar histórico
+curl -H "Authorization: Bearer <token>" http://localhost:3000/v1/history/sessions
+```
+
 ## Observações
 
-- Todos os padrões desta entrega pertencem ao módulo de **Onboarding** e foram implementados na branch `feat/modulo-on-boarding`.
-- Os padrões de **outros módulos** serão adicionados à matriz conforme cada membro da equipe documentar sua contribuição nas seções correspondentes dos documentos 3.1, 3.2 e 3.3.
+- Padrões de **Onboarding**: branch `feat/modulo-on-boarding` (Lucas Antunes).
+- Padrões de **Histórico**: branch `feat/modulo-historico` (Giovanni Dornelas Ferreira) — RF26 e RF27.
+- Novos módulos devem ser documentados nas seções **"[Módulo: ____________] — A preencher"** dos arquivos [3.1](../padroes-de-projeto/3-1-gofs-criacionais.md), [3.2](../padroes-de-projeto/3-2-gofs-estruturais.md) e [3.3](../padroes-de-projeto/3-3-gofs-comportamentais.md), e adicionados a esta matriz.
 - A coluna **Endpoint(s)** lista os endpoints HTTP que exercitam o padrão em produção — útil para validação manual via Postman ou similar.
 
 ## Histórico de versões
@@ -62,3 +89,4 @@ sudo docker compose exec api npx jest onboarding --verbose
 | Versão | Data       | Descrição                                                                                | Autor         |
 |--------|------------|------------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Matriz de rastreabilidade com os 5 padrões GoF do módulo de onboarding e elos entre eles | Lucas Antunes |
+| 1.1    | 20/05/2026 | Inclusão de Multiton, Proxy e Observer do módulo de histórico (RF26/RF27)               | Giovanni Dornelas Ferreira |

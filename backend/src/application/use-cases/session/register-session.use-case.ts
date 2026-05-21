@@ -4,6 +4,7 @@ import { DomainEventBus } from '@application/events/domain-event-bus';
 import { AppLogger, APP_LOGGER } from '@application/logger/logger.interface';
 import { ApplicationException } from '@application/exceptions/application-exceptions';
 import { TrainingSessionBuilder } from '@domain/builders/training-session.builder';
+import { WorkoutSessionSubject } from '@domain/history/observers/workout-session-subject';
 import { ITrainingSessionRepository, TRAINING_SESSION_REPOSITORY } from '@domain/repositories/training-session.repository';
 import * as crypto from 'crypto';
 
@@ -35,6 +36,7 @@ export class RegisterSessionUseCase extends UseCase<RegisterSessionRequestDTO, R
     private readonly sessionRepository: ITrainingSessionRepository,
     eventBus: DomainEventBus,
     @Inject(APP_LOGGER) private readonly logger: AppLogger,
+    private readonly workoutSessionSubject: WorkoutSessionSubject,
   ) {
     super(eventBus);
   }
@@ -67,6 +69,8 @@ export class RegisterSessionUseCase extends UseCase<RegisterSessionRequestDTO, R
       const session = builder.build();
 
       await this.sessionRepository.save(session);
+
+      this.workoutSessionSubject.notify(session);
 
       const totalVolume = session.getSessionTotalVolume();
 

@@ -22,10 +22,12 @@ export class TrainingSessionBuilder {
   }
 
   public withDate(date: Date): this {
+    this.date = date;
     return this;
   }
 
   public withRoutine(routineId: string): this {
+    this.routineId = routineId;
     return this;
   }
 

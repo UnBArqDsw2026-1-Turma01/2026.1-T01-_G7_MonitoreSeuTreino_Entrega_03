@@ -81,23 +81,29 @@ graph TD
 |--------------|--------------------------------------------------|------------------------------------------------|--------------|
 | Autenticação | `auth/` (JWT, refresh token, guards)             | `features/auth/` (login, cadastro)             | Implementado |
 | Onboarding   | `onboarding/` (perfil, histórico, classificação) | `features/onboarding/` (formulário, resultado) | Implementado |
+| Sessões      | `session/` (registro de treino, composite)       | —                                              | Implementado (API) |
+| Histórico    | `history/` (RF26, RF27, Multiton, Proxy, Observer) | —                                            | Implementado (API) |
 | Dashboard    | —                                                | `features/dashboard/` (tela inicial)           | Parcial      |
 | Treinos      | —                                                | —                                              | Planejado    |
 
 ## Relação com os padrões GoF
 
-Os padrões foram aplicados exclusivamente dentro do módulo de **Onboarding** nesta entrega. A tabela abaixo localiza cada padrão na arquitetura:
+Os padrões GoF estão distribuídos nos módulos de **Onboarding** e **Histórico de Sessões**. A tabela abaixo localiza cada padrão na arquitetura:
 
-| Padrão          | Camada                  | Localização                                               | Problema resolvido                                                    |
-|-----------------|-------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
-| Singleton       | Domain                  | `domain/onboarding/rules/`                                | Fonte única de regras de classificação para múltiplos classificadores |
-| Bridge          | Domain                  | `domain/onboarding/bridge/`                               | Separar hierarquia de fluxos da hierarquia de classificadores         |
-| Facade          | Presentation            | `presentation/facades/`                                   | Isolar o controller do subsistema interno de use cases                |
-| Memento         | Domain + Infrastructure | `domain/onboarding/entities/`, `infrastructure/database/` | Preservar estado anterior do perfil antes de um redo                  |
-| Template Method | Domain                  | `domain/onboarding/bridge/` (OnboardingFlow)              | Garantir sequência imutável do algoritmo de classificação             |
+| Padrão          | Módulo     | Camada                  | Localização                                               | Problema resolvido                                                    |
+|-----------------|------------|-------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
+| Singleton       | Onboarding | Domain                  | `domain/onboarding/rules/`                                | Fonte única de regras de classificação para múltiplos classificadores |
+| Multiton        | Histórico  | Domain                  | `domain/history/history-manager.ts`                       | Uma instância de gerenciador de histórico por usuário autenticado     |
+| Bridge          | Onboarding | Domain                  | `domain/onboarding/bridge/`                               | Separar hierarquia de fluxos da hierarquia de classificadores         |
+| Facade          | Onboarding | Presentation            | `presentation/facades/`                                   | Isolar o controller do subsistema interno de use cases                |
+| Proxy           | Histórico  | Infrastructure          | `infrastructure/services/history-service.proxy.ts`        | Validar acesso, auditar e delegar ao serviço real de histórico        |
+| Memento         | Onboarding | Domain + Infrastructure | `domain/onboarding/entities/`, `infrastructure/database/` | Preservar estado anterior do perfil antes de um redo                  |
+| Template Method | Onboarding | Domain                  | `domain/onboarding/bridge/` (OnboardingFlow)              | Garantir sequência imutável do algoritmo de classificação             |
+| Observer        | Histórico  | Domain + Application    | `domain/history/observers/`, `register-session.use-case`  | Atualizar histórico automaticamente ao concluir sessão de treino      |
 
 ## Histórico de versões
 
 | Versão | Data       | Descrição                                                                          | Autor         |
 |--------|------------|------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Visão geral da arquitetura com localização dos padrões GoF do módulo de onboarding | Lucas Antunes |
+| 1.1    | 20/05/2026 | Inclusão dos módulos Sessões e Histórico com padrões Multiton, Proxy e Observer   | Giovanni Dornelas Ferreira |

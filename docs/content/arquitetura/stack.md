@@ -49,9 +49,13 @@ Documentar as tecnologias adotadas no projeto MonitoreSeuTreino, suas justificat
 | **Facade**          | NestJS providers + `@Injectable()` permitem injetar o facade no controller sem expor os use cases individuais ao container |
 | **Memento**         | Value Objects imutáveis (TypeScript `readonly`) garantem que o memento não seja mutado após a captura                      |
 | **Template Method** | Classes abstratas TypeScript com métodos `protected` implementam os hooks sem precisar de framework adicional              |
+| **Multiton**        | `Map<string, T>` estático em TypeScript; construtor `private` por instância de pool; sem dependência de framework           |
+| **Proxy**           | NestJS `useFactory` injeta `HistoryServiceProxy` no token `HISTORY_SERVICE`; interface TypeScript compartilhada com o real |
+| **Observer**        | Subject/Observer em classes `@Injectable()`; inscrição em `OnModuleInit` do `HistoryModule`                                |
 
 ## Histórico de versões
 
-| Versão | Data       | Descrição                                                       | Autor         |
-|--------|------------|-----------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Documentação da stack com relação aos padrões GoF implementados | Lucas Antunes |
+| Versão | Data       | Descrição                                                       | Autor                      |
+|--------|------------|-----------------------------------------------------------------|----------------------------|
+| 1.0    | 19/05/2026 | Documentação da stack com relação aos padrões GoF implementados | Lucas Antunes              |
+| 1.1    | 20/05/2026 | Relação da stack com Multiton, Proxy e Observer (histórico)     | Giovanni Dornelas Ferreira |

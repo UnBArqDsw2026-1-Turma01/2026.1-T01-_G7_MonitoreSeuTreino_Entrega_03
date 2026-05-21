@@ -4,7 +4,7 @@
 
 Os padrões criacionais tratam do processo de criação de objetos, abstraindo a lógica de instanciação e permitindo que o sistema seja independente de como seus objetos são criados, compostos e representados.
 
-Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. As seções sinalizadas como **"a preencher"** aguardam a contribuição dos demais membros — siga a estrutura da seção de Onboarding como referência.
+Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. Ao final do arquivo, a seção **"[Módulo: ____________] — A preencher"** permanece disponível para novas contribuições — siga a estrutura das seções de Onboarding ou Histórico de Sessões como referência.
 
 ---
 
@@ -178,13 +178,186 @@ sudo docker compose exec api npx jest onboarding-classification-rules --verbose
 
 ---
 
+## Módulo de Histórico de Sessões
+
+> **Responsável:** Giovanni Dornelas Ferreira | **Branch:** `feat/modulo-historico`
+>
+> Contexto: o desafio criacional do histórico (RF26/RF27) é manter **estado de cache por usuário autenticado** sem recriar gerenciadores a cada requisição HTTP, permitindo que o Observer atualize o mesmo objeto após cada sessão concluída.
+
+### Padrões analisados
+
+| Padrão           | Possível aplicação                              | Status          | Justificativa                                                                                    |
+|------------------|-------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------|
+| **Multiton**     | Uma instância de `HistoryManager` por `userId`  | Selecionado     | Pool controlado por usuário; evita Singleton global que misturaria dados entre usuários          |
+| Singleton        | Instância única global de histórico             | Não selecionado | Violaria isolamento multiusuário — histórico de A poderia vazar para B                         |
+| Factory Method   | Criar `HistoryManager` via factory              | Avaliado        | Multiton com `getInstance(userId)` é mais direto para o caso “uma instância por chave”         |
+| Builder          | Montar resposta de listagem                     | Não selecionado | View model + mapeamento no serviço são suficientes                                             |
+| Prototype        | Clonar sessões em cache                         | Não selecionado | Sessões são imutáveis após conclusão; `Map` por `sessionId` resolve armazenamento               |
+
+### Padrão implementado — Multiton · `HistoryManager.getInstance(userId)`
+
+## Problema arquitetural
+
+O módulo de histórico precisa:
+
+1. **Listar sessões concluídas** (RF26) com ordenação por data decrescente.
+2. **Filtrar por período** (RF27) quando o cliente envia `startDate`/`endDate`.
+3. **Atualizar o cache** automaticamente quando uma nova sessão é registrada (`POST /v1/sessions`).
+
+Se cada requisição criasse um novo objeto de “gerenciador de histórico”, haveria:
+
+- **Recriação desnecessária** de estruturas (`Map` de sessões) a cada `GET /v1/history/sessions`.
+- **Perda de sincronia** com o Observer: o `HistoryObserver` adicionaria sessão em uma instância, mas a listagem poderia ler outra instância vazia na mesma requisição subsequente (sem pool estável por usuário).
+
+O **Multiton** resolve isso mantendo `Map<userId, HistoryManager>` — uma instância reutilizada por usuário, diferente do Singleton (uma instância para toda a aplicação).
+
+## Justificativa da escolha
+
+- **`HistoryManager.getInstance(userId)`** expressa explicitamente o escopo: estado pertence ao usuário autenticado.
+- **Reutilização**: `HistoryService` e `HistoryObserver` obtêm a mesma instância para o mesmo `userId`.
+- **Domínio puro**: a classe não depende de NestJS; vive em `domain/history/`.
+- **Complemento ao Observer**: quando `WorkoutSessionSubject.notify()` dispara, `HistoryObserver.update()` chama `getInstance(session.userId).addSession(session)` na instância já existente ou recém-criada para aquele usuário.
+
+## Modelagem
+
+```mermaid
+classDiagram
+    class HistoryManager {
+        -instances$: Map~string, HistoryManager~$
+        -sessions: Map~string, TrainingSession~
+        -userId: string
+        -constructor(userId)
+        +getInstance(userId)$ HistoryManager
+        +clearInstance(userId)$ void
+        +addSession(session) void
+        +getSessions() TrainingSession[]
+        +loadSessions(sessions) void
+        +filterByDateRange(start, end) TrainingSession[]
+    }
+
+    class HistoryService {
+        +listCompletedSessions(userId, filter)
+        +getSessionDetail(userId, sessionId)
+    }
+
+    class HistoryObserver {
+        +update(session) void
+    }
+
+    HistoryService --> HistoryManager : getInstance(userId)
+    HistoryObserver --> HistoryManager : getInstance(userId)
+```
+
+## Implementação
+
+| Elemento              | Caminho                                                              |
+|-----------------------|----------------------------------------------------------------------|
+| Multiton              | `backend/src/domain/history/history-manager.ts`                      |
+| Consumidor — serviço  | `backend/src/application/services/history.service.ts`                |
+| Consumidor — observer | `backend/src/domain/history/observers/history-observer.ts`           |
+| Repositório (fonte)   | `backend/src/infrastructure/database/training-session.repository.impl.ts` |
+| Endpoints             | `GET /v1/history/sessions`, `GET /v1/history/sessions/:sessionId`  |
+
+### Trecho central
+
+```typescript
+// history-manager.ts — Multiton
+export class HistoryManager {
+  private static readonly instances = new Map<string, HistoryManager>();
+  private readonly sessions = new Map<string, TrainingSession>();
+
+  private constructor(public readonly userId: string) {}
+
+  static getInstance(userId: string): HistoryManager {
+    let instance = HistoryManager.instances.get(userId);
+    if (!instance) {
+      instance = new HistoryManager(userId);
+      HistoryManager.instances.set(userId, instance);
+    }
+    return instance;
+  }
+
+  addSession(session: TrainingSession): void {
+    this.sessions.set(session.id, session);
+  }
+}
+
+// history-observer.ts — atualização via Observer
+update(session: TrainingSession): void {
+  if (!session.isCompleted()) return;
+  HistoryManager.getInstance(session.userId).addSession(session);
+}
+```
+
+## Evidência de execução
+
+Fluxo manual recomendado (Swagger `http://localhost:3000/api/docs` ou REST Client):
+
+1. `POST /v1/auth/login` → obter `accessToken`.
+2. `POST /v1/sessions` → registrar sessão com exercícios.
+3. `GET /v1/history/sessions` → listar histórico (cache Multiton + banco).
+4. `GET /v1/history/sessions?startDate=...&endDate=...` → filtrar período (RF27).
+
+Exemplo de resposta da listagem:
+
+```json
+{
+  "sessions": [
+    {
+      "sessionId": "uuid",
+      "date": "2026-05-20T10:00:00.000Z",
+      "routineId": "uuid-da-rotina",
+      "exerciseCount": 2
+    }
+  ]
+}
+```
+
+## Rastreabilidade
+
+| Artefato                          | Relação                                                       |
+|-----------------------------------|---------------------------------------------------------------|
+| Requisitos                        | RF26 (listar histórico), RF27 (filtrar por período)           |
+| Módulo                            | `domain/history/`                                             |
+| Camada                            | Domínio                                                       |
+| Padrão estrutural relacionado     | Proxy (`HistoryServiceProxy` delega ao serviço que usa Multiton) |
+| Padrão comportamental relacionado | Observer (`HistoryObserver` alimenta o Multiton após `notify`) |
+| Endpoint de escrita               | `POST /v1/sessions` (dispara Observer)                        |
+| Endpoint de leitura               | `GET /v1/history/sessions`                                    |
+
+## Senso crítico
+
+### Benefícios
+
+- **Isolamento por usuário**: impossível misturar sessões de dois usuários na mesma instância.
+- **Performance em leituras repetidas**: após warm-up, listagens sem filtro de data podem usar cache em memória.
+- **Integração natural com Observer**: mesma instância recebe sessões novas sem acoplamento ao use case de registro.
+
+### Limitações
+
+- **Estado em memória**: reinício do processo Node limpa o pool; primeira listagem recarrega do PostgreSQL via repositório.
+- **Não distribuído**: em múltiplas réplicas da API, cada instância teria seu próprio Multiton — aceitável no escopo atual (cache otimista, fonte de verdade no banco).
+
+### Alternativas consideradas
+
+- **Singleton global**: rejeitado por não separar usuários.
+- **Cache Redis**: mais robusto em cluster, mas adiciona infraestrutura além do escopo da entrega.
+- **Apenas consulta ao banco**: funcional, mas perderia atualização imediata pós-registro sem o Observer + Multiton.
+
+## Referências
+
+- GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 3 — Creational Patterns (variação Multiton, padrão de instância por chave).
+- NOBLE, J.; WEIR, C. *Small Memory Software*. Prentice Hall, 2000. Cap. 4 — Object Reuse (pools de instâncias).
+
+---
+
 ## [Módulo: ____________] — A preencher
 
 > **Responsável:** [Nome do membro] | **Branch:** [nome da branch]
 
 !!! warning "Seção pendente"
     Esta seção aguarda a contribuição do responsável pelo módulo.
-    Siga a estrutura da seção **Módulo de Onboarding** acima como referência:
+    Siga a estrutura da seção **Módulo de Onboarding** ou **Módulo de Histórico de Sessões** acima como referência:
 
     1. **Padrões analisados** — tabela com os padrões GoF avaliados e justificativa da escolha
     2. **Padrão implementado** — nome e identificador central (ex.: classe ou interface principal)
@@ -197,8 +370,11 @@ sudo docker compose exec api npx jest onboarding-classification-rules --verbose
     9. **Senso crítico** — benefícios, limitações e alternativas consideradas
     10. **Referências** — bibliográficas (ABNT ou formato GoF)
 
+---
+
 ## Histórico de versões
 
-| Versão | Data       | Descrição                                                                          | Autor         |
-|--------|------------|------------------------------------------------------------------------------------|---------------|
-| 1.0    | 19/05/2026 | Documentação do padrão Singleton do módulo de onboarding (regras de classificação) | Lucas Antunes |
+| Versão | Data       | Descrição                                                                          | Autor                      |
+|--------|------------|------------------------------------------------------------------------------------|----------------------------|
+| 1.0    | 19/05/2026 | Documentação do padrão Singleton do módulo de onboarding (regras de classificação) | Lucas Antunes              |
+| 1.1    | 20/05/2026 | Documentação do padrão Multiton do módulo de histórico de sessões (RF26/RF27)      | Giovanni Dornelas Ferreira |
