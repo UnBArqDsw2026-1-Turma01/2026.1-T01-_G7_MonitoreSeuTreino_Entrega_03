@@ -83,6 +83,7 @@ graph TD
 | Onboarding   | `onboarding/` (perfil, histórico, classificação) | `features/onboarding/` (formulário, resultado) | Implementado |
 | Sessões      | `session/` (registro de treino, composite)       | —                                              | Implementado (API) |
 | Histórico    | `history/` (RF26, RF27, Multiton, Proxy, Observer) | —                                            | Implementado (API) |
+| Exercícios   | `exercises/` (criação, edição, listagem)         | `features/exercises/` (listagem, modais)       | Implementado |
 | Dashboard    | —                                                | `features/dashboard/` (tela inicial)           | Parcial      |
 | Treinos      | —                                                | —                                              | Planejado    |
 
@@ -100,6 +101,18 @@ Os padrões GoF estão distribuídos nos módulos de **Onboarding** e **Históri
 | Memento         | Onboarding | Domain + Infrastructure | `domain/onboarding/entities/`, `infrastructure/database/` | Preservar estado anterior do perfil antes de um redo                  |
 | Template Method | Onboarding | Domain                  | `domain/onboarding/bridge/` (OnboardingFlow)              | Garantir sequência imutável do algoritmo de classificação             |
 | Observer        | Histórico  | Domain + Application    | `domain/history/observers/`, `register-session.use-case`  | Atualizar histórico automaticamente ao concluir sessão de treino      |
+Os padrões foram aplicados dentro dos módulos de **Onboarding** e **Exercícios** nesta entrega. A tabela abaixo localiza cada padrão na arquitetura:
+
+| Padrão          | Camada                  | Localização                                               | Problema resolvido                                                    |
+|-----------------|-------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
+| Singleton       | Domain                  | `domain/onboarding/rules/`                                | Fonte única de regras de classificação para múltiplos classificadores |
+| Bridge          | Domain                  | `domain/onboarding/bridge/`                               | Separar hierarquia de fluxos da hierarquia de classificadores         |
+| Facade          | Presentation            | `presentation/facades/`                                   | Isolar o controller do subsistema interno de use cases                |
+| Memento         | Domain + Infrastructure | `domain/onboarding/entities/`, `infrastructure/database/` | Preservar estado anterior do perfil antes de um redo                  |
+| Template Method | Domain                  | `domain/onboarding/bridge/` (OnboardingFlow)              | Garantir sequência imutável do algoritmo de classificação             |
+| Builder         | Domain                  | `domain/exercises/builders/`                              | Centralizar validações e montagem de parâmetros opcionais             |
+| Decorator       | Domain + Infrastructure | `infrastructure/modules/` e `infrastructure/database/`    | Inclusão transparente de logs e cache sobre o repositório base        |
+| Chain of Resp.  | Infrastructure          | `infrastructure/database/` (ExerciseSearchChain)          | Construção dinâmica das validações encadeadas da pipeline de busca    |
 
 ## Histórico de versões
 
@@ -107,3 +120,4 @@ Os padrões GoF estão distribuídos nos módulos de **Onboarding** e **Históri
 |--------|------------|------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Visão geral da arquitetura com localização dos padrões GoF do módulo de onboarding | Lucas Antunes |
 | 1.1    | 20/05/2026 | Inclusão dos módulos Sessões e Histórico com padrões Multiton, Proxy e Observer   | Giovanni Dornelas Ferreira |
+| 1.1    | 21/05/2026 | Adição do módulo de exercícios à lista de módulos e GoFs                           | Daniel Teles        |

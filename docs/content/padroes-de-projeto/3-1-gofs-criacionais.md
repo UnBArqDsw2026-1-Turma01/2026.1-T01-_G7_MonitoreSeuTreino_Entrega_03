@@ -4,7 +4,7 @@
 
 Os padrões criacionais tratam do processo de criação de objetos, abstraindo a lógica de instanciação e permitindo que o sistema seja independente de como seus objetos são criados, compostos e representados.
 
-Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. Ao final do arquivo, a seção **"[Módulo: ____________] — A preencher"** permanece disponível para novas contribuições — siga a estrutura das seções de Onboarding ou Histórico de Sessões como referência.
+Este documento reúne as contribuições de **todos os módulos do projeto**. Cada seção identifica o módulo, o integrante responsável e o padrão GoF aplicado. Ao final do arquivo, a seção **"[Módulo: ____________] — A preencher"** permanece disponível para novas contribuições — siga a estrutura das seções de Onboarding, Exercícios ou Histórico de Sessões como referência.
 
 ---
 
@@ -175,6 +175,111 @@ sudo docker compose exec api npx jest onboarding-classification-rules --verbose
 
 - GAMMA, E. et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Singleton, p. 127–136.
 - MARTIN, R. C. *Clean Architecture*. Prentice Hall, 2017. Cap. 22 — The Clean Architecture.
+
+---
+
+## Módulo de Exercicios
+
+> **Responsável:** Daniel Teles | **Branch:** `feature/exercise_module`
+>
+> Contexto: criar exercícios vinculados a um usuário de forma segura e validada, sem expor lógica de construção do agregado (validação de nome, grupo muscular opcional). O objetivo foi centralizar a construção do agregado e manter os use cases enxutos.
+
+### Padrões analisados
+
+| Padrão   | Possível aplicação                            | Status      | Justificativa |
+|----------|-----------------------------------------------|-------------|---------------|
+| Builder  | Construção de `Exercise` com validações e campos opcionais | Selecionado | Simplifica a criação no use case e garante VOs válidos antes de persistir |
+| Factory  | Criar a entidade via factory                   | Avaliado    | Menor benefício quando VOs exigem validação complexa; Builder dá clareza fluente |
+
+### Padrão implementado — Builder · `ExerciseBuilder`
+
+## Problema arquitetural
+
+O `CreateExerciseUseCase` precisava construir um `Exercise` garantindo: `userId` obrigatório, `name` válido e `muscleGroup` opcional validado como VO. Colocar essa validação inline no use case poluiria a aplicação e duplicaria lógica em outros pontos consumidores.
+
+### Justificativa da escolha
+
+O `Builder` concentra a lógica de construção (`withUserId`, `withName`, `withMuscleGroup`, `build`) permitindo que o use case crie uma instância pronta para persistir com uma chamada fluente. Além disso, o Builder facilita a inclusão futura de presets e validações sem alterar o contrato do use case.
+
+## Implementação
+
+| Elemento       | Caminho |
+|----------------|---------|
+| Builder        | `backend/src/domain/exercises/builders/exercise.builder.ts` |
+| Entidade       | `backend/src/domain/exercises/entities/exercise.entity.ts` |
+| Value Objects  | `backend/src/domain/exercises/value-objects/exercise-name.vo.ts`, `backend/src/domain/exercises/value-objects/muscle-group.vo.ts` |
+| Use Case       | `backend/src/application/use-cases/exercises/create-exercise.use-case.ts` |
+
+### Trecho central
+
+```typescript
+const exercise = new ExerciseBuilder()
+  .withUserId(cmd.userId)
+  .withName(cmd.name)
+  .withMuscleGroup(cmd.muscleGroup)
+  .build();
+
+await this.exerciseRepository.save(exercise);
+```
+
+## Modelagem
+
+```mermaid
+classDiagram
+    class ExerciseBuilder {
+        -userId: string
+        -name: string
+        -muscleGroup: string
+        +withUserId(userId: string) ExerciseBuilder
+        +withName(name: string) ExerciseBuilder
+        +withMuscleGroup(muscleGroup: string) ExerciseBuilder
+        +build() Exercise
+    }
+
+    class Exercise {
+        +id: string
+        +userId: string
+        +name: ExerciseName
+        +muscleGroup: MuscleGroup
+        +active: boolean
+    }
+
+    ExerciseBuilder ..> Exercise : creates
+```
+
+## Evidência de execução
+
+```bash
+docker compose exec api npx jest create-exercise
+```
+
+## Rastreabilidade
+
+| Artefato | Relação |
+|---------|--------|
+| Requisito | RF13 — cadastrar exercício com nome obrigatório e grupo muscular opcional |
+| Use Case  | `CreateExerciseUseCase` |
+| Camada    | `domain/exercises` (Builder + VOs) |
+
+## Senso crítico
+
+### Benefícios
+
+- **Imutabilidade e Segurança:** Garante que o agregado `Exercise` sempre nasça em um estado válido.
+- **Leitura Fluente:** Melhora a leitura dos casos de uso, onde a criação passo a passo fica evidente.
+- **Desacoplamento:** Remove a responsabilidade do construtor da Entidade de lidar com valores default espalhados.
+
+### Limitações
+
+- **Verboso:** Para objetos com poucos atributos, criar um builder pode parecer boilerplate desnecessário.
+
+### Alternativas consideradas
+
+- **Static Factory Method:** `Exercise.create({ ... })`. Descartado por perder validação passo a passo (ex.: `muscleGroup` opcional).
+
+## Referências
+
+- GAMMA, E. et al. *Design Patterns*. Addison-Wesley, 1994. Cap. 3 — Creational Patterns, Builder.
 
 ---
 
@@ -351,13 +456,16 @@ Exemplo de resposta da listagem:
 
 ---
 
+
+---
+
 ## [Módulo: ____________] — A preencher
 
 > **Responsável:** [Nome do membro] | **Branch:** [nome da branch]
 
 !!! warning "Seção pendente"
     Esta seção aguarda a contribuição do responsável pelo módulo.
-    Siga a estrutura da seção **Módulo de Onboarding** ou **Módulo de Histórico de Sessões** acima como referência:
+    Siga a estrutura das seções **Módulo de Onboarding**, **Módulo de Exercícios** ou **Módulo de Histórico de Sessões** acima como referência:
 
     1. **Padrões analisados** — tabela com os padrões GoF avaliados e justificativa da escolha
     2. **Padrão implementado** — nome e identificador central (ex.: classe ou interface principal)
@@ -377,4 +485,5 @@ Exemplo de resposta da listagem:
 | Versão | Data       | Descrição                                                                          | Autor                      |
 |--------|------------|------------------------------------------------------------------------------------|----------------------------|
 | 1.0    | 19/05/2026 | Documentação do padrão Singleton do módulo de onboarding (regras de classificação) | Lucas Antunes              |
-| 1.1    | 20/05/2026 | Documentação do padrão Multiton do módulo de histórico de sessões (RF26/RF27)      | Giovanni Dornelas Ferreira |
+| 1.1    | 20/05/2026 | Documentação do padrão Builder para o módulo de exercises (criação de Exercise)      | Daniel Teles               |
+| 1.2    | 20/05/2026 | Documentação do padrão Multiton do módulo de histórico de sessões (RF26/RF27)      | Giovanni Dornelas Ferreira |

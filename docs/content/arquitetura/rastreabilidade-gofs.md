@@ -16,6 +16,9 @@ Mapear cada padrão GoF implementado ao seu artefato de código, camada de arqui
 | **Criacional**     | Multiton        | Histórico  | Domain                  | `HistoryManager.getInstance(userId)`                                    | Pool de gerenciadores por usuário; cache de sessões concluídas sem recriação a cada request                          | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md#módulo-de-histórico-de-sessões) | `GET /v1/history/sessions`    |
 | **Estrutural**     | Proxy           | Histórico  | Infrastructure          | `HistoryServiceProxy` → `HistoryService`                                | Controle de acesso, validação de período e logs antes de delegar ao serviço real                                     | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md#módulo-de-histórico-de-sessões) | `GET /v1/history/sessions`    |
 | **Comportamental** | Observer        | Histórico  | Domain + Application    | `WorkoutSessionSubject.notify()` + `HistoryObserver.update()`           | Atualizar histórico automaticamente após `POST /v1/sessions` sem acoplar use case ao módulo de histórico             | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md#módulo-de-histórico-de-sessões) | `POST /v1/sessions`           |
+| **Criacional**     | Builder         | Exercises  | Domain                  | `ExerciseBuilder`                                       | Centralizar regras de montagem e validações obrigacionas vs opcionais do agregado `Exercise` | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md)             | `POST /v1/exercises`            |
+| **Estrutural**     | Decorator       | Exercises  | Domain + Infrastructure | `LoggingExerciseRepository` + `CachingExerciseRepository` | OCP para cacheamento e logging de respostas das rotas de leitura   | [3.2 GoFs Estruturais](../padroes-de-projeto/3-2-gofs-estruturais.md)             | `GET/POST/PUT /v1/exercises` |
+| **Comportamental** | Chain of Resp.  | Exercises  | Infrastructure          | `ExerciseSearchChain`                                   | Encadeamento de restrições de busca `where` (ativos, name, muscleGroup) | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md)       | `GET /v1/exercises`             |
 
 ## Elos entre padrões
 
@@ -37,6 +40,14 @@ graph LR
 
     Observer -.->|disparado por| POST["POST /v1/sessions"]
     Proxy -.->|lê via| GET["GET /v1/history/sessions"]
+    Singleton["Singleton\nOnboardingClassificationRules"] -->|usado por| Bridge
+    Bridge["Bridge\nOnboardingFlow + ProfileClassifier"] -->|compõe| TemplateMethod
+    TemplateMethod["Template Method\nOnboardingFlow.execute()"] -->|acionado via| Facade
+    Facade["Facade\nOnboardingFacade"] -->|orquestra| Memento
+    Memento["Memento\nTrainingProfile.createMemento()"] -->|snapshot de| Bridge
+    Builder["Builder\nExerciseBuilder"] -->|usado por| CreateExerciseUseCase[CreateExerciseUseCase]
+    Decorator["Decorator\nCaching & Logging Repository"] -->|envolve| PostgresRepository[ExercisePostgresRepository]
+    ChainResp["ChainOfResponsibility\nExerciseSearchChain"] -->|usado por| PostgresRepository
 ```
 
 | Relação                  | Descrição                                                                                                        |
@@ -49,6 +60,9 @@ graph LR
 | Observer → Multiton      | `HistoryObserver.update()` chama `HistoryManager.getInstance(userId).addSession()`                               |
 | Multiton → Proxy         | `HistoryService` (real) usa o Multiton; use cases acessam via `HistoryServiceProxy`                              |
 | POST sessions → Observer | `RegisterSessionUseCase` chama `notify()` após `save()` — RF26 atualização automática                            |
+| Builder → Use Case       | O `CreateExerciseUseCase` aciona o Builder para compilar todas as validações obrigatórias antes da persistência |
+| Decorator → Infra        | O módulo do NestJS interliga e resolve a inversão de dependências injetando os decorators no wrapper do REPOSITORY |
+| C.O.R → Infra            | O método de busca (`search`) constrói a base query e delega as filtragens dinâmicas à Chain of Responsibility |
 
 ## Cobertura de testes por padrão
 
@@ -62,6 +76,9 @@ graph LR
 | Multiton        | evidência manual — fluxo POST session + GET history (Swagger / REST Client)          | —              |
 | Proxy           | evidência manual — logs `[HistoryProxy]` e validação de intervalo de datas         | —              |
 | Observer        | evidência manual — sessão aparece em GET history imediatamente após POST           | —              |
+| Builder         | `domain/exercises/builders/exercise.builder.spec.ts` (ou testes e2e de exercise)        | 3 |
+| Decorator       | `infrastructure/database/exercise.repository.spec.ts` (ou validação manual via stdout)   | 0 |
+| Chain of Resp.  | `infrastructure/database/exercise-search.chain.spec.ts`                                  | 2 |
 
 Execute todos os testes do módulo de onboarding no container:
 
@@ -90,3 +107,4 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/v1/history/session
 |--------|------------|------------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Matriz de rastreabilidade com os 5 padrões GoF do módulo de onboarding e elos entre eles | Lucas Antunes |
 | 1.1    | 20/05/2026 | Inclusão de Multiton, Proxy e Observer do módulo de histórico (RF26/RF27)               | Giovanni Dornelas Ferreira |
+| 1.1    | 20/05/2026 | Matriz de rastreabilidade expandida com os 3 padrões GoF do módulo de Exercises | Daniel Teles|

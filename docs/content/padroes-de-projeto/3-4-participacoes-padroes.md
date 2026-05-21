@@ -16,6 +16,14 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Giovanni Dornelas Ferreira | Multiton `HistoryManager`, integração com `HistoryService` e `HistoryObserver`, repositório `findCompletedByUserId`, RF26/RF27, documentação | Excelente | `backend/src/domain/history/history-manager.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
+### Builder — Módulo de Exercises
+
+**Contexto:** Implementação de `ExerciseBuilder` para garantir a criação correta do agregado `Exercise` com seus value objects vinculados.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|----------------|--------------|---------------|----------------|
+| Daniel Teles | Modelagem do Builder para gerenciar construção de exercícios, separando a lógica inline do UseCase e melhorando segurança da criação. | Excelente | `backend/src/domain/exercises/builders/` |
+
 ---
 
 ## GoFs Estruturais
@@ -31,6 +39,14 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Lucas Antunes | Bridge: abstração `OnboardingFlow`, `StrengthOnboardingFlow`, interface `ProfileClassifier`, `MaleProfileClassifier`, `FemaleProfileClassifier`, testes (6 casos). Facade: `OnboardingFacade`, integração com `OnboardingController` | Excelente | `backend/src/domain/onboarding/bridge/`, `backend/src/presentation/facades/` |
 | Giovanni Dornelas Ferreira | Proxy `HistoryServiceProxy`, interface `IHistoryService`, serviço real `HistoryService`, wiring em `HistoryModule`, `HistoryController`, documentação | Excelente | `backend/src/infrastructure/services/history-service.proxy.ts`, `backend/src/application/services/history.service.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
+### Decorator — Módulo de Exercises
+
+**Contexto:** Padrões Caching e Logging ao redor do repositório base para ganho em observabilidade e performance.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|----------------|--------------|---------------|----------------|
+| Daniel Teles | Adição de Decorators `CachingExerciseRepository` e `LoggingExerciseRepository` em volta do Postgres Repository, mantendo OCP e SRP. | Excelente | `backend/src/infrastructure/database/` e `backend/src/infrastructure/modules/` |
 
 ---
 
@@ -69,6 +85,14 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 |----------------|--------------|---------------|----------------|
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
+### Chain of Responsibility — Módulo de Exercises
+
+**Contexto:** Construção elástica da query de busca através de uma pipeline de handlers.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|----------------|--------------|---------------|----------------|
+| Daniel Teles | Encadeamento de restrições de busca `ExerciseSearchChain` para permitir múltiplos testes dinâmicos de filtro. | Excelente | `backend/src/infrastructure/database/exercise-search.chain.ts` |
+
 ---
 
 ## Histórico de versões
@@ -77,3 +101,7 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 |--------|------------|------------------------------------------------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Registro de participações nos padrões GoF do módulo de onboarding (Singleton, Bridge, Facade, Memento, Template Method)      | Lucas Antunes |
 | 1.1    | 20/05/2026 | Participações no módulo de histórico (Multiton, Proxy, Observer) — RF26/RF27                                                | Giovanni Dornelas Ferreira |
+| Versão | Data       | Descrição | Autor |
+|--------|------------|-----------|-------|
+| 1.0    | 19/05/2026 | Registro de participações nos padrões GoF do módulo de onboarding | Lucas Antunes |
+| 1.1    | 20/05/2026 | Adição de participações de Exercises | Daniel Teles |

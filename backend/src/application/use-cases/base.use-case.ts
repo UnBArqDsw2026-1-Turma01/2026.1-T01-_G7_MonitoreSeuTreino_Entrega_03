@@ -31,30 +31,16 @@ export abstract class UseCase<TInput, TOutput> {
   }
 
   private collectAggregates(result: unknown): AggregateRoot[] {
+    if (!result || typeof result !== 'object') return [];
+
     if (result instanceof AggregateRoot) return [result];
 
     if (Array.isArray(result)) {
-      return result.filter(
-        (v): v is AggregateRoot => v instanceof AggregateRoot,
-      );
+      return result.flatMap((v) => this.collectAggregates(v));
     }
 
-    if (result !== null && typeof result === 'object') {
-      return Object.values(result).flatMap((value) => {
-        if (value instanceof AggregateRoot) {
-          return [value];
-        }
-
-        if (Array.isArray(value)) {
-          return value.filter(
-            (v): v is AggregateRoot => v instanceof AggregateRoot,
-          );
-        }
-
-        return [];
-      });
-    }
-
-    return [];
+    return Object.values(result).flatMap((value) =>
+      this.collectAggregates(value),
+    );
   }
 }

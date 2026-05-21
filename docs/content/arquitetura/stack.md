@@ -59,3 +59,13 @@ Documentar as tecnologias adotadas no projeto MonitoreSeuTreino, suas justificat
 |--------|------------|-----------------------------------------------------------------|----------------------------|
 | 1.0    | 19/05/2026 | Documentação da stack com relação aos padrões GoF implementados | Lucas Antunes              |
 | 1.1    | 20/05/2026 | Relação da stack com Multiton, Proxy e Observer (histórico)     | Giovanni Dornelas Ferreira |
+| **Builder**         | TypeScript e a tipagem estática previnem que desenvolvedores esqueçam de chamar propriedades da entidade antes de construir (`build()`)      |
+| **Decorator**       | Interfaces TypeScript e herança auxiliam em interceptar as camadas do repositório TypeORM na sua instanciação no NestJS                    |
+| **Chain of Resp.**  | O QueryBuilder do TypeORM (`SelectQueryBuilder`) entra como contexto passável (`req/res`) pelos interceptadores iterativos                 |
+
+## Histórico de versões
+
+| Versão | Data       | Descrição                                                       | Autor         |
+|--------|------------|-----------------------------------------------------------------|---------------|
+| 1.0    | 19/05/2026 | Documentação da stack com relação aos padrões GoF implementados | Lucas Antunes |
+| 1.1    | 21/05/2026 | Adição dos padrões GoF pertinentes ao módulo de Exercícios                      | Daniel Teles        |

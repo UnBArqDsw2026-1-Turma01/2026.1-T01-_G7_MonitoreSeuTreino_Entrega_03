@@ -25,14 +25,17 @@ A tabela abaixo consolida todos os padrões implementados. Cada seção dos docu
 | Criacional       | [A definir]     | [Módulo]       | [Nome]        | —                                                  | —                                 |
 | Estrutural       | [A definir]     | [Módulo]       | [Nome]        | —                                                  | —                                 |
 | Comportamental   | [A definir]     | [Módulo]       | [Nome]        | —                                                  | —                                 |
+| **Criacional**   | Builder         | Exercises      | Daniel Teles       | `ExerciseBuilder`                                  | `POST /v1/exercises`              |
+| **Estrutural**   | Decorator       | Exercises      | Daniel Teles       | `CachingExerciseRepository` / `Logging...` | `GET/POST/PUT /v1/exercises`      |
+| **Comportamental** | Chain of Resp.  | Exercises    | Daniel Teles       | `ExerciseSearchChain`                              | `GET /v1/exercises`               |
 
 ## Organização do módulo
 
 | Seção                    | Descrição                                                                                                       |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------|
-| [3.1 GoFs Criacionais](3-1-gofs-criacionais.md) | Singleton (Onboarding) e Multiton (Histórico de Sessões) |
-| [3.2 GoFs Estruturais](3-2-gofs-estruturais.md) | Bridge e Facade (Onboarding); Proxy (Histórico de Sessões) |
-| [3.3 GoFs Comportamentais](3-3-gofs-comportamentais.md) | Memento e Template Method (Onboarding); Observer (Histórico de Sessões) |
+| [3.1 GoFs Criacionais](3-1-gofs-criacionais.md) | Singleton (Onboarding), Builder (Exercícios), Multiton (Histórico) |
+| [3.2 GoFs Estruturais](3-2-gofs-estruturais.md) | Bridge e Facade (Onboarding); Decorator (Exercícios); Proxy (Histórico) |
+| [3.3 GoFs Comportamentais](3-3-gofs-comportamentais.md) | Memento e Template Method (Onboarding); Chain of Responsibility (Exercícios); Observer (Histórico) |
 | [3.4 Participações](3-4-participacoes-padroes.md) | Registro individual das contribuições de cada membro, com significância e comprobatórios por padrão implementado |
 | [3.5 Iniciativas Extras](3-5-iniciativas-extras.md) | Iniciativas além do escopo mínimo — testes de integração, documentação de API, organização de arquivos por padrão de módulo |
 
@@ -63,4 +66,5 @@ Cada documento de GoF (3-1, 3-2, 3-3) contém uma seção **"[Módulo: _________
 | Versão | Data       | Descrição                                                                                           | Autor         |
 |--------|------------|-----------------------------------------------------------------------------------------------------|---------------|
 | 1.0    | 19/05/2026 | Estruturação do módulo de padrões de projeto com todos os GoFs do módulo de onboarding documentados | Lucas Antunes |
-| 1.1    | 20/05/2026 | Inclusão dos GoFs do módulo de histórico (Multiton, Proxy, Observer) — RF26 e RF27              | Giovanni Dornelas Ferreira |
+| 1.1    | 21/05/2026 | Atualização do painel de GoFs com o módulo de exercícios                                        | Daniel Teles               |
+| 1.2    | 20/05/2026 | Inclusão dos GoFs do módulo de histórico (Multiton, Proxy, Observer) — RF26 e RF27              | Giovanni Dornelas Ferreira |
