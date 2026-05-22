@@ -77,7 +77,7 @@ export function RoutinesPage() {
     setIsModalOpen(true);
   };
 
-   
+
   const getExerciseName = (exerciseId: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const exercise = exercises.find((ex: any) => ex.id === exerciseId);

@@ -27,7 +27,8 @@ export class RoutinePostgresRepository implements RoutineRepository {
       where: { userId },
       order: { isActive: 'DESC' },
     });
-    return ormEntities as unknown as Routine[];
+
+    return ormEntities.map((ormEntity) => Routine.reconstitute(ormEntity));
   }
 
   async save(routine: Routine): Promise<void> {

@@ -21,6 +21,9 @@ import { UpdateRoutineInput } from '../../application/use-cases/routines/update-
 import { CloneRoutineInput } from '../../application/use-cases/routines/clone-routine.use-case';
 import { ActivateRoutineInput } from '../../application/use-cases/routines/activate-routine.use-case';
 
+// Importando o View Model
+import { RoutineViewModel } from '../view-models/routine.view-model';
+
 @Controller('routines')
 export class RoutineController {
   constructor(
@@ -36,36 +39,37 @@ export class RoutineController {
   @Get()
   async getMyRoutines(@Query('userId') userId: string) {
     const id = userId || 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
-    return this.getMyRoutinesUseCase.execute(id);
+    const routines = await this.getMyRoutinesUseCase.execute(id);
+    return routines.map((routine) => RoutineViewModel.toHTTP(routine));
   }
 
   @Post()
   async create(@Body() body: CreateRoutineInput) {
-    return this.createRoutineUseCase.execute(body);
+    await this.createRoutineUseCase.execute(body);
   }
 
   @Post(':id/clone')
   async clone(@Param('id') id: string, @Body() body: CloneRoutineInput) {
-    return this.cloneRoutineUseCase.execute({ ...body, routineId: id });
+    await this.cloneRoutineUseCase.execute({ ...body, routineId: id });
   }
 
   @Put(':id')
   async update(@Param('id') id: string, @Body() body: UpdateRoutineInput) {
-    return this.updateRoutineUseCase.execute({ ...body, routineId: id });
+    await this.updateRoutineUseCase.execute({ ...body, routineId: id });
   }
 
   @Patch(':id/activate')
   async activate(@Param('id') id: string, @Body() body: ActivateRoutineInput) {
-    return this.activateRoutineUseCase.execute({ ...body, routineId: id });
+    await this.activateRoutineUseCase.execute({ ...body, routineId: id });
   }
 
   @Delete(':id')
   async delete(@Param('id') id: string) {
-    return this.deleteRoutineUseCase.execute(id);
+    await this.deleteRoutineUseCase.execute(id);
   }
 
   @Patch(':id/inactivate')
   async inactivate(@Param('id') id: string) {
-    return this.inactivateRoutineUseCase.execute(id);
+    await this.inactivateRoutineUseCase.execute(id);
   }
 }

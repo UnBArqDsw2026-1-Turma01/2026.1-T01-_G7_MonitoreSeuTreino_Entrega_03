@@ -68,7 +68,9 @@ export class PasswordResetToken extends AggregateRoot {
       this.createdAt,
       now,
     );
-    updated.pushEvent(new PasswordResetCompletedEvent(this.userId, now.toDate()));
+    updated.pushEvent(
+      new PasswordResetCompletedEvent(this.userId, now.toDate()),
+    );
     return updated;
   }
 
