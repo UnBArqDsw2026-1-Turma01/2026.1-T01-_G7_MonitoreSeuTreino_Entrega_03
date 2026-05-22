@@ -21,6 +21,8 @@ import { RoutineModule } from '../../routine.module';
 import { UserModule } from './user.module';
 import { SessionModule } from './session.module';
 import { HistoryModule } from './history.module';
+import { TrackingModule } from './tracking.module';
+import { WeeklyMonitoringOrmEntity } from '../database/weekly-monitoring.orm-entity';
 
 @Module({
   imports: [
@@ -47,6 +49,7 @@ import { HistoryModule } from './history.module';
           ExerciseNodeOrmEntity,
           TrainingSetOrmEntity,
           PasswordResetTokenOrmEntity,
+          WeeklyMonitoringOrmEntity
         ],
         synchronize: config.get('NODE_ENV') === 'development',
       }),
@@ -58,6 +61,7 @@ import { HistoryModule } from './history.module';
     UserModule,
     SessionModule,
     HistoryModule,
+    TrackingModule,
   ],
 })
 export class AppModule implements NestModule {
