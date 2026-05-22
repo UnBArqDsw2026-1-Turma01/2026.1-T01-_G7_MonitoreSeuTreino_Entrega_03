@@ -18,26 +18,32 @@ A tabela abaixo consolida todos os padrões implementados. Cada seção dos docu
 | **Criacional** | Factory Method | Autenticação | Samuel Nogueira Caetano | `User.create()`, `RefreshToken.create()` | `POST /v1/auth/signup`, `POST /v1/auth/login` |
 | **Criacional** | Builder | Exercises | Daniel Teles | `ExerciseBuilder` | `POST /v1/exercises` |
 | **Criacional** | Multiton | Histórico | Giovanni Dornelas Ferreira | `HistoryManager.getInstance(userId)` | `GET /v1/history/sessions` |
+| **Criacional** | Builder | Usuário | André Ricardo Meyer de Melo | `PasswordResetRequestBuilder`, `AccountDeletionRequestBuilder` | `POST /v1/auth/password-reset/request`, `DELETE /v1/users/me` |
+| **Criacional** | Builder | Sessão de Treino | Eduardo Waski | `TrainingSessionBuilder` | `POST /v1/sessions` |
 | **Estrutural** | Bridge | Onboarding | Lucas Antunes | `OnboardingFlow` + `ProfileClassifier` | `POST /v1/onboarding` |
 | **Estrutural** | Facade | Onboarding | Lucas Antunes | `OnboardingFacade` | `GET/POST/PUT /v1/onboarding` |
 | **Estrutural** | Facade | Autenticação | Samuel Nogueira Caetano | `AuthenticationFacade` | `POST /v1/auth/login`, `POST /v1/auth/logout` |
 | **Estrutural** | Decorator | Autenticação | Samuel Nogueira Caetano | `CachingUserRepository`, `LoggingUserRepository` | Diversos via infraestrutura |
 | **Estrutural** | Decorator | Exercises | Daniel Teles | `CachingExerciseRepository`, `LoggingExerciseRepository` | `GET/POST/PUT /v1/exercises` |
 | **Estrutural** | Proxy | Histórico | Giovanni Dornelas Ferreira | `HistoryServiceProxy` → `HistoryService` | `GET /v1/history/sessions` |
+| **Estrutural** | Facade | Usuário | André Ricardo Meyer de Melo | `PasswordResetFacade`, `AccountDeletionFacade` | `POST /v1/auth/password-reset/request`, `DELETE /v1/users/me` |
+| **Estrutural** | Composite | Sessão de Treino | Eduardo Waski | `WorkoutComponent` (Interface), `ExerciseNode` (Composite), `TrainingSet` (Leaf) | `POST /v1/sessions` |
 | **Comportamental** | Memento | Onboarding | Lucas Antunes | `TrainingProfile.createMemento()` + `OnboardingMementoVO` | `PUT /v1/onboarding` |
 | **Comportamental** | Template Method | Onboarding | Lucas Antunes | `OnboardingFlow.execute()` | `POST /v1/onboarding` |
 | **Comportamental** | Template Method | Autenticação | Samuel Nogueira Caetano | `UseCase<TInput, TOutput>.execute()` | Diversos |
 | **Comportamental** | Observer | Autenticação | Samuel Nogueira Caetano | `DomainEventBus`, `AggregateRoot.pullDomainEvents()` | Diversos |
 | **Comportamental** | Observer | Histórico | Giovanni Dornelas Ferreira | `WorkoutSessionSubject` + `HistoryObserver` | `POST /v1/sessions` |
 | **Comportamental** | Chain of Responsibility | Exercises | Daniel Teles | `ExerciseSearchChain` | `GET /v1/exercises` |
+| **Comportamental** | Chain of Responsibility | Usuário | André Ricardo Meyer de Melo | `Handler` (RF04 / RF07) | `POST /v1/auth/password-reset/request`, `DELETE /v1/users/me` |
+| **Comportamental** | Iterator | Sessão de Treino | Eduardo Waski | `TrainingSetIterator` | `POST /v1/sessions` |
 
 ## Organização do módulo
 
 | Seção | Descrição |
 |---|---|
-| [3.1 GoFs Criacionais](3-1-gofs-criacionais.md) | Padrões que tratam da criação de objetos — **Singleton** (Onboarding), **Factory Method** (Autenticação), **Builder** (Exercises) e **Multiton** (Histórico). |
-| [3.2 GoFs Estruturais](3-2-gofs-estruturais.md) | Padrões de composição de classes e objetos — **Bridge** e **Facade** (Onboarding), **Facade** e **Decorator** (Autenticação), **Decorator** (Exercises) e **Proxy** (Histórico). |
-| [3.3 GoFs Comportamentais](3-3-gofs-comportamentais.md) | Padrões de interação e distribuição de responsabilidade — **Memento** e **Template Method** (Onboarding), **Template Method** e **Observer** (Autenticação), **Observer** (Histórico) e **Chain of Responsibility** (Exercises). |
+| [3.1 GoFs Criacionais](3-1-gofs-criacionais.md) | Padrões que tratam da criação de objetos — **Singleton** (Onboarding), **Factory Method** (Autenticação), **Builder** (Exercises, Usuário, Sessão de Treino) e **Multiton** (Histórico). |
+| [3.2 GoFs Estruturais](3-2-gofs-estruturais.md) | Padrões de composição de classes e objetos — **Bridge** e **Facade** (Onboarding), **Facade** e **Decorator** (Autenticação), **Decorator** (Exercises), **Proxy** (Histórico), **Facade** (Usuário) e **Composite** (Sessão de Treino). |
+| [3.3 GoFs Comportamentais](3-3-gofs-comportamentais.md) | Padrões de interação e distribuição de responsabilidade — **Memento** e **Template Method** (Onboarding), **Template Method** e **Observer** (Autenticação), **Observer** (Histórico), **Chain of Responsibility** (Exercises, Usuário) e **Iterator** (Sessão de Treino). |
 | [3.4 Participações](3-4-participacoes-padroes.md) | Registro individual das contribuições de cada membro, com significância e comprobatórios por padrão implementado. |
 | [3.5 Iniciativas Extras](3-5-iniciativas-extras.md) | Iniciativas além do escopo mínimo — testes de integração, documentação de API, organização de arquivos por padrão de módulo. |
 
@@ -72,3 +78,4 @@ Caso mais padrões precisem ser adicionados nos documentos filhos (3-1, 3-2, 3-3
 | 1.2 | 20/05/2026 | Inclusão dos GoFs do módulo de Histórico: Multiton, Proxy e Observer. | Giovanni Dornelas Ferreira |
 | 1.3 | 21/05/2026 | Atualização do painel de GoFs com os padrões do módulo de Exercises. | Daniel Teles |
 | 1.4 | 21/05/2026 | Inclusão dos GoFs do módulo de Usuário (Builder, Facade, Chain of Responsibility) — RF04 e RF07. | André Ricardo Meyer de Melo |
+| 1.5 | 21/05/2026 | Inclusão dos GoFs do módulo de Sessão de Treino (Builder, Composite, Iterator) e atualização consolidada. | Eduardo Waski |
