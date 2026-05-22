@@ -4,6 +4,8 @@ import { DomainEventBus } from '@application/events/domain-event-bus';
 import { APP_LOGGER, AppLogger } from '@application/logger/logger.interface';
 import { SessionController } from '@presentation/controllers/session.controller';
 import { RegisterSessionUseCase } from '@application/use-cases/session/register-session.use-case';
+import { UpdateSessionUseCase } from '@application/use-cases/session/update-session.use-case';
+import { DeleteSessionUseCase } from '@application/use-cases/session/delete-session.use-case';
 import {
   ITrainingSessionRepository,
   TRAINING_SESSION_REPOSITORY,
@@ -52,9 +54,50 @@ import { AuthModule } from './auth.module';
         WorkoutSessionSubject,
       ],
     },
+    {
+      provide: UpdateSessionUseCase,
+      useFactory: (
+        sessionRepo: ITrainingSessionRepository,
+        eventBus: DomainEventBus,
+        logger: AppLogger,
+        workoutSessionSubject: WorkoutSessionSubject,
+      ) =>
+        new UpdateSessionUseCase(
+          sessionRepo,
+          eventBus,
+          logger,
+          workoutSessionSubject,
+        ),
+      inject: [
+        TRAINING_SESSION_REPOSITORY,
+        DomainEventBus,
+        APP_LOGGER,
+        WorkoutSessionSubject,
+      ],
+    },
+    {
+      provide: DeleteSessionUseCase,
+      useFactory: (
+        sessionRepo: ITrainingSessionRepository,
+        eventBus: DomainEventBus,
+        logger: AppLogger,
+      ) =>
+        new DeleteSessionUseCase(
+          sessionRepo,
+          eventBus,
+          logger,
+        ),
+      inject: [
+        TRAINING_SESSION_REPOSITORY,
+        DomainEventBus,
+        APP_LOGGER,
+      ],
+    },
   ],
   exports: [
     RegisterSessionUseCase,
+    UpdateSessionUseCase,
+    DeleteSessionUseCase,
     TRAINING_SESSION_REPOSITORY,
     WorkoutSessionSubject,
   ],

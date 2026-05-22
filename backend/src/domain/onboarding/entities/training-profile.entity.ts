@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Sex } from '../enums/sex.enum';
 import { TrainingLevel } from '../enums/training-level.enum';
 import { TrainingGoal } from '../enums/training-goal.enum';
@@ -35,7 +36,7 @@ export class TrainingProfile {
   ): TrainingProfile {
     const now = new Date();
     return new TrainingProfile(
-      crypto.randomUUID(),
+      randomUUID(),
       userId,
       answers.sex,
       answers.age,

@@ -42,6 +42,10 @@ export class HistoryManager {
     this.sessions.set(session.id, session);
   }
 
+  removeSession(sessionId: string): void {
+    this.sessions.delete(sessionId);
+  }
+
   getSessions(): TrainingSession[] {
     return Array.from(this.sessions.values()).sort(
       (a, b) => b.date.getTime() - a.date.getTime(),

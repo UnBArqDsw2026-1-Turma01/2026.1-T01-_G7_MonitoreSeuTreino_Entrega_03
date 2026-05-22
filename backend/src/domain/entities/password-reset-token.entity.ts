@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
   PasswordResetCompletedEvent,
   PasswordResetRequestedEvent,
@@ -28,7 +29,7 @@ export class PasswordResetToken extends AggregateRoot {
   ): PasswordResetToken {
     const now = Timestamp.now();
     const token = new PasswordResetToken(
-      crypto.randomUUID(),
+      randomUUID(),
       userId,
       tokenHash,
       expiresAt,

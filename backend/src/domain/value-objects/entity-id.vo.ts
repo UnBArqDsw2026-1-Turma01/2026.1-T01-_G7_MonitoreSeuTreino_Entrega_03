@@ -1,9 +1,11 @@
+import { randomUUID } from 'crypto';
+
 export abstract class AggregateId {
   private readonly value: `${string}-${string}-${string}-${string}-${string}`;
 
   protected constructor(value?: string) {
     if (value === undefined) {
-      this.value = crypto.randomUUID();
+      this.value = randomUUID();
       return;
     }
 
