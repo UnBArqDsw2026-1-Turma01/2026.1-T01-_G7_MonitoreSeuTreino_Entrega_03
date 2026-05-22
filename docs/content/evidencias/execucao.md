@@ -2,12 +2,10 @@
 
 ## Objetivo
 
-[Descrever o objetivo desta página.]
+Concentrar as evidências de execução prática do sistema, relacionando os materiais que demonstram o funcionamento integrado da aplicação e a validação dos artefatos entregues.
 
-## Evidências por padrão
+## Evidências disponíveis
 
-| Categoria | Padrão | Evidência | Link |
+| Categoria | Evidência | Descrição | Link |
 |---|---|---|---|
-| Criacional | [Padrão] | [Descrição] | [Link] |
-| Estrutural | [Padrão] | [Descrição] | [Link] |
-| Comportamental | [Padrão] | [Descrição] | [Link] |
+| Geral | Execução completa do sistema | Demonstração da aplicação em funcionamento com o fluxo integrado da entrega. | [YouTube](https://youtu.be/H_VkCgZWl4A) |
