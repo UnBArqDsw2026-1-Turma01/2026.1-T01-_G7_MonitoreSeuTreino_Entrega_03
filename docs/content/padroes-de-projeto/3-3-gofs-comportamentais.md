@@ -815,6 +815,10 @@ const rows = await queryBuilder.getMany();
 
 #### Evidência de execução
 
+No vídeo abaixo é realizada a demonstração do GOF Chain of Responsability:
+
+![Vídeo da demonstração do Gof Chain of Responsability](../assets/gof_chain.gif)
+
 ```bash
 docker compose exec api npx jest search-chain --verbose
 ```
@@ -1289,3 +1293,4 @@ Ao ativar 1 ficha, ele é responsável por desativar todas as outras.
 | 1.4    | 21/05/2026 | Documentação do padrão Chain of Responsibility do módulo de Usuário, referente aos RF04 e RF07.   | André Ricardo Meyer de Melo |
 | 1.5 | 21/05/2026 | Documentação do padrão Iterator do módulo de Sessão de Treino. | Eduardo Waski |
 | 1.6 | 21/05/2026 | Documentação do padrão Mediator do módulo de Rotinas | José Victor Gabriel Menezes da Costa |
+| 1.7 | 21/05/2026 | Adiciona gif de execução do GOF Chain of Responsability | Daniel Teles |

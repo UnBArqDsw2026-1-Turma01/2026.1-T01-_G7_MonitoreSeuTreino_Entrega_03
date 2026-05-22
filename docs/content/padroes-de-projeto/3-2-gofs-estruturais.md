@@ -735,10 +735,12 @@ classDiagram
 const base = new ExercisePostgresRepository(ormRepo);
 const cached = new CachingExerciseRepository(base);
 const logging = new LoggingExerciseRepository(cached, logger);
-// exportado como EXERCISE_REPOSITORY → logging
 ```
 
 #### Evidência de execução
+
+O GIF abaixo evidencia a execução do padrão decorator:
+![Vídeo da demonstração do Gof Decorator](../assets/gof_decorator.gif)
 
 Os logs aparecem no console do container indicando tempo de execução e sucesso das chamadas. O cache invalida ou usa dados em memória conforme necessário.
 
@@ -1213,3 +1215,4 @@ No GIF abaixo, podemos ver a edição/criação acontecendo na prática, onde at
 | 1.4    | 21/05/2026 | Documentação do padrão Facade do módulo de Usuário, referente aos RF04 e RF07.  | André Ricardo Meyer de Melo |
 | 1.5 | 21/05/2026 | Documentação do padrão Composite do módulo de Sessão de Treino. | Eduardo Waski |
 | 1.6 | 21/05/2026 | Documentação do Proxy relacionada ao módulo de Rotinas  | José Victor Gabriel Menezes da Costa |
+| 1.7 | 21/05/2026 | Adiciona gif de execução do GoF Decorator  | Daniel Teles |
