@@ -57,6 +57,15 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 |---|---|---|---|
 | José Victor Gabriel Menezes da Costa | Modelagem do Prototype na entidade `Routine`, lógica de cópia profunda de divisões/exercícios, e consumo limpo no `CloneRoutineUseCase`. | Excelente | `backend/src/domain/entities/routine.entity.ts`<br>`backend/src/application/use-cases/routines/clone-routine.use-case.ts` |
 
+### Factory Method — Módulo de Monitoramento Semanal
+
+**Contexto:** o desafio criacional consistia em criar dinamicamente estratégias de resolução de períodos semanais (`WeeklyPeriodStrategy`) sem acoplar o caso de uso (`GetWeeklySummaryUseCase`) às implementações concretas responsáveis pelo cálculo de datas. O módulo precisava permitir navegação entre semanas e futura expansão para intervalos customizados, mantendo a lógica temporal encapsulada e consistente dentro do domínio.
+
+|Nome do Membro|Contribuição|Significância|Comprobatórios|
+|---|---|---|---|
+|João Maurício Pilla Nascimento|Modelagem do Factory Method `WeeklyPeriodFactory`, criação das estratégias `CurrentWeekPeriodStrategy` e `CustomPeriodStrategy`, integração com `GetWeeklySummaryUseCase`, configuração da injeção de dependência no `TrackingModule`, testes manuais com persistência real no PostgreSQL e documentação.|Excelente|`backend/src/domain/tracking/services/weekly-period.service.ts`<br>`backend/src/domain/tracking/factory/weekly-period.factory.ts`<br>`backend/src/domain/tracking/strategy/weekly-period.strategy.ts`<br>`backend/src/application/use-cases/tracking/get-weekly-summary.use-case.ts`|
+
+
 ## GoFs Estruturais
 
 ### Bridge + Facade — Módulo de Onboarding
@@ -115,6 +124,14 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Nome do Membro | Contribuição | Significância | Comprobatórios |
 |---|---|---|---|
 | José Victor Gabriel Menezes da Costa | Criação do Proxy protetor, mantendo o ORM do TypeORM livre de implementações lógicas na camada de infraestrutura. | Excelente | `backend/src/infrastructure/proxies/routine-repository.proxy.ts` |
+
+### Facade — Módulo de Monitoramento Semanal
+
+**Contexto:** o desafio estrutural consistia em simplificar o acesso ao subsistema de monitoramento semanal, encapsulando a comunicação entre controller, caso de uso e regras de domínio em uma interface única e coesa. O objetivo era evitar que a camada de apresentação conhecesse detalhes internos da orquestração do módulo, reduzindo acoplamento entre as camadas da arquitetura CLEAN.
+
+|Nome do Membro|Contribuição|Significância|Comprobatórios|
+|---|---|---|---|
+|João Maurício Pilla Nascimento|Implementação do `TrackingFacade` como ponto central da camada de apresentação, isolamento do `TrackingController` dos detalhes internos dos casos de uso, padronização das respostas via `TrackingViewModel`, integração com autenticação JWT e documentação arquitetural do módulo.|Excelente|`backend/src/presentation/facades/tracking.facade.ts`<br>`backend/src/presentation/controllers/tracking.controller.ts`<br>`backend/src/presentation/view-models/tracking.view-model.ts`|
 
 ## GoFs Comportamentais
 
@@ -185,6 +202,16 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Facade | André Ricardo Meyer de Melo | `PasswordResetFacade` e `AccountDeletionFacade` — orquestram cadeia, repositórios, e-mail e eventos | Excelente |
 | Chain of Responsibility | André Ricardo Meyer de Melo | Cadeia RF04 (4 handlers) e cadeia RF07 (4 handlers) com decisões de segurança embutidas | Excelente |
 
+## GoFs Comportamentais
+
+### Strategy — Módulo de Monitoramento Semanal
+
+**Contexto:** o desafio comportamental consistia em calcular diferentes métricas derivadas das sessões concluídas (como total de sessões e dias distintos de atividade) sem concentrar múltiplos algoritmos diretamente no caso de uso ou em uma única classe monolítica. O módulo precisava permitir que cada regra de consolidação semanal variasse independentemente, facilitando extensão futura para novas métricas de acompanhamento e consistência.
+
+|Nome do Membro|Contribuição|Significância|Comprobatórios|
+|---|---|---|---|
+|João Maurício Pilla Nascimento|Modelagem das estratégias `TotalSessionsStrategy` e `ActiveDaysStrategy`, implementação das estratégias concretas `DefaultTotalSessionsStrategy` e `DefaultActiveDaysStrategy`, composição via `DefaultWeeklySummaryCalculator`, integração com o módulo NestJS e consolidação do resumo semanal através do padrão Strategy.|Excelente|`backend/src/domain/tracking/services/weekly-summary.service.ts`<br>`backend/src/domain/tracking/strategy/weekly-summary.strategy.ts`<br>`backend/src/application/use-cases/tracking/get-weekly-summary.use-case.ts`<br>`backend/src/infrastructure/modules/tracking.module.ts`|
+
 ---
 
 ## Histórico de versões
@@ -199,3 +226,4 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | 1.5 | 21/05/2026 | Registro de participações nos padrões GoF do módulo de Sessão de Treino (Builder, Composite, Iterator). | Eduardo Waski |
 | 1.6 | 21/05/2026 | Registro de participações nos padrões Prototype, Mediator e Proxy | José Victor Gabriel Menezes da Costa |
 | 1.7 | 21/05/2026 | Correção ortográfica no módulo de exercício | Daniel Teles |
+| 1.8 | 21/05/2026 | Registro de participações nos padrões GoF do módulo de Monitoramento Semanal (Factory Method, Facade, Strategy) | João Maurício |

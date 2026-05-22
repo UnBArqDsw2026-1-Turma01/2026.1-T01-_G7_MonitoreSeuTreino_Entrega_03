@@ -1280,6 +1280,192 @@ Ao ativar 1 ficha, ele é responsável por desativar todas as outras.
 
 - **Depuração complexa**: o encadeamento indireto dificulta o tracing. Erros comuns, como a falha do método inactivate caso o repositório devolva "objetos anêmicos", explodem silenciosamente no barramento ao invés de alertarem o desenvolvedor na hora.
 
+## Módulo de Monitoramento Semanal
+
+> **Responsável:** João Maurício | **Branch:** `feat/modulo-monitoramento-semanal`  
+> **Contexto:** o desafio comportamental consistia em calcular diferentes métricas derivadas das sessões concluídas (como total de sessões e dias distintos de atividade) sem concentrar múltiplos algoritmos diretamente no caso de uso ou em uma única classe monolítica. O módulo precisava permitir que cada regra de consolidação semanal variasse independentemente, facilitando extensão futura para novas métricas de acompanhamento e consistência.
+
+### Padrões analisados
+
+|Padrão|Possível aplicação|Status|Justificativa|
+|---|---|---|---|
+|**Strategy**|Variar o cálculo do resumo semanal|Selecionado|O módulo precisa calcular métricas diferentes a partir das mesmas sessões; o algoritmo deve ficar isolado e trocável.|
+|Template Method|Definir sequência fixa de cálculo|Avaliado|Seria mais rígido do que o necessário; o módulo tem cálculo direto e não uma sequência com passos obrigatórios.|
+|Observer|Notificar mudanças de resumo|Não selecionado|O módulo é de consulta e não emite eventos próprios de monitoramento.|
+
+### Padrão implementado — Strategy · `WeeklySummaryServiceImpl` + estratégias de cálculo
+
+### Problema arquitetural
+
+O resumo semanal precisa calcular mais de uma métrica a partir das mesmas sessões concluídas: total de sessões e dias distintos com atividade. Se essas regras ficarem diretamente no use case, a lógica de cálculo ficará misturada com orquestração e difícil de evoluir.
+
+Além disso, a regra pode crescer no futuro com novas métricas, como constância semanal, sequência de dias treinados ou distribuição por período.
+
+### Justificativa da escolha
+
+O `WeeklySummaryServiceImpl` atua como contexto e delega o cálculo para estratégias específicas:
+
+- `DefaultTotalSessionsStrategy`
+    
+- `DefaultActiveDaysStrategy`
+    
+
+Isso mantém cada algoritmo isolado e testável, permitindo substituir ou ampliar a forma de cálculo sem mexer na camada de apresentação.
+
+### Modelagem
+
+```mermaid
+classDiagram
+    class WeeklySummaryService {
+        <<interface>>
+        +calculate(sessions, period) WeeklySummary
+    }
+
+    class WeeklySummaryServiceImpl {
+        -totalSessionsStrategy: TotalSessionsStrategy
+        -activeDaysStrategy: ActiveDaysStrategy
+        +calculate(sessions, period) WeeklySummary
+    }
+
+    class TotalSessionsStrategy {
+        <<interface>>
+        +calculate(sessions) number
+    }
+
+    class ActiveDaysStrategy {
+        <<interface>>
+        +calculate(sessions) string[]
+    }
+
+    class DefaultTotalSessionsStrategy {
+        +calculate(sessions) number
+    }
+
+    class DefaultActiveDaysStrategy {
+        +calculate(sessions) string[]
+    }
+
+    WeeklySummaryService <|.. WeeklySummaryServiceImpl
+    TotalSessionsStrategy <|.. DefaultTotalSessionsStrategy
+    ActiveDaysStrategy <|.. DefaultActiveDaysStrategy
+    WeeklySummaryServiceImpl --> TotalSessionsStrategy
+    WeeklySummaryServiceImpl --> ActiveDaysStrategy
+```
+
+### Implementação
+
+|Elemento|Papel no Strategy|Caminho|
+|---|---|---|
+|`WeeklySummaryService`|Contrato do contexto|`src/domain/tracking/services/weekly-summary.service.ts`|
+|`WeeklySummaryServiceImpl`|Context|`src/domain/tracking/strategy/weekly-summary.strategy.ts`|
+|`TotalSessionsStrategy`|Estratégia abstrata|`src/domain/tracking/services/weekly-summary.service.ts`|
+|`ActiveDaysStrategy`|Estratégia abstrata|`src/domain/tracking/services/weekly-summary.service.ts`|
+|`DefaultTotalSessionsStrategy`|Estratégia concreta|`src/domain/tracking/strategy/weekly-summary.strategy.ts`|
+|`DefaultActiveDaysStrategy`|Estratégia concreta|`src/domain/tracking/strategy/weekly-summary.strategy.ts`|
+
+#### Trecho central
+
+```ts
+// src/domain/tracking/strategy/weekly-summary.strategy.ts
+export class DefaultTotalSessionsStrategy implements TotalSessionsStrategy {
+  calculate(sessions: CompletedSession[]): number {
+    return sessions.length;
+  }
+}
+
+export class DefaultActiveDaysStrategy implements ActiveDaysStrategy {
+  calculate(sessions: CompletedSession[]): string[] {
+    const uniqueDays = new Set<string>();
+
+    for (const session of sessions) {
+      uniqueDays.add(toDayKey(session.concludedAt));
+    }
+
+    return Array.from(uniqueDays);
+  }
+}
+
+export class WeeklySummaryServiceImpl implements WeeklySummaryService {
+  constructor(
+    private readonly totalSessionsStrategy: TotalSessionsStrategy,
+    private readonly activeDaysStrategy: ActiveDaysStrategy,
+  ) {}
+
+  calculate(sessions: CompletedSession[], period: DateRange): WeeklySummary {
+    const totalSessions = this.totalSessionsStrategy.calculate(sessions);
+    const activeDays = this.activeDaysStrategy.calculate(sessions);
+
+    return new WeeklySummary(period, totalSessions, activeDays);
+  }
+}
+```
+
+```ts
+// src/application/use-cases/tracking/get-weekly-summary.use-case.ts
+const sessions =
+  await this.trackingRepository.findCompletedSessionsByUserAndPeriod(
+    cmd.userId,
+    period,
+  );
+
+return this.summaryService.calculate(sessions, period);
+```
+
+### Evidência de execução
+
+Na execução manual do endpoint, ao inserir sessões em `sessions` e consultar `GET /v1/tracking/weekly-summary`, o retorno mostrou:
+
+- `totalSessions: 3`
+    
+- `distinctDaysCount: 2`
+    
+No GIF abaixo, observamos esse retorno específico:
+
+![Vídeo da demonstração do Gof Prototype](../assets/tracking.gif)
+    
+
+### Rastreabilidade
+
+|Artefato|Relação|
+|---|---|
+|Requisito|RF28 — resumo semanal; RN01, RN02, RN03 — contagem e consolidação de dias.|
+|Módulo|`domain/tracking/strategy/`|
+|Camada|Domínio|
+|Padrão criacional relacionado|Factory Method — a estratégia de período é escolhida pela fábrica.|
+|Padrão estrutural relacionado|Facade — a complexidade do uso do caso de uso não aparece na UI.|
+|Endpoint|`GET /v1/tracking/weekly-summary`|
+
+### Senso crítico
+
+#### Benefícios
+
+- **Algoritmos isolados**: cada métrica fica independente.
+    
+- **Testabilidade**: total de sessões e dias ativos podem ser testados separadamente.
+    
+- **Extensibilidade**: novas métricas podem entrar sem alterar o contrato público do endpoint.
+    
+
+#### Limitações
+
+- **Mais arquivos**: a solução fica mais formal do que uma implementação direta.
+    
+- **Pode parecer exagero para poucos cálculos**: o ganho é maior em clareza do que em redução de linhas.
+    
+
+#### Alternativas consideradas
+
+- **Cálculo direto no use case**: rejeitado por acoplamento e baixa coesão.
+    
+- **Template Method**: seria mais rígido do que necessário para uma consolidação simples.
+    
+
+### Referências
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 5 — Strategy.
+    
+- MARTIN, R. C. _Clean Architecture_. Prentice Hall, 2017.
+
 ---
 
 ## Histórico de versões
@@ -1294,3 +1480,4 @@ Ao ativar 1 ficha, ele é responsável por desativar todas as outras.
 | 1.5 | 21/05/2026 | Documentação do padrão Iterator do módulo de Sessão de Treino. | Eduardo Waski |
 | 1.6 | 21/05/2026 | Documentação do padrão Mediator do módulo de Rotinas | José Victor Gabriel Menezes da Costa |
 | 1.7 | 21/05/2026 | Adiciona gif de execução do GOF Chain of Responsability | Daniel Teles |
+| 1.8 | 21/05/2026 | Documentação do padrão Strategy do módulo de Monitoramento Semanal | João Maurício |

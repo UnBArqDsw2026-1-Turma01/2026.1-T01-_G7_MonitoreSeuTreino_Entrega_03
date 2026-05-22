@@ -1211,6 +1211,200 @@ No GIF abaixo, podemos ver a clonagem funcionando na prática, e podemos ver ond
 
 - **Uso de structuredClone() nativo**: funciona para objetos literais, mas destrói os métodos e o protótipo de classes ricas, resultando em objetos anêmicos sem métodos de domínio. O Prototype nativo foi necessário.
 
+## Módulo de Monitoramento Semanal
+
+> **Responsável:** João Maurício | **Branch:** `feat/modulo-monitoramento-semanal`  
+> **Contexto:** o desafio criacional consistia em criar dinamicamente estratégias de resolução de períodos semanais (WeeklyPeriodStrategy) sem acoplar o caso de uso (GetWeeklySummaryUseCase) às implementações concretas responsáveis pelo cálculo de datas. O módulo precisava permitir navegação entre semanas e futura expansão para intervalos customizados, mantendo a lógica temporal encapsulada e consistente dentro do domínio.
+
+### Padrões analisados
+
+|Padrão|Possível aplicação|Status|Justificativa|
+|---|---|---|---|
+|**Factory Method**|Criação da estratégia de período semanal|Selecionado|Centraliza a escolha entre semana atual e período customizado, sem expor a lógica de instanciação ao use case.|
+|Builder|Construção incremental do resumo semanal|Não selecionado|O objeto final é simples e derivado de consulta; não há montagem passo a passo de um agregado complexo.|
+|Abstract Factory|Família de objetos de monitoramento|Não selecionado|O módulo não cria famílias relacionadas de objetos; apenas decide qual estratégia de período usar.|
+
+### Padrão implementado — Factory Method · `DefaultWeeklyPeriodFactory`
+
+### Problema arquitetural
+
+O resumo semanal precisa consultar períodos diferentes sem espalhar regras de data pelo caso de uso. Se o `GetWeeklySummaryUseCase` precisasse saber como montar o início e o fim da semana, o cálculo de período ficaria duplicado, difícil de testar e propenso a erros de consistência.
+
+Além disso, o módulo já trabalha com uma definição clara de semana, mas precisa permitir variações futuras, como um intervalo customizado. Isso exige uma criação controlada do objeto responsável por resolver o período.
+
+### Justificativa da escolha
+
+O `DefaultWeeklyPeriodFactory` encapsula a criação da estratégia correta de período. Ele recebe um modo de uso e devolve uma implementação concreta de `WeeklyPeriodStrategy`, mantendo o use case desacoplado da classe específica escolhida.
+
+A fábrica também preserva a regra de que o período deve ser válido antes de chegar ao domínio. Assim, a criação não fica espalhada em `if/else` no controlador ou no use case.
+
+### Modelagem
+
+```mermaid
+classDiagram
+    class WeeklyPeriodFactory {
+        <<interface>>
+        +create(params) WeeklyPeriodStrategy
+    }
+
+    class DefaultWeeklyPeriodFactory {
+        +create(params) WeeklyPeriodStrategy
+    }
+
+    class WeeklyPeriodStrategy {
+        <<interface>>
+        +resolve(reference: Date) DateRange
+    }
+
+    class CurrentWeekPeriodStrategy {
+        +resolve(reference: Date) DateRange
+    }
+
+    class CustomPeriodStrategy {
+        +resolve() DateRange
+    }
+
+    WeeklyPeriodFactory <|.. DefaultWeeklyPeriodFactory
+    WeeklyPeriodStrategy <|.. CurrentWeekPeriodStrategy
+    WeeklyPeriodStrategy <|.. CustomPeriodStrategy
+    DefaultWeeklyPeriodFactory ..> WeeklyPeriodStrategy : cria
+```
+
+### Implementação
+
+|Elemento|Papel no Factory Method|Caminho|
+|---|---|---|
+|`WeeklyPeriodFactory`|Contrato da fábrica|`src/domain/tracking/services/weekly-period.service.ts`|
+|`DefaultWeeklyPeriodFactory`|Concrete Factory|`src/domain/tracking/factory/weekly-period.factory.ts`|
+|`WeeklyPeriodStrategy`|Produto abstrato|`src/domain/tracking/strategy/weekly-period.strategy.ts`|
+|`CurrentWeekPeriodStrategy`|Produto concreto|`src/domain/tracking/strategy/weekly-period.strategy.ts`|
+|`CustomPeriodStrategy`|Produto concreto|`src/domain/tracking/strategy/weekly-period.strategy.ts`|
+|`GetWeeklySummaryUseCase`|Cliente da fábrica|`src/application/use-cases/tracking/get-weekly-summary.use-case.ts`|
+
+#### Trecho central
+
+```ts
+// src/domain/tracking/factory/weekly-period.factory.ts
+export class DefaultWeeklyPeriodFactory implements WeeklyPeriodFactory {
+  create(params: WeeklyPeriodParams): WeeklyPeriodStrategy {
+    switch (params.mode) {
+      case 'current-week':
+        return new CurrentWeekPeriodStrategy(params.weekOffset ?? 0);
+
+      case 'custom':
+        if (!params.start || !params.end) {
+          throw new Error('Custom period requires both start and end dates.');
+        }
+
+        return new CustomPeriodStrategy(params.start, params.end);
+
+      default:
+        throw new Error(`Unsupported weekly period mode: ${params.mode}`);
+    }
+  }
+}
+```
+
+```ts
+// src/domain/tracking/strategy/weekly-period.strategy.ts
+export class CurrentWeekPeriodStrategy implements WeeklyPeriodStrategy {
+  constructor(private readonly weekOffset = 0) {}
+
+  resolve(reference: Date): DateRange {
+    const start = startOfUtcWeek(reference);
+    start.setUTCDate(start.getUTCDate() + this.weekOffset * 7);
+
+    const end = endOfUtcWeek(start);
+
+    return DateRange.between(start, end);
+  }
+}
+
+export class CustomPeriodStrategy implements WeeklyPeriodStrategy {
+  constructor(
+    private readonly start: Date,
+    private readonly end: Date,
+  ) {}
+
+  resolve(): DateRange {
+    const start = cloneDate(this.start);
+    const end = cloneDate(this.end);
+
+    if (start > end) {
+      throw new Error('Custom period start cannot be after end.');
+    }
+
+    return DateRange.between(start, end);
+  }
+}
+```
+
+```ts
+// src/application/use-cases/tracking/get-weekly-summary.use-case.ts
+const periodStrategy = this.periodFactory.create({
+  mode: 'current-week',
+  weekOffset: cmd.weekOffset ?? 0,
+});
+
+const period = periodStrategy.resolve(new Date());
+```
+
+### Evidência de execução
+
+A evidência pode ser obtida ao chamar o endpoint com diferentes offsets, por exemplo:
+
+```http
+GET /v1/tracking/weekly-summary?weekOffset=-1
+```
+
+e confirmar que o período retornado muda conforme a estratégia criada pela fábrica.
+
+No GIF abaixo, podemos ver isso na prática ao retornar e avançar uma semana:
+
+![Vídeo da demonstração do Gof Prototype](../assets/tracking.gif)
+
+### Rastreabilidade
+
+|Artefato|Relação|
+|---|---|
+|Requisito|RF28 e RF29 — resumo semanal e navegação entre semanas.|
+|Módulo|`domain/tracking/factory/`|
+|Camada|Domínio|
+|Padrão estrutural relacionado|Facade — o controller chama o módulo por meio de uma única interface.|
+|Padrão comportamental relacionado|Strategy — a fábrica instancia a estratégia concreta de período.|
+|Endpoint|`GET /v1/tracking/weekly-summary`|
+
+### Senso crítico
+
+#### Benefícios
+
+- **Instanciação centralizada**: a criação do período fica em um único ponto.
+    
+- **Desacoplamento do use case**: o caso de uso não conhece as classes concretas.
+    
+- **Extensibilidade**: adicionar novos modos de período não exige alterar a lógica do controlador.
+    
+
+#### Limitações
+
+- **Indireção extra**: para um módulo pequeno, a fábrica adiciona uma camada a mais.
+    
+- **Possível excesso de abstração**: se o sistema nunca precisar de outros modos de período, a fábrica pode parecer mais formal do que necessário.
+    
+
+#### Alternativas consideradas
+
+- **Instanciação direta no use case**: rejeitada porque espalharia a lógica de data.
+    
+- **Helper estático simples**: seria funcional, mas menos claro para rastrear a criação como um padrão criacional.
+    
+
+### Referências
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 3 — Factory Method.
+    
+- MARTIN, R. C. _Clean Architecture_. Prentice Hall, 2017.
+
 ## Histórico de versões
 
 | Versão | Data | Descrição | Autor |
@@ -1223,3 +1417,4 @@ No GIF abaixo, podemos ver a clonagem funcionando na prática, e podemos ver ond
 | 1.5 | 21/05/2026 | Documentação do padrão Builder do módulo de Sessão de Treino. | Eduardo Waski |
 | 1.6 | 21/05/2026 | Documentação do padrão Prototype no módulo de Rotina | José Victor Gabriel Menezes da Costa |
 | 1.7 | 21/05/2026 | Adiciona gif de execução do builder | Daniel Teles |
+| 1.8 | 21/05/2026 | Documentação do padrão Factory Method do módulo de Monitoramento Semanal | João Maurício |
