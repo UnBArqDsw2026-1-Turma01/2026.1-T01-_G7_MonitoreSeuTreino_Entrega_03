@@ -1,4 +1,4 @@
-import { DomainException } from '@domain/exceptions/domain-exceptions';
+import { BaseException } from '@shared/exceptions/base.exception';
 import { InfrastructureException } from '@infrastructure/exceptions/infrastructure-exceptions';
 import {
   ArgumentsHost,
@@ -11,7 +11,7 @@ import {
 import type { Request, Response } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
-@Catch(DomainException)
+@Catch(BaseException)
 export class DomainExceptionFilter implements ExceptionFilter {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -24,10 +24,11 @@ export class DomainExceptionFilter implements ExceptionFilter {
     UNAUTHORIZED: HttpStatus.UNAUTHORIZED,
     TOKEN_EXPIRED: HttpStatus.UNAUTHORIZED,
     VALIDATION: HttpStatus.BAD_REQUEST,
+    FORBIDDEN: HttpStatus.FORBIDDEN,
     INFRASTRUCTURE_ERROR: HttpStatus.INTERNAL_SERVER_ERROR,
   };
 
-  catch(exception: DomainException, host: ArgumentsHost): void {
+  catch(exception: BaseException, host: ArgumentsHost): void {
     const req = host.switchToHttp().getRequest<Request>();
     const res = host.switchToHttp().getResponse<Response>();
     const status =

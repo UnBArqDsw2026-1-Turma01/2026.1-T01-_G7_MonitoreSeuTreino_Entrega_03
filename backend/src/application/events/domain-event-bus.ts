@@ -23,13 +23,13 @@ export class DomainEventBus {
 
     results
       .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-      .forEach((r) =>
+      .forEach((r) => {
+        const errorMessage =
+          r.reason instanceof Error ? r.reason.message : String(r.reason);
         this.logger.error('Event handler failed', {
-          context: 'DomainEventBus',
           eventName,
-          reason: r.reason instanceof Error ? r.reason.message : r.reason,
-          stack: r.reason instanceof Error ? r.reason.stack : undefined,
-        }),
-      );
+          reason: errorMessage,
+        });
+      });
   }
 }

@@ -7,9 +7,22 @@ import { RefreshTokenOrmEntity } from '../database/refresh-token.orm-entity';
 import { UserOrmEntity } from '../database/user.orm-entity';
 import { OnboardingHistoryOrmEntity } from '../database/onboarding-history.orm-entity';
 import { TrainingProfileOrmEntity } from '../database/training-profile.orm-entity';
+import { ExerciseOrmEntity } from '../database/exercise.orm-entity';
+import { RoutineOrmEntity } from '../database/routine.orm-entity';
+import { TrainingSessionOrmEntity } from '../database/session.orm-entity';
+import { ExerciseNodeOrmEntity } from '../database/exercise-node.orm-entity';
+import { TrainingSetOrmEntity } from '../database/training-set.orm-entity';
+import { PasswordResetTokenOrmEntity } from '../database/password-reset-token.orm-entity';
 import { winstonConfig } from '../logger/winston.config';
 import { AuthModule } from './auth.module';
+import { ExerciseModule } from './exercise.module';
 import { OnboardingModule } from './onboarding.module';
+import { RoutineModule } from '../../routine.module';
+import { UserModule } from './user.module';
+import { SessionModule } from './session.module';
+import { HistoryModule } from './history.module';
+import { TrackingModule } from './tracking.module';
+import { WeeklyMonitoringOrmEntity } from '../database/weekly-monitoring.orm-entity';
 
 @Module({
   imports: [
@@ -30,12 +43,25 @@ import { OnboardingModule } from './onboarding.module';
           RefreshTokenOrmEntity,
           TrainingProfileOrmEntity,
           OnboardingHistoryOrmEntity,
+          ExerciseOrmEntity,
+          RoutineOrmEntity,
+          TrainingSessionOrmEntity,
+          ExerciseNodeOrmEntity,
+          TrainingSetOrmEntity,
+          PasswordResetTokenOrmEntity,
+          WeeklyMonitoringOrmEntity
         ],
         synchronize: config.get('NODE_ENV') === 'development',
       }),
     }),
     AuthModule,
+    ExerciseModule,
     OnboardingModule,
+    RoutineModule,
+    UserModule,
+    SessionModule,
+    HistoryModule,
+    TrackingModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { AuthGuard } from '../../features/auth/guards/auth-guard';
+import { RoutinesPage } from '../../features/routines/pages/routines-page';
 
 export const appRouter = createBrowserRouter([
   {
@@ -24,6 +25,45 @@ export const appRouter = createBrowserRouter([
         lazy: async () => {
           const { OnboardingResultPage } = await import('../../features/onboarding/pages/onboarding-result-page');
           return { Component: OnboardingResultPage };
+        },
+      },
+      {
+        path: '/exercises',
+        lazy: async () => {
+          const { ExercisesPage } = await import('../../features/exercises/pages/exercises-page');
+          return { Component: ExercisesPage };
+        },
+      },
+      {
+      path: '/tracking',
+        lazy: async () => {
+          const { TrackingPage } = await import('../../features/tracking/pages/tracking-page');
+          return { Component: TrackingPage };
+        },
+      },
+      {
+        path: '/routines',
+        element: <RoutinesPage />,
+      },
+      {
+        path: '/sessions/new',
+        lazy: async () => {
+          const { RecordSessionPage } = await import('../../features/session/pages/record-session-page');
+          return { Component: RecordSessionPage };
+        },
+      },
+      {
+        path: '/sessions/history',
+        lazy: async () => {
+          const { SessionHistoryPage } = await import('../../features/session/pages/session-history-page');
+          return { Component: SessionHistoryPage };
+        },
+      },
+      {
+        path: '/sessions/edit/:sessionId',
+        lazy: async () => {
+          const { EditSessionPage } = await import('../../features/session/pages/edit-session-page');
+          return { Component: EditSessionPage };
         },
       },
     ],

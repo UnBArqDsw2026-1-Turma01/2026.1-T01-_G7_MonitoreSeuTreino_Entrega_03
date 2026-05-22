@@ -2,7 +2,7 @@
         api api-logs api-build api-shell \
         web web-logs web-build web-shell web-install web-test web-lint \
         db db-console db-reset \
-        docs docs-build docs-logs \
+        docs docs-logs docs-build \
         install lint test test-cov \
         prod-up prod-down prod-build
 
@@ -88,14 +88,14 @@ db-reset: ## Apaga o volume do banco e reinicia (⚠️ perde todos os dados)
 
 # ── Documentação ──────────────────────────────────────────────────────────────
 
-docs: ## Sobe o servidor de documentação
+docs: ## Sobe o servidor Docsify em http://localhost:8000
 	$(COMPOSE) up -d docs
 
-docs-logs: ## Exibe logs da documentação
+docs-logs: ## Exibe logs do servidor de documentação
 	$(COMPOSE) logs -f docs
 
-docs-build: ## Gera o build estático da documentação
-	$(COMPOSE) run --rm docs build
+docs-build: ## Reconstrói a imagem da documentação
+	$(COMPOSE) build --no-cache docs
 
 # ── Qualidade ────────────────────────────────────────────────────────────────
 

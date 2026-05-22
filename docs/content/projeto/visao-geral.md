@@ -22,6 +22,6 @@ Projeto G7 — MonitoreSeuTreino, baseado em qualquer software que ajude de algu
 
 ## Histórico de versões
 
-| Versão | Data | Descrição | Autor |
-|---|---|---|---|
-| 1.0 | DD/MM/AAAA | Criação do documento | Nome |
+| Versão | Data       | Descrição            | Autor |
+| ------ | ---------- | -------------------- | ----- |
+| 1.0    | DD/MM/AAAA | Criação do documento | Nome  |

@@ -4,9 +4,9 @@ Breve relato sobre as Iniciativas Extras realizadas pela equipe, no escopo da en
 
 ## Iniciativas realizadas
 
-| Iniciativa | Descrição | Comprobatório |
-|---|---|---|
-| [Nome da iniciativa] | [Descrição] | [Link] |
+| Iniciativa           | Descrição   | Comprobatório |
+| -------------------- | ----------- | ------------- |
+| [Nome da iniciativa] | [Descrição] | [Link]        |
 
 ## Considerações
 
@@ -14,6 +14,6 @@ Breve relato sobre as Iniciativas Extras realizadas pela equipe, no escopo da en
 
 ## Histórico de versões
 
-| Versão | Data | Descrição | Autor |
-|---|---|---|---|
-| 1.0 | DD/MM/AAAA | Criação do documento | Nome |
+| Versão | Data       | Descrição            | Autor |
+| ------ | ---------- | -------------------- | ----- |
+| 1.0    | DD/MM/AAAA | Criação do documento | Nome  |

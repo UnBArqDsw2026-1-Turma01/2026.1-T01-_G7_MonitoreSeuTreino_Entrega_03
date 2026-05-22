@@ -1,5 +1,6 @@
 # ── Dependências ──────────────────────────────────────────────────────────────
 node_modules/
+.venv/
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 dist/
@@ -26,6 +27,7 @@ coverage/
 .idea/
 .vscode/
 .claude/
+.antigravitycli/
 *.suo
 *.ntvs*
 *.njsproj
