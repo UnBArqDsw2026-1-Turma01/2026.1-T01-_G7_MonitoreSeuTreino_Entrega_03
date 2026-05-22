@@ -22,7 +22,7 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Samuel Nogueira Caetano | Modelagem do padrão Factory Method nas entidades, blindagem de construtores, implementação de regras e barramentos via Value Objects (`UserId`, `Email`), documentação e desenvolvimento da suíte de testes unitários para asserção da lógica de emissão. | Excelente | `backend/src/domain/entities/user.entity.ts`<br>`backend/src/domain/entities/refresh-token.entity.ts`<br>Arquivos `.spec.ts` equivalentes. |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
-### Builder — Módulo de Exercises
+### Builder — Módulo de Exercício
 
 **Contexto:** Implementação de `ExerciseBuilder` para garantir a criação correta do agregado `Exercise` com seus Value Objects vinculados.
 
@@ -81,7 +81,7 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Samuel Nogueira Caetano | Decorator: criação dos wrappers `CachingUserRepository` e `LoggingUserRepository`, configuração da montagem de injeção de dependência em `AuthModule` e testes. Facade: refatoração do `AuthController` e roteamento de sessões no facade. | Excelente | `backend/src/infrastructure/database/`<br>`backend/src/infrastructure/modules/auth.module.ts`<br>`backend/src/presentation/facades/`<br>`backend/src/presentation/controllers/auth.controller.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
-### Decorator — Módulo de Exercises
+### Decorator — Módulo de Exercícios
 
 **Contexto:** Padrões Caching e Logging ao redor do repositório base para ganho em observabilidade e performance.
 
@@ -149,7 +149,7 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Giovanni Dornelas Ferreira | Observer: `WorkoutSessionSubject`, `HistoryObserver`, `SessionObserver`, integração em `RegisterSessionUseCase.notify()`, inscrição em `HistoryModule.onModuleInit` e documentação. | Excelente | `backend/src/domain/history/observers/`<br>`backend/src/application/use-cases/session/register-session.use-case.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
-### Chain of Responsibility — Módulo de Exercises
+### Chain of Responsibility — Módulo de Exercícios
 
 **Contexto:** Construção elástica da query de busca através de uma pipeline de handlers, permitindo encadear filtros de busca de exercícios sem concentrar condicionais no repositório.
 
@@ -198,3 +198,4 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | 1.4    | 21/05/2026 | Registro de participações nos padrões GoF do módulo de Usuário (Builder, Facade, Chain of Responsibility — RF04 e RF07).              | André Ricardo Meyer de Melo |
 | 1.5 | 21/05/2026 | Registro de participações nos padrões GoF do módulo de Sessão de Treino (Builder, Composite, Iterator). | Eduardo Waski |
 | 1.6 | 21/05/2026 | Registro de participações nos padrões Prototype, Mediator e Proxy | José Victor Gabriel Menezes da Costa |
+| 1.7 | 21/05/2026 | Correção ortográfica no módulo de exercício | Daniel Teles |

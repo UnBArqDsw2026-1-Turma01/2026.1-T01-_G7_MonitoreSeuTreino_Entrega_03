@@ -571,6 +571,9 @@ await this.exerciseRepository.save(exercise);
 
 ### Evidência de execução
 
+No GIF abaixo, é possível ver a criação de objetos e validações realizadas pelo builder.
+![Vídeo da demonstração do Gof Builder](../assets/gof_builder.gif)
+
 Os testes do builder e a criação via E2E verificam que os exercícios são sempre instanciados em estado válido, não sendo possível persistir atributos inválidos devido às regras encapsuladas no builder.
 
 ```bash
@@ -1219,3 +1222,4 @@ No GIF abaixo, podemos ver a clonagem funcionando na prática, e podemos ver ond
 | 1.4    | 21/05/2026 | Documentação do padrão Builder do módulo de Usuário, referente aos RF04 e RF07.                    | André Ricardo Meyer de Melo |
 | 1.5 | 21/05/2026 | Documentação do padrão Builder do módulo de Sessão de Treino. | Eduardo Waski |
 | 1.6 | 21/05/2026 | Documentação do padrão Prototype no módulo de Rotina | José Victor Gabriel Menezes da Costa |
+| 1.7 | 21/05/2026 | Adiciona gif de execução do builder | Daniel Teles |
