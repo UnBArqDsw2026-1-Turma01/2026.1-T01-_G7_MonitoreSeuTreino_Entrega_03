@@ -1204,6 +1204,145 @@ No GIF abaixo, podemos ver a edição/criação acontecendo na prática, onde at
 
 - **Interceptors Nativos do NestJS**: eficazes na borda (Controllers), mas ruins para proteger invocações internas feitas entre serviços de domínio. O Proxy se mantém agnóstico a decorators HTTP.
 
+## Módulo de Monitoramento Semanal
+
+> **Responsável:** João Maurício | **Branch:** `feat/modulo-monitoramento-semanal`  
+> **Contexto:** o desafio estrutural consistia em simplificar o acesso ao subsistema de monitoramento semanal, encapsulando a comunicação entre controller, caso de uso e regras de domínio em uma interface única e coesa. O objetivo era evitar que a camada de apresentação conhecesse detalhes internos da orquestração do módulo, reduzindo acoplamento entre as camadas da arquitetura CLEAN.
+
+### Padrões analisados
+
+|Padrão|Possível aplicação|Status|Justificativa|
+|---|---|---|---|
+|**Facade**|Ponto único de entrada para o módulo de monitoramento|Selecionado|Simplifica o acesso da apresentação ao caso de uso e evita que o controller conheça detalhes internos do subsistema.|
+|Adapter|Adaptar dados do banco para o domínio|Não selecionado como principal|A adaptação existe na infraestrutura, mas o problema central do módulo de apresentação é simplificação de acesso.|
+|Proxy|Intermediar acesso ao resumo|Não selecionado|Não há controle adicional de permissão ou cache além do que já é feito pelo guard e pelo repositório.|
+
+### Padrão implementado — Facade · `TrackingFacade`
+
+### Problema arquitetural
+
+Sem uma fachada, o controller teria que depender diretamente do use case e saber como montar o comando de entrada. Isso aumenta o acoplamento entre apresentação e aplicação e torna o código menos coeso, principalmente quando a feature crescer com novos painéis ou métricas.
+
+### Justificativa da escolha
+
+O `TrackingFacade` funciona como uma porta de entrada única para o subsistema de monitoramento. Ele isola a camada de apresentação da estrutura interna do caso de uso, reduz a complexidade do controller e mantém a navegação da UI simples.
+
+### Modelagem
+
+```mermaid
+classDiagram
+    class TrackingController {
+        -trackingFacade: TrackingFacade
+        +weeklySummary(req, query) Promise
+    }
+
+    class TrackingFacade {
+        -getWeeklySummaryUseCase: GetWeeklySummaryUseCase
+        +weeklySummary(userId: string, weekOffset: number) Promise
+    }
+
+    class GetWeeklySummaryUseCase {
+        +execute(cmd) Promise
+    }
+
+    TrackingController --> TrackingFacade
+    TrackingFacade --> GetWeeklySummaryUseCase
+```
+
+### Implementação
+
+|Elemento|Papel no Facade|Caminho|
+|---|---|---|
+|`TrackingFacade`|Interface simplificada do subsistema|`src/presentation/facades/tracking.facade.ts`|
+|`TrackingController`|Cliente do Facade|`src/presentation/controllers/tracking.controller.ts`|
+|`GetWeeklySummaryUseCase`|Operação encapsulada pela fachada|`src/application/use-cases/tracking/get-weekly-summary.use-case.ts`|
+
+#### Trecho central
+
+```ts
+// src/presentation/facades/tracking.facade.ts
+export class TrackingFacade {
+  constructor(
+    private readonly getWeeklySummaryUseCase: GetWeeklySummaryUseCase,
+  ) {}
+
+  weeklySummary(userId: string, weekOffset = 0) {
+    return this.getWeeklySummaryUseCase.execute({
+      userId,
+      weekOffset,
+    });
+  }
+}
+```
+
+```ts
+// src/presentation/controllers/tracking.controller.ts
+@Get('weekly-summary')
+async weeklySummary(
+  @Req() req: Request,
+  @Query() query: WeeklySummaryRequest,
+) {
+  const userId = req.user!.userId;
+
+  const summary = await this.trackingFacade.weeklySummary(
+    userId,
+    query.weekOffset ?? 0,
+  );
+
+  return TrackingViewModel.toResponse(summary);
+}
+```
+
+### Evidência de execução
+
+A evidência aparece quando o controller responde corretamente à rota `GET /v1/tracking/weekly-summary` sem conhecer os detalhes internos do use case ou da consulta ao banco.
+
+No GIF abaixo, podemos ver isso na prática pelo funcionamento adequado da funcionalidade:
+
+![Vídeo da demonstração do Gof Prototype](../assets/tracking.gif)
+
+### Rastreabilidade
+
+|Artefato|Relação|
+|---|---|
+|Requisito|Exibir resumo semanal autenticado do usuário.|
+|Módulo|`presentation/facades/`|
+|Camada|Apresentação|
+|Padrão criacional relacionado|Factory Method — a fachada chama o use case que cria o período.|
+|Padrão comportamental relacionado|Strategy — a fachada entrega entrada simples para o cálculo do resumo.|
+|Endpoint|`GET /v1/tracking/weekly-summary`|
+
+### Senso crítico
+
+#### Benefícios
+
+- **Controller enxuto**: a rota fica simples e legível.
+    
+- **Menor acoplamento**: a apresentação não precisa conhecer a composição interna do caso de uso.
+    
+- **Facilidade de expansão**: novas operações de monitoramento podem entrar na mesma fachada.
+    
+
+#### Limitações
+
+- **Camada a mais**: para um módulo pequeno, a fachada pode parecer redundante.
+    
+- **Não substitui regra de negócio**: ela apenas organiza o acesso, não calcula nada.
+    
+
+#### Alternativas consideradas
+
+- **Controller chamando o use case diretamente**: funcional, mas menos consistente com o padrão do projeto.
+    
+- **Application service sem fachada**: resolveria tecnicamente, mas haveria uma fuga arquitetura da estabelecida.
+    
+
+### Referências
+
+- GAMMA, E. et al. _Design Patterns: Elements of Reusable Object-Oriented Software_. Addison-Wesley, 1994. Cap. 4 — Facade.
+    
+- FOWLER, M. _Patterns of Enterprise Application Architecture_. Addison-Wesley, 2002.
+
 ## Histórico de versões
 
 | Versão | Data | Descrição | Autor |
@@ -1216,3 +1355,4 @@ No GIF abaixo, podemos ver a edição/criação acontecendo na prática, onde at
 | 1.5 | 21/05/2026 | Documentação do padrão Composite do módulo de Sessão de Treino. | Eduardo Waski |
 | 1.6 | 21/05/2026 | Documentação do Proxy relacionada ao módulo de Rotinas  | José Victor Gabriel Menezes da Costa |
 | 1.7 | 21/05/2026 | Adiciona gif de execução do GoF Decorator  | Daniel Teles |
+| 1.8 | 21/05/2026 | Documentação do padrão Facade do módulo de Monitoramento Semanal | João Maurício |

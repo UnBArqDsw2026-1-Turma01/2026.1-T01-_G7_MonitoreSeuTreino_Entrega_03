@@ -35,6 +35,13 @@ export const appRouter = createBrowserRouter([
         },
       },
       {
+      path: '/tracking',
+        lazy: async () => {
+          const { TrackingPage } = await import('../../features/tracking/pages/tracking-page');
+          return { Component: TrackingPage };
+        },
+      },
+      {
         path: '/routines',
         element: <RoutinesPage />,
       },
