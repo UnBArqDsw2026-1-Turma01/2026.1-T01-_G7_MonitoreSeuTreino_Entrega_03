@@ -1248,8 +1248,10 @@ export class DeactivateOtherRoutinesHandler implements IEventHandler<RoutineActi
 
 ### Evidência de execução
 
-No GIF abaixo, podemos ver a clonagem funcionando na prática, e podemos ver onde os arquivos foram implementados:
+No GIF abaixo, podemos ver a ativação e desativação ocorrendo na prática, onde atua o Mediator.
+Ao ativar 1 ficha, ele é responsável por desativar todas as outras.
 
+![Vídeo da demonstração do Gof Prototype](../assets/mediator.gif)
 
 ### Rastreabilidade
 

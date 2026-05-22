@@ -1173,8 +1173,9 @@ export class RoutineRepositoryProxy implements RoutineRepository {
 
 ### Evidência de execução
 
-No GIF abaixo, podemos ver a clonagem funcionando na prática, e podemos ver onde os arquivos foram implementados:
+No GIF abaixo, podemos ver a edição/criação acontecendo na prática, onde atua o Proxy.
 
+![Vídeo da demonstração do Gof Prototype](../assets/proxy.gif)
 
 ### Rastreabilidade
 

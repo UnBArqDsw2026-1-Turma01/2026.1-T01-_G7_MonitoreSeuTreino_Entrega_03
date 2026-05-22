@@ -1181,6 +1181,7 @@ clone(newName?: RoutineName): Routine {
 
 No GIF abaixo, podemos ver a clonagem funcionando na prática, e podemos ver onde os arquivos foram implementados:
 
+![Vídeo da demonstração do Gof Prototype](../assets/prototype.gif)
 
 ### Rastreabilidade
 
