@@ -1,16 +1,11 @@
 import { LoggerService, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AuthModule } from './auth.module';
-import { WinstonAppLogger } from '../logger/winston-app-logger';
-import { WeeklyMonitoringRepositoryImpl } from '../database/weekly-monitoring.repository.impl';
 import { APP_LOGGER, AppLogger } from '../../application/logger/logger.interface';
 import { DomainEventBus } from '../../application/events/domain-event-bus';
 import { GetWeeklySummaryUseCase } from '../../application/use-cases/tracking/get-weekly-summary.use-case';
 import { WEEKLY_MONITORING_REPOSITORY } from '../../domain/repositories/weekly-monitoring.repository';
-import {
-  WEEKLY_PERIOD_FACTORY,
-  type WeeklyPeriodFactory,
-} from '../../domain/tracking/services/weekly-period.service';
 import {
   ACTIVE_DAYS_STRATEGY,
   TOTAL_SESSIONS_STRATEGY,
@@ -20,6 +15,10 @@ import {
   type WeeklySummaryService,
 } from '../../domain/tracking/services/weekly-summary.service';
 import {
+  WEEKLY_PERIOD_FACTORY,
+  type WeeklyPeriodFactory,
+} from '../../domain/tracking/services/weekly-period.service';
+import {
   DefaultActiveDaysStrategy,
   DefaultTotalSessionsStrategy,
   WeeklySummaryServiceImpl,
@@ -28,9 +27,15 @@ import { DefaultWeeklyPeriodFactory } from '../../domain/tracking/factory/weekly
 import { TrackingController } from '../../presentation/controllers/tracking.controller';
 import { TrackingFacade } from '../../presentation/facades/tracking.facade';
 import { BearerTokenGuard } from '../../presentation/guards/bearer-token.guard';
+import { WinstonAppLogger } from '../logger/winston-app-logger';
+import { WeeklyMonitoringRepositoryImpl } from '../database/weekly-monitoring.repository.impl';
+import { WeeklyMonitoringOrmEntity } from '../database/weekly-monitoring.orm-entity';
 
 @Module({
-  imports: [AuthModule],
+  imports: [
+    AuthModule,
+    TypeOrmModule.forFeature([WeeklyMonitoringOrmEntity]),
+  ],
   controllers: [TrackingController],
   providers: [
     {
