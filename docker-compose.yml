@@ -29,6 +29,11 @@ services:
       - path: ./backend/.env
         required: false
     environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-monitore}
+      DB_PASS: ${POSTGRES_PASSWORD:-monitore}
+      DB_NAME: ${POSTGRES_DB:-monitore_seu_treino}
       DATABASE_URL: postgresql://${POSTGRES_USER:-monitore}:${POSTGRES_PASSWORD:-monitore}@db:5432/${POSTGRES_DB:-monitore_seu_treino}?schema=public
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     ports:

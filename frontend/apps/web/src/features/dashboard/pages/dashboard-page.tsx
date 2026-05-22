@@ -5,6 +5,20 @@ import { getOnboardingStatus } from '../../onboarding/services/onboarding-api';
 import { TRAINING_LEVEL_LABELS } from '../../onboarding/types/onboarding.types';
 import { BottomNavigation } from '../../../shared/components/bottom-navigation';
 import { AppHeader } from '../../../shared/components/app-header';
+import { useAuthStore } from '../../auth/store/auth-store';
+import { fetchRoutines } from '../../routines/services/routine-api';
+import { getSessionHistory } from '../../session/services/session-api';
+
+const getUserIdFromToken = (token: string | null) => {
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.sub || payload.userId || payload.id;
+  } catch (error) {
+    console.error("Erro ao decodificar token", error);
+    return null;
+  }
+};
 
 
 export function DashboardPage() {
@@ -13,6 +27,21 @@ export function DashboardPage() {
   const statusQuery = useQuery({
     queryKey: ['onboarding-status'],
     queryFn: getOnboardingStatus,
+  });
+
+  const { token } = useAuthStore();
+  const userId = getUserIdFromToken(token);
+
+  const routinesQuery = useQuery({
+    queryKey: ['routines', userId],
+    queryFn: () => fetchRoutines(userId!),
+    enabled: !!userId,
+  });
+
+  const historyQuery = useQuery({
+    queryKey: ['session-history', userId],
+    queryFn: getSessionHistory,
+    enabled: !!userId,
   });
 
   useEffect(() => {
@@ -77,18 +106,57 @@ export function DashboardPage() {
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          {([
-            { label: 'Treinos', value: '—', sub: 'em breve' },
-            { label: 'Rotina', value: '—', sub: 'em breve' },
-            { label: 'Histórico', value: '—', sub: 'em breve' },
-            { label: 'Progresso', value: '—', sub: 'em breve' },
-          ]).map(({ label, value, sub }) => (
-            <div key={label} className="bg-[#1a1530] rounded-2xl p-4 border border-[rgba(139,127,168,0.15)]">
-              <p className="text-[#8b7fa8] text-xs font-bold uppercase tracking-widest">{label}</p>
-              <p className="text-white font-black text-2xl mt-1">{value}</p>
-              <p className="text-[#4a4266] text-xs mt-1">{sub}</p>
+          {/* Card Treinos */}
+          <Link
+            to="/sessions/new"
+            className="bg-[#1a1530] rounded-2xl p-4 border border-[rgba(139,127,168,0.15)] hover:border-brand/40 transition flex flex-col justify-between min-h-[110px]"
+          >
+            <div>
+              <p className="text-[#8b7fa8] text-[10px] font-black uppercase tracking-wider">Gravar Treino</p>
+              <p className="text-white font-black text-xl mt-2">Gravar</p>
             </div>
-          ))}
+            <p className="text-[#4a4266] text-[10px] font-bold uppercase mt-1">Iniciar nova sessão</p>
+          </Link>
+
+          {/* Card Rotina */}
+          <Link
+            to="/routines"
+            className="bg-[#1a1530] rounded-2xl p-4 border border-[rgba(139,127,168,0.15)] hover:border-brand/40 transition flex flex-col justify-between min-h-[110px]"
+          >
+            <div>
+              <p className="text-[#8b7fa8] text-[10px] font-black uppercase tracking-wider">Sua Ficha</p>
+              <p className="text-white font-black text-sm mt-2 truncate">
+                {routinesQuery.isLoading ? '...' : (routinesQuery.data?.find(r => r.isActive)?.name || 'Nenhuma ativa')}
+              </p>
+            </div>
+            <p className="text-[#4a4266] text-[10px] font-bold uppercase mt-1">Fichas de treino</p>
+          </Link>
+
+          {/* Card Histórico */}
+          <Link
+            to="/sessions/history"
+            className="bg-[#1a1530] rounded-2xl p-4 border border-[rgba(139,127,168,0.15)] hover:border-brand/40 transition flex flex-col justify-between min-h-[110px]"
+          >
+            <div>
+              <p className="text-[#8b7fa8] text-[10px] font-black uppercase tracking-wider">Histórico</p>
+              <p className="text-white font-black text-xl mt-2">
+                {historyQuery.isLoading ? '...' : (historyQuery.data?.sessions.length !== undefined ? `${historyQuery.data.sessions.length} treinos` : '0 treinos')}
+              </p>
+            </div>
+            <p className="text-[#4a4266] text-[10px] font-bold uppercase mt-1">Sessões concluídas</p>
+          </Link>
+
+          {/* Card Exercícios */}
+          <Link
+            to="/exercises"
+            className="bg-[#1a1530] rounded-2xl p-4 border border-[rgba(139,127,168,0.15)] hover:border-brand/40 transition flex flex-col justify-between min-h-[110px]"
+          >
+            <div>
+              <p className="text-[#8b7fa8] text-[10px] font-black uppercase tracking-wider">Exercícios</p>
+              <p className="text-white font-black text-xl mt-2">Catálogo</p>
+            </div>
+            <p className="text-[#4a4266] text-[10px] font-bold uppercase mt-1">Gerenciar lista</p>
+          </Link>
         </div>
       </main>
       <BottomNavigation/>
