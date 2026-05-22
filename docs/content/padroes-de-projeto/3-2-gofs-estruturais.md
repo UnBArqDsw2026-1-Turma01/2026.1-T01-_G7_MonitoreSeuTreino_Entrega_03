@@ -982,7 +982,7 @@ docker compose exec api npx jest training-session --verbose
 
 ## Módulo de Usuário — Facade
 
-**Autor:** André Ricardo Meyer de Melo  
+**Autor:** André Ricardo Meyer de Melo
 **Funcionalidades:** RF04 (Recuperar Senha) e RF07 (Excluir Conta)
 
 ### Problema
@@ -1065,6 +1065,143 @@ classDiagram
 
 ---
 
+## Módulo de Rotinas
+
+**Responsável:** José Victor Gabriel Menezes da Costa <br>
+**Branch:** `feat/modulo-rotinas`
+
+### Padrão implementado — Proxy `RoutineRepositoryProxy`
+
+### Problema arquitetural
+
+Acessar o banco de dados de forma crua pelos casos de uso impede a injeção limpa de regras de controle (como logging avançado, métricas ou verificações de precondições globais de I/O). Adicionar essas lógicas diretamente no `RoutinePostgresRepository` violaria o princípio de Responsabilidade Única (SRP), misturando persistência com infraestrutura acessória.
+
+### Padrões analisados
+
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Proxy** | Interceptar chamadas ao repositório de rotinas | Selecionado | Mantém a integridade do OCP (Open/Closed Principle) controlando o acesso e a delegação sem alterar a classe concreta. |
+| Decorator | Empilhar cache e log no repositório | Avaliado | O Proxy foi preferido para o módulo de rotinas por ter um foco maior no controle e bloqueio/validação de delegação, em vez de apenas acúmulo de *features*. |
+| Adapter | Traduzir DTOs do banco | Não selecionado | A lógica de reconstituição do próprio repositório já atua como mapeador, dispensando um adapter externo. |
+
+
+### Justificativa da escolha
+
+O Proxy assume a mesma interface do repositório real (`RoutineRepository`). A camada de aplicação desconhece essa troca e continua operando normalmente. O Proxy recebe a requisição, aplica as interceptações necessárias de forma transparente e então delega a persistência final ao repositório do banco de dados (o Real Subject).
+
+### Modelagem
+
+```mermaid
+classDiagram
+    class RoutineRepository {
+        <<interface>>
+        +findById(id: string) Promise~Routine|null~
+        +findByUserId(userId: string) Promise~Routine[]~
+        +save(routine: Routine) Promise~void~
+        +delete(id: string) Promise~void~
+    }
+
+    class RoutinePostgresRepository {
+        +findById(id)
+        +findByUserId(userId)
+        +save(routine)
+    }
+
+    class RoutineRepositoryProxy {
+        -realSubject: RoutinePostgresRepository
+        +findById(id)
+        +findByUserId(userId)
+        +save(routine)
+    }
+
+    RoutineRepository <|.. RoutinePostgresRepository
+    RoutineRepository <|.. RoutineRepositoryProxy
+    RoutineRepositoryProxy --> RoutinePostgresRepository : delega
+```
+
+### Implementação (caminhos)
+
+| Elemento | Caminho |
+|---|---|
+| Interface Subject | `backend/src/domain/repositories/routine.repository.ts` |
+| Proxy | `backend/src/infrastructure/proxies/routine-repository.proxy.ts` |
+| Real Subject | `backend/src/infrastructure/database/routine.postgres-repository.ts` |
+
+
+### Trecho Central
+
+Localizado no arquivo `backend/src/infrastructure/proxies/routine-repository.proxy.ts`.
+
+```typescript
+@Injectable()
+export class RoutineRepositoryProxy implements RoutineRepository {
+  constructor(
+    @Inject('REAL_ROUTINE_REPOSITORY')
+    private readonly realRepository: RoutineRepository,
+
+    @Inject(TRAINING_SESSION_REPOSITORY)
+    private readonly sessionRepository: ITrainingSessionRepository,
+  ) {}
+
+  async findById(id: string): Promise<Routine | null> {
+    return this.realRepository.findById(id);
+  }
+
+  async findByUserId(userId: string): Promise<Routine[]> {
+    return this.realRepository.findByUserId(userId);
+  }
+
+  async save(routine: Routine): Promise<void> {
+    const hasHistory = await this.sessionRepository.hasCompletedSessions(
+      routine.id.toString(),
+    );
+
+    if (hasHistory) {
+      throw new ValidationException(
+        'Proxy Protection: Esta rotina possui histórico de treinos e não pode ser editada diretamente.',
+      );
+    }
+
+    await this.realRepository.save(routine);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.realRepository.delete(id);
+  }
+}
+```
+
+### Evidência de execução
+
+No GIF abaixo, podemos ver a edição/criação acontecendo na prática, onde atua o Proxy.
+
+![Vídeo da demonstração do Gof Prototype](../assets/proxy.gif)
+
+### Rastreabilidade
+
+| Artefato | Relação |
+|---|---|
+| Requisito | US17, US19, US20 e US21 (O Proxy intercepta de forma transversal a persistência de criação, edição, inativação e ativação de fichas). |
+| Módulo | `infrastructure/proxies/` |
+| Camada | Infraestrutura |
+| Padrão criacional relacionado | **Prototype** — as rotinas clonadas são persistidas passando pelo Proxy. |
+
+
+### Vantagens e Desvantagens
+
+#### Vantagens
+
+- **Princípio do Aberto/Fechado (OCP)**: a lógica transversal pode evoluir no Proxy sem que o repositório TypeORM seja tocado.
+- **Transparência**: casos de uso não percebem a diferença entre o Proxy e o Repositório, pois o contrato da interface é mantido.
+
+#### Desvantagens
+
+- **Complexidade de Injeção**: aumenta a complexidade no arquivo de módulos (app.module.ts), pois a abstração agora resolve para o Proxy, que manualmente consome o repositório base.
+
+#### Alternativas consideradas
+
+- **Interceptors Nativos do NestJS**: eficazes na borda (Controllers), mas ruins para proteger invocações internas feitas entre serviços de domínio. O Proxy se mantém agnóstico a decorators HTTP.
+
 ## Histórico de versões
 
 | Versão | Data | Descrição | Autor |
@@ -1075,3 +1212,4 @@ classDiagram
 | 1.3 | 21/05/2026 | Documentação do padrão Decorator para o repositório de Exercícios. | Daniel Teles |
 | 1.4    | 21/05/2026 | Documentação do padrão Facade do módulo de Usuário, referente aos RF04 e RF07.  | André Ricardo Meyer de Melo |
 | 1.5 | 21/05/2026 | Documentação do padrão Composite do módulo de Sessão de Treino. | Eduardo Waski |
+| 1.6 | 21/05/2026 | Documentação do Proxy relacionada ao módulo de Rotinas  | José Victor Gabriel Menezes da Costa |
