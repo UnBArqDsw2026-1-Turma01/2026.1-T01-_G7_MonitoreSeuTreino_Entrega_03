@@ -40,7 +40,7 @@ export function DashboardPage() {
 
   const historyQuery = useQuery({
     queryKey: ['session-history', userId],
-    queryFn: getSessionHistory,
+    queryFn: () => getSessionHistory(),
     enabled: !!userId,
   });
 

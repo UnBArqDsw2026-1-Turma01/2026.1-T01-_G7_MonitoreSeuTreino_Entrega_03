@@ -15,6 +15,7 @@ export interface ITrainingSessionRepository {
   ): Promise<TrainingSession[]>;
 
   hasCompletedSessions(routineId: string): Promise<boolean>;
+  delete(id: string): Promise<void>;
 }
 
 export const TRAINING_SESSION_REPOSITORY = Symbol('ITrainingSessionRepository');

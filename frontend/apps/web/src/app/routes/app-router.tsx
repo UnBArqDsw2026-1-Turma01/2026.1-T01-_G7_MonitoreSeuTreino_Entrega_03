@@ -52,6 +52,13 @@ export const appRouter = createBrowserRouter([
           return { Component: SessionHistoryPage };
         },
       },
+      {
+        path: '/sessions/edit/:sessionId',
+        lazy: async () => {
+          const { EditSessionPage } = await import('../../features/session/pages/edit-session-page');
+          return { Component: EditSessionPage };
+        },
+      },
     ],
   },
   {

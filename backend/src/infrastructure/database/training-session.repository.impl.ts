@@ -23,6 +23,9 @@ export class TrainingSessionRepositoryImpl implements ITrainingSessionRepository
   ) {}
 
   async save(session: TrainingSession): Promise<void> {
+    // Para prevenir órfãos na atualização, removemos as relações antigas da sessão
+    await this.ormRepository.manager.delete(ExerciseNodeOrmEntity, { sessionId: session.id });
+
     const ormSession = new TrainingSessionOrmEntity();
     ormSession.id = session.id;
     ormSession.userId = session.userId;
@@ -119,6 +122,10 @@ export class TrainingSessionRepositoryImpl implements ITrainingSessionRepository
       },
     });
     return count > 0;
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.ormRepository.delete(id);
   }
 
   private mapToDomain(ormSession: TrainingSessionOrmEntity): TrainingSession {

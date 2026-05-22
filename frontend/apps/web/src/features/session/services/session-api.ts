@@ -9,14 +9,22 @@ export async function registerSession(payload: RegisterSessionPayload): Promise<
   await apiClient.post('/v1/sessions', payload);
 }
 
-export async function getSessionHistory(): Promise<{ sessions: SessionHistorySummary[] }> {
-  const { data } = await apiClient.get<{ sessions: SessionHistorySummary[] }>('/v1/history/sessions');
+export async function getSessionHistory(params?: { startDate?: string; endDate?: string }): Promise<{ sessions: SessionHistorySummary[] }> {
+  const { data } = await apiClient.get<{ sessions: SessionHistorySummary[] }>('/v1/history/sessions', { params });
   return data;
 }
 
 export async function getSessionHistoryDetail(sessionId: string): Promise<SessionHistoryDetail> {
   const { data } = await apiClient.get<SessionHistoryDetail>(`/v1/history/sessions/${sessionId}`);
   return data;
+}
+
+export async function updateSession(sessionId: string, payload: RegisterSessionPayload): Promise<void> {
+  await apiClient.put(`/v1/sessions/${sessionId}`, payload);
+}
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  await apiClient.delete(`/v1/sessions/${sessionId}`);
 }
 
 // Mantido por retrocompatibilidade caso alguma rota ou arquivo de testes dependa dele

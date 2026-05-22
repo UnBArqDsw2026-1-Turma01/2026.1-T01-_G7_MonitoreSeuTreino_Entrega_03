@@ -26,10 +26,10 @@ export class DomainEventBus {
       .forEach((r) => {
         const errorMessage =
           r.reason instanceof Error ? r.reason.message : String(r.reason);
-        console.error(
-          `[DomainEventBus] Falha ao processar evento ${eventName}:`,
-          errorMessage,
-        );
+        this.logger.error('Event handler failed', {
+          eventName,
+          reason: errorMessage,
+        });
       });
   }
 }

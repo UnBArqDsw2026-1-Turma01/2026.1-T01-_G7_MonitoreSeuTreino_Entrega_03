@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../auth/store/auth-store';
 import { fetchRoutines } from '../../routines/services/routine-api';
 import { searchExercises } from '../../exercises/services/exercises-api';
 import type { Exercise } from '../../exercises/types/exercises.types';
-import { getSessionHistory, getSessionHistoryDetail } from '../services/session-api';
+import { getSessionHistory, getSessionHistoryDetail, deleteSession } from '../services/session-api';
 import { AppHeader } from '../../../shared/components/app-header';
 import { BottomNavigation } from '../../../shared/components/bottom-navigation';
 
@@ -21,9 +22,20 @@ const getUserIdFromToken = (token: string | null) => {
 
 // Sub-componente para carregar e renderizar os detalhes de uma sessão
 function SessionDetailCard({ sessionId, exercisesCatalog }: { sessionId: string; exercisesCatalog: Exercise[] }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+
   const { data: detail, isLoading, isError } = useQuery({
     queryKey: ['session-detail', sessionId],
     queryFn: () => getSessionHistoryDetail(sessionId),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: () => deleteSession(sessionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['session-history'] });
+    },
   });
 
   const getExerciseName = (exerciseId: string) => {
@@ -105,6 +117,65 @@ function SessionDetailCard({ sessionId, exercisesCatalog }: { sessionId: string;
           ))
         )}
       </div>
+
+      {/* Botões de Ação */}
+      <div className="flex gap-3 pt-2">
+        <button
+          type="button"
+          onClick={() => navigate(`/sessions/edit/${sessionId}`)}
+          className="flex-1 bg-surface hover:bg-card border border-border hover:border-brand/40 text-white font-bold text-[10px] tracking-wider py-3 px-4 rounded-xl transition flex items-center justify-center gap-2"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          EDITAR TREINO
+        </button>
+
+        {isConfirmingDelete ? (
+          <div className="flex-1 flex flex-col gap-2">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => deleteMut.mutate()}
+                disabled={deleteMut.isPending}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] tracking-wider py-3 px-3 rounded-xl transition flex items-center justify-center gap-1"
+              >
+                {deleteMut.isPending ? 'EXCLUINDO...' : 'SIM, EXCLUIR'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsConfirmingDelete(false);
+                  deleteMut.reset();
+                }}
+                className="bg-[#221d3d] border border-border hover:border-brand/40 text-muted font-bold text-[10px] tracking-wider py-3 px-3 rounded-xl transition"
+              >
+                CANCELAR
+              </button>
+            </div>
+            {deleteMut.isError && (
+              <p className="text-[10px] text-red-400 font-bold text-center mt-1">
+                Erro ao excluir treino. Verifique se o servidor foi reiniciado.
+              </p>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsConfirmingDelete(true)}
+            className="flex-1 bg-red-950/30 hover:bg-red-900/20 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold text-[10px] tracking-wider py-3 px-4 rounded-xl transition flex items-center justify-center gap-2"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            EXCLUIR
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -115,11 +186,22 @@ export function SessionHistoryPage() {
 
   // Estados locais
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   // Queries
   const { data: historyData, isLoading: isLoadingHistory } = useQuery({
-    queryKey: ['session-history', userId],
-    queryFn: getSessionHistory,
+    queryKey: ['session-history', userId, startDate, endDate],
+    queryFn: () => {
+      const params: { startDate?: string; endDate?: string } = {};
+      if (startDate) {
+        params.startDate = new Date(`${startDate}T00:00:00`).toISOString();
+      }
+      if (endDate) {
+        params.endDate = new Date(`${endDate}T23:59:59`).toISOString();
+      }
+      return getSessionHistory(params);
+    },
     enabled: !!userId,
   });
 
@@ -181,14 +263,59 @@ export function SessionHistoryPage() {
           <div className="w-12 h-1 bg-brand mb-1" />
         </div>
 
+        {/* Filtros por Período */}
+        <div className="bg-surface border border-border rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-brand">Filtrar por Período</span>
+            {(startDate || endDate) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className="text-[9px] font-black text-red-400 hover:underline uppercase tracking-wider animate-fade-in"
+              >
+                Limpar Filtros
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="block text-[8px] font-black uppercase tracking-wider text-muted">De</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-[#1b1731] text-white border border-border/80 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand font-medium font-mono"
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <label className="block text-[8px] font-black uppercase tracking-wider text-muted">Até</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full bg-[#1b1731] text-white border border-border/80 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand font-medium font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
         {isLoadingHistory ? (
           <div className="flex justify-center py-12">
             <div className="w-7 h-7 border-2 border-brand border-t-transparent rounded-full animate-spin" />
           </div>
         ) : sessions.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-border rounded-2xl bg-surface/50">
-            <p className="text-muted text-sm font-bold uppercase tracking-wider mb-1">Nenhum treino gravado ainda</p>
-            <p className="text-muted/60 text-xs">Comece a gravar seus treinos no botão central abaixo!</p>
+            <p className="text-muted text-sm font-bold uppercase tracking-wider mb-1">
+              {startDate || endDate ? 'Nenhum treino no período' : 'Nenhum treino gravado ainda'}
+            </p>
+            <p className="text-muted/60 text-xs">
+              {startDate || endDate ? 'Tente alterar as datas selecionadas' : 'Comece a gravar seus treinos no botão central abaixo!'}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
