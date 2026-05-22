@@ -79,6 +79,7 @@ export function OnboardingForm({ defaultValues, isSubmitting = false, submitLabe
     defaultValues: { ...DEFAULT_ONBOARDING_VALUES, ...defaultValues },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const sex = watch('sex');
   const goal = watch('mainGoal');
   const technique = watch('techniqueLevel');
