@@ -29,7 +29,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/andre_meyer.png" alt="André Ricardo Meyer De Melo">
+    <img class="member-photo" src="assets/membros/andre_meyer.png" alt="André Ricardo Meyer De Melo">
     <div class="member-info">
       <h4>André Ricardo Meyer De Melo</h4>
       <p>Matrícula: 231011097</p>
@@ -40,7 +40,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/daniel_teles.png" alt="Daniel Teles Brito">
+    <img class="member-photo" src="assets/membros/daniel_teles.png" alt="Daniel Teles Brito">
     <div class="member-info">
       <h4>Daniel Teles Brito</h4>
       <p>Matrícula: 231012174</p>
@@ -51,7 +51,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/eduardo_valadares.png" alt="Eduardo Oliveira Valadares">
+    <img class="member-photo" src="assets/membros/eduardo_valadares.png" alt="Eduardo Oliveira Valadares">
     <div class="member-info">
       <h4>Eduardo Oliveira Valadares</h4>
       <p>Matrícula: 231026311</p>
@@ -62,7 +62,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/eduardo_waski.png" alt="Eduardo Silva Waski">
+    <img class="member-photo" src="assets/membros/eduardo_waski.png" alt="Eduardo Silva Waski">
     <div class="member-info">
       <h4>Eduardo Silva Waski</h4>
       <p>Matrícula: 231011284</p>
@@ -73,7 +73,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/giovanni_dornelas.png" alt="Giovanni Dornelas Ferreira">
+    <img class="member-photo" src="assets/membros/giovanni_dornelas.png" alt="Giovanni Dornelas Ferreira">
     <div class="member-info">
       <h4>Giovanni Dornelas Ferreira</h4>
       <p>Matrícula: 232002664</p>
@@ -84,7 +84,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/joao_nascimento.png" alt="João Maurício Pilla Nascimento">
+    <img class="member-photo" src="assets/membros/joao_nascimento.png" alt="João Maurício Pilla Nascimento">
     <div class="member-info">
       <h4>João Maurício Pilla Nascimento</h4>
       <p>Matrícula: 231011533</p>
@@ -95,7 +95,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/jose_victor.png" alt="José Victor Gabriel Menezes da Costa">
+    <img class="member-photo" src="assets/membros/jose_victor.png" alt="José Victor Gabriel Menezes da Costa">
     <div class="member-info">
       <h4>José Victor Gabriel Menezes da Costa</h4>
       <p>Matrícula: 231027121</p>
@@ -106,7 +106,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/lucas_antunes.png" alt="Lucas Gabriel da Silva Antunes">
+    <img class="member-photo" src="assets/membros/lucas_antunes.png" alt="Lucas Gabriel da Silva Antunes">
     <div class="member-info">
       <h4>Lucas Gabriel da Silva Antunes</h4>
       <p>Matrícula: 190091681</p>
@@ -117,7 +117,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/mateus_negrini.png" alt="Mateus Santos Negrini">
+    <img class="member-photo" src="assets/membros/mateus_negrini.png" alt="Mateus Santos Negrini">
     <div class="member-info">
       <h4>Mateus Santos Negrini</h4>
       <p>Matrícula: 200024825</p>
@@ -128,7 +128,7 @@
 
 <div class="member-card">
   <div class="member-header">
-    <img class="member-photo" src="../assets/membros/samuel_caetano.png" alt="Samuel Nogueira Caetano">
+    <img class="member-photo" src="assets/membros/samuel_caetano.png" alt="Samuel Nogueira Caetano">
     <div class="member-info">
       <h4>Samuel Nogueira Caetano</h4>
       <p>Matrícula: 231027186</p>
