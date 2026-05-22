@@ -7,7 +7,7 @@ import { searchExercises } from '../../exercises/services/exercises-api';
 import { registerSession } from '../services/session-api';
 import { AppHeader } from '../../../shared/components/app-header';
 import { BottomNavigation } from '../../../shared/components/bottom-navigation';
-import type { RegisterSessionPayload, ExerciseNode } from '../types/session.types';
+import type { RegisterSessionPayload } from '../types/session.types';
 
 const getUserIdFromToken = (token: string | null) => {
   if (!token) return null;
@@ -87,8 +87,9 @@ export function RecordSessionPage() {
         navigate('/sessions/history');
       }, 2000);
     },
-    onError: (err: any) => {
-      const errorMsg = err.response?.data?.message || 'Erro ao gravar treino. Verifique os dados.';
+    onError: (err) => {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const errorMsg = axiosError.response?.data?.message || 'Erro ao gravar treino. Verifique os dados.';
       setMessage({ text: errorMsg, isError: true });
     },
   });
@@ -191,17 +192,19 @@ export function RecordSessionPage() {
     exerciseIdx: number,
     setIdx: number,
     field: 'targetReps' | 'actualReps' | 'weight' | 'observations',
-    value: any
+    value: string | number
   ) => {
     const updated = [...sessionExercises];
     const currentSet = updated[exerciseIdx].sets[setIdx];
     
     if (field === 'observations') {
-      currentSet[field] = value;
-    } else {
-      // Conversão numérica segura
-      const numVal = value === '' ? null : Number(value);
-      currentSet[field] = numVal as any;
+      currentSet.observations = String(value);
+    } else if (field === 'targetReps') {
+      currentSet.targetReps = value === '' ? 12 : Number(value);
+    } else if (field === 'actualReps') {
+      currentSet.actualReps = value === '' ? null : Number(value);
+    } else if (field === 'weight') {
+      currentSet.weight = value === '' ? null : Number(value);
     }
     
     setSessionExercises(updated);
@@ -220,7 +223,7 @@ export function RecordSessionPage() {
   };
 
   const getExerciseName = (exerciseId: string) => {
-    const ex = exercises.find((e: any) => e.id === exerciseId);
+    const ex = exercises.find((e) => e.id === exerciseId);
     return ex ? ex.name : 'Carregando nome do exercício...';
   };
 

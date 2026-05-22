@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../auth/store/auth-store';
 import { fetchRoutines } from '../../routines/services/routine-api';
 import { searchExercises } from '../../exercises/services/exercises-api';
+import type { Exercise } from '../../exercises/types/exercises.types';
 import { getSessionHistory, getSessionHistoryDetail } from '../services/session-api';
 import { AppHeader } from '../../../shared/components/app-header';
 import { BottomNavigation } from '../../../shared/components/bottom-navigation';
@@ -19,7 +20,7 @@ const getUserIdFromToken = (token: string | null) => {
 };
 
 // Sub-componente para carregar e renderizar os detalhes de uma sessão
-function SessionDetailCard({ sessionId, exercisesCatalog }: { sessionId: string; exercisesCatalog: any[] }) {
+function SessionDetailCard({ sessionId, exercisesCatalog }: { sessionId: string; exercisesCatalog: Exercise[] }) {
   const { data: detail, isLoading, isError } = useQuery({
     queryKey: ['session-detail', sessionId],
     queryFn: () => getSessionHistoryDetail(sessionId),
