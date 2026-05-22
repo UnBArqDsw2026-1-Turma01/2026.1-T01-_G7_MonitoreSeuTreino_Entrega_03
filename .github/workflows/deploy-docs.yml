@@ -1,8 +1,6 @@
 name: Deploy — Docs (GitHub Pages)
 
 # Pré-requisito: em Settings > Pages, defina "Source" como "GitHub Actions".
-# Opcional: defina site_url em docs/mkdocs.yml com a URL do GitHub Pages
-# (ex: https://<org>.github.io/<repo>/).
 
 on:
   push:
@@ -21,33 +19,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build docs
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install MkDocs Material
-        run: pip install mkdocs-material
-
-      - name: Build
-        run: mkdocs build -f docs/mkdocs.yml --strict
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
   deploy:
     name: Deploy to GitHub Pages
-    needs: build
     runs-on: ubuntu-latest
 
     environment:
@@ -55,6 +28,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>G7 - MonitoreSeuTreino</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Documentação do projeto MonitoreSeuTreino - Arquitetura e Desenho de Software 2026.1 - Entrega 03 (Padrões de Projeto)">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+
+  <!-- Theme -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar.min.css">
+
+  <style>
+    :root {
+      --theme-color: #1a73e8;
+      --theme-color-dark: #1558b0;
+      --sidebar-width: 280px;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      border-right: 1px solid #e0e4e8;
+      background: linear-gradient(180deg, #f8fafc 0%, #f0f4f8 100%);
+    }
+
+    .sidebar-nav {
+      padding: 0 8px;
+    }
+
+    .sidebar-nav > ul > li {
+      margin-bottom: 2px;
+    }
+
+    /* Sidebar section headers (bold items) */
+    .sidebar-nav li p {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #5d6d7e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 16px 0 4px 0;
+      padding: 0 8px;
+    }
+
+    /* First bold item (Grupo 7) */
+    .sidebar-nav > ul > li:first-child > a {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--theme-color-dark);
+      padding: 10px 8px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-nav li a {
+      font-size: 0.88rem;
+      transition: all 0.2s;
+      padding: 5px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      color: #34495e;
+      line-height: 1.4;
+    }
+
+    .sidebar-nav li a:hover {
+      color: var(--theme-color);
+      background-color: #e8f0fe;
+    }
+
+    /* Separador hr na sidebar */
+    .sidebar-nav hr {
+      border: none;
+      border-top: 1px solid #dde2e6;
+      margin: 8px 12px;
+    }
+
+    /* Página ativa na sidebar */
+    .sidebar-nav li.active > a {
+      color: var(--theme-color) !important;
+      font-weight: 600 !important;
+      background-color: #e8f0fe;
+      border-left: 3px solid var(--theme-color);
+      padding-left: 7px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* Subtópicos mais recuados e menores */
+    .sidebar-nav ul ul ul a {
+      font-size: 0.82rem;
+      padding-left: 14px;
+    }
+
+    .app-name-link {
+      font-weight: 700 !important;
+      font-size: 1.05rem !important;
+      color: var(--theme-color-dark) !important;
+    }
+
+    /* Content */
+    .markdown-section {
+      max-width: 850px;
+      padding: 30px 25px 40px;
+    }
+
+    .markdown-section h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      border-bottom: 3px solid var(--theme-color);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .markdown-section h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e8e8e8;
+      border-bottom: none;
+      padding-bottom: 0.3rem;
+    }
+
+    .markdown-section h2:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .markdown-section h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      padding-top: 0.8rem;
+    }
+
+    /* Tables */
+    .markdown-section table {
+      display: table;
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    .markdown-section .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 1rem 0;
+    }
+
+    .markdown-section .table-wrap table {
+      min-width: 700px;
+      margin: 0;
+    }
+
+    .markdown-section table thead {
+      background-color: var(--theme-color);
+      color: #fff;
+    }
+
+    .markdown-section table th {
+      padding: 10px 16px;
+      font-weight: 600;
+      text-align: left;
+    }
+
+    .markdown-section table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .markdown-section table tbody tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .markdown-section table tbody tr:hover {
+      background-color: #e3f2fd;
+    }
+
+    /* Blockquotes as callouts */
+    .markdown-section blockquote {
+      border-left: 4px solid var(--theme-color);
+      background-color: #e8f0fe;
+      padding: 12px 20px;
+      border-radius: 0 4px 4px 0;
+      margin: 1rem 0;
+    }
+
+    .markdown-section blockquote p {
+      margin: 0;
+      font-weight: 500;
+    }
+
+    /* Lists */
+    .markdown-section ol > li,
+    .markdown-section ul > li {
+      margin: 0.5rem 0;
+      line-height: 1.7;
+    }
+
+    /* Search */
+    .search input {
+      border-radius: 6px !important;
+      border: 1px solid #ddd !important;
+      padding: 8px 12px !important;
+    }
+
+    .search input:focus {
+      border-color: var(--theme-color) !important;
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2) !important;
+    }
+
+    /* Pagination */
+    .docsify-pagination-container {
+      border-top: 1px solid #eaecef;
+      margin-top: 3rem;
+      padding-top: 1rem;
+    }
+
+    /* Scroll to top */
+    .scroll-to-top {
+      background-color: var(--theme-color) !important;
+    }
+
+    /* Code blocks */
+    .markdown-section code {
+      border-radius: 4px;
+      padding: 2px 6px;
+      background-color: #f1f3f4;
+      color: var(--theme-color-dark);
+      font-size: 0.9em;
+    }
+
+    .markdown-section pre > code {
+      background-color: #282c34;
+      color: #abb2bf;
+      padding: 16px;
+      border-radius: 6px;
+    }
+
+    /* Footer */
+    .markdown-section hr {
+      border: none;
+      border-top: 1px solid #eaecef;
+      margin: 2rem 0;
+    }
+
+    /* Landing page buttons */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .tech-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 64px;
+      padding: 14px 18px;
+      border: 1px solid #d6e4f0;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+      color: var(--theme-color-dark) !important;
+      text-decoration: none !important;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .tech-item:hover {
+      transform: translateY(-1px);
+      border-color: var(--theme-color);
+      box-shadow: 0 6px 18px rgba(26, 115, 232, 0.14);
+      color: var(--theme-color) !important;
+    }
+
+    @media (max-width: 600px) {
+      .tech-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Member Cards */
+    .members-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 1.5rem 0;
+    }
+
+    @media (max-width: 600px) {
+      .members-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .member-card {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      grid-template-rows: auto auto;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 14px 16px;
+      gap: 6px 16px;
+      transition: box-shadow 0.2s, transform 0.2s;
+      background: #fff;
+    }
+
+    .member-card:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .member-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .member-header {
+      grid-column: 1;
+      grid-row: 1 / -1;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      text-align: left;
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    .member-header:only-child {
+      grid-column: 1 / -1;
+    }
+
+    .member-photo {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #d4e6f1;
+      flex-shrink: 0;
+    }
+
+    .member-info h4 {
+      margin: 0 0 3px 0;
+      font-size: 0.92rem;
+      color: #1c2833;
+      line-height: 1.3;
+    }
+
+    .member-info p {
+      margin: 1px 0;
+      font-size: 0.8rem;
+      color: #5d6d7e;
+    }
+
+    .member-info a {
+      color: var(--theme-color);
+      text-decoration: none;
+    }
+
+    .member-info a:hover {
+      text-decoration: underline;
+    }
+
+    .member-contrib {
+      grid-column: 2;
+      grid-row: 1;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #34495e;
+      margin: 4px 0 0 0;
+      text-align: justify;
+    }
+
+    .member-relato {
+      grid-column: 2;
+      grid-row: 2;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #34495e;
+      margin: 4px 0 0 0;
+      text-align: justify;
+    }
+
+    .member-contrib strong, .member-relato strong {
+      color: #1c2833;
+    }
+
+    .member-relato em {
+      color: #abb2b9;
+    }
+
+    @media (max-width: 600px) {
+      .member-card {
+        grid-template-columns: 1fr;
+      }
+      .member-header {
+        grid-row: 1;
+        flex-direction: row;
+        text-align: left;
+        gap: 12px;
+      }
+      .member-contrib {
+        grid-column: 1;
+        grid-row: 2;
+      }
+      .member-relato {
+        grid-column: 1;
+        grid-row: 3;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">Carregando...</div>
+  <script>
+    window.$docsify = {
+      name: 'Grupo 7',
+      repo: 'https://github.com/UnBArqDsw2026-1-Turma01/2026.1-T01-_G7_MonitoreSeuTreino_Entrega_03',
+      loadSidebar: true,
+      homepage: 'content/index.md',
+      coverpage: false,
+      auto2top: true,
+      maxLevel: 3,
+      subMaxLevel: 2,
+      sidebarDisplayLevel: 1,
+      search: {
+        placeholder: 'Pesquisar...',
+        noData: 'Nenhum resultado encontrado.',
+        depth: 3
+      },
+      pagination: {
+        previousText: 'Anterior',
+        nextText: 'Próximo',
+        crossChapter: true,
+        crossChapterText: true
+      },
+      copyCode: {
+        buttonText: 'Copiar',
+        successText: 'Copiado!'
+      }
+    }
+  </script>
+
+  <!-- Docsify v4 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+
+  <!-- Plugins -->
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
+</body>
+</html>

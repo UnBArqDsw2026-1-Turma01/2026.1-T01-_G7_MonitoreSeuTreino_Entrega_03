@@ -8,6 +8,8 @@ Esta página serve como índice de rastreabilidade. Para a análise completa de 
 
 ## Matriz de rastreabilidade
 
+<div class="table-wrap">
+
 | Categoria | Padrão | Módulo | Camada | Artefato principal | Problema resolvido | Documento | Endpoint(s) |
 |---|---|---|---|---|---|---|---|
 | **Criacional** | Singleton | Onboarding | Domain | `OnboardingClassificationRules` | Garantir fonte única de regras de pontuação para `MaleProfileClassifier` e `FemaleProfileClassifier`. | [3.1 GoFs Criacionais](../padroes-de-projeto/3-1-gofs-criacionais.md) | `POST /v1/onboarding` |
@@ -35,6 +37,8 @@ Esta página serve como índice de rastreabilidade. Para a análise completa de 
 | **Comportamental** | Chain of Resp. | Usuário | Application | `password-reset.chain.ts` | Etapas sequenciais de validação e execução com aborto silencioso por segurança. | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `POST /v1/auth/password-reset/*` |
 | **Comportamental** | Iterator | Sessão de Treino | Domain | `TrainingSetIterator` | Percorrer sequencialmente e planificar a estrutura recursiva de exercícios. | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `POST /v1/sessions` |
 | **Comportamental** | Mediator | Rotinas | Application | `DomainEventBus` + Handler | Desacoplar a desativação de rotinas antigas do fluxo de ativação principal. | [3.3 GoFs Comportamentais](../padroes-de-projeto/3-3-gofs-comportamentais.md) | `PATCH /v1/routines/:id/activate` |
+
+</div>
 
 ## Elos entre padrões
 
@@ -176,7 +180,8 @@ A bateria de testes unitários automatizados foi desenvolvida para assegurar o f
 | Histórico    | Multiton                | Evidência manual — fluxo POST session + GET history (Swagger / REST Client)              | —              |
 | Histórico    | Proxy                   | Evidência manual — logs `[HistoryProxy]` e validação de intervalo de datas               | —              |
 | Histórico    | Observer                | Evidência manual — sessão aparece em GET history imediatamente após POST                 | —              |
-Rotinas | Prototype, Proxy, Mediator | Evidência manual — Logs e Interface (Clonagem e Ativação)
+| Rotinas      | Prototype, Proxy, Mediator | Evidência manual — Logs e Interface (Clonagem e Ativação)                             | —              |
+
 Para executar localmente as suítes automatizadas diretamente pelo container:
 
 ```bash
