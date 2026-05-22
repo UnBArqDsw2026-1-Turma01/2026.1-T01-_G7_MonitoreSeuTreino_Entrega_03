@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../auth/store/auth-store';
 import { fetchRoutines } from '../../routines/services/routine-api';
+import type { Routine } from '../../routines/services/routine-api';
 import { searchExercises } from '../../exercises/services/exercises-api';
+import type { Exercise } from '../../exercises/types/exercises.types';
 import { getSessionHistoryDetail, updateSession } from '../services/session-api';
 import { AppHeader } from '../../../shared/components/app-header';
 import { BottomNavigation } from '../../../shared/components/bottom-navigation';
-import type { RegisterSessionPayload } from '../types/session.types';
+import type { RegisterSessionPayload, SessionHistoryDetail } from '../types/session.types';
 
 const getUserIdFromToken = (token: string | null) => {
   if (!token) return null;
@@ -42,68 +44,41 @@ interface LocalActiveExercise {
   }[];
 }
 
-export function EditSessionPage() {
-  const { sessionId } = useParams<{ sessionId: string }>();
+interface EditSessionFormProps {
+  detail: SessionHistoryDetail;
+  routines: Routine[];
+  exercises: Exercise[];
+  sessionId: string;
+}
+
+function EditSessionForm({ detail, routines, exercises, sessionId }: EditSessionFormProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { token } = useAuthStore();
-  const userId = getUserIdFromToken(token);
 
-  // Estados locais
-  const [sessionDate, setSessionDate] = useState('');
-  const [selectedRoutineId, setSelectedRoutineId] = useState<string>('');
-  const [sessionExercises, setSessionExercises] = useState<LocalActiveExercise[]>([]);
+  // Estados locais inicializados diretamente
+  const [sessionDate, setSessionDate] = useState(() => formatIsoToDatetimeLocal(detail.date));
+  const selectedRoutineId = detail.routineId || '';
+  const [sessionExercises, setSessionExercises] = useState<LocalActiveExercise[]>(() =>
+    detail.exercises.map((ex) => ({
+      exerciseId: ex.exerciseId,
+      expectedSets: ex.expectedSets,
+      sets: ex.sets.map((set) => ({
+        targetReps: set.targetReps,
+        actualReps: set.actualReps,
+        weight: set.weight,
+        observations: set.observations || '',
+      })),
+    }))
+  );
   const [selectedExerciseToAdd, setSelectedExerciseToAdd] = useState<string>('');
   const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Queries
-  const { data: detail, isLoading: isLoadingDetail, isError: isErrorDetail } = useQuery({
-    queryKey: ['session-detail', sessionId],
-    queryFn: () => getSessionHistoryDetail(sessionId!),
-    enabled: !!sessionId,
-  });
-
-  const { data: routines = [] } = useQuery({
-    queryKey: ['routines', userId],
-    queryFn: () => fetchRoutines(userId!),
-    enabled: !!userId,
-  });
-
-  const { data: exercises = [] } = useQuery({
-    queryKey: ['exercises'],
-    queryFn: () => searchExercises(),
-    enabled: !!userId,
-  });
-
-  // Inicializa o estado com base no detalhe da sessão
-  useEffect(() => {
-    if (detail && !isInitialized) {
-      setSessionDate(formatIsoToDatetimeLocal(detail.date));
-      setSelectedRoutineId(detail.routineId || '');
-      
-      const loaded = detail.exercises.map((ex) => ({
-        exerciseId: ex.exerciseId,
-        expectedSets: ex.expectedSets,
-        sets: ex.sets.map((set) => ({
-          targetReps: set.targetReps,
-          actualReps: set.actualReps,
-          weight: set.weight,
-          observations: set.observations || '',
-        })),
-      }));
-      
-      setSessionExercises(loaded);
-      setIsInitialized(true);
-    }
-  }, [detail, isInitialized]);
 
   // Encontra a rotina associada (se houver)
   const activeRoutine = routines.find((r) => r.id === selectedRoutineId);
 
   // Mutação para salvar a edição
   const updateSessionMut = useMutation({
-    mutationFn: (payload: RegisterSessionPayload) => updateSession(sessionId!, payload),
+    mutationFn: (payload: RegisterSessionPayload) => updateSession(sessionId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['session-history'] });
       queryClient.invalidateQueries({ queryKey: ['session-detail', sessionId] });
@@ -119,7 +94,6 @@ export function EditSessionPage() {
     },
   });
 
-  // Funções de manipulação da sessão
   const handleAddExercise = () => {
     if (!selectedExerciseToAdd) return;
     
@@ -153,7 +127,6 @@ export function EditSessionPage() {
     const updated = [...sessionExercises];
     const targetEx = updated[exerciseIdx];
     
-    // Pega as reps do último set ou default para 10
     const lastSetReps = targetEx.sets.length > 0 
       ? targetEx.sets[targetEx.sets.length - 1].targetReps 
       : 10;
@@ -213,7 +186,6 @@ export function EditSessionPage() {
       return;
     }
 
-    // Validação de repetições planejadas (targetReps >= 1)
     for (let i = 0; i < sessionExercises.length; i++) {
       const ex = sessionExercises[i];
       if (ex.sets.length === 0) {
@@ -250,34 +222,6 @@ export function EditSessionPage() {
     updateSessionMut.mutate(payload);
   };
 
-  if (!userId) {
-    return <p className="text-center mt-10 text-muted">Você não está autenticado. Por favor, faça login.</p>;
-  }
-
-  if (isLoadingDetail) {
-    return (
-      <div className="min-h-screen bg-[#0d0b1e] flex flex-col justify-center items-center text-white">
-        <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-bold uppercase tracking-widest text-muted">Carregando treino...</p>
-      </div>
-    );
-  }
-
-  if (isErrorDetail || !detail) {
-    return (
-      <div className="min-h-screen bg-[#0d0b1e] flex flex-col justify-center items-center text-white p-5">
-        <p className="text-sm font-black uppercase text-red-400 mb-4">Erro ao carregar os dados deste treino.</p>
-        <button
-          type="button"
-          onClick={() => navigate('/sessions/history')}
-          className="bg-brand text-dark font-black text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:brightness-110 transition"
-        >
-          Voltar ao histórico
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#0d0b1e] flex flex-col pb-24 text-white">
       <AppHeader title="Editar Treino" />
@@ -302,11 +246,9 @@ export function EditSessionPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Configurações básicas */}
           <div className="bg-surface rounded-2xl p-5 border border-border space-y-4">
             <h2 className="text-xs font-black uppercase tracking-widest text-brand">Configurações</h2>
             
-            {/* Campo de Data */}
             <div className="space-y-1">
               <label className="block text-[10px] font-black uppercase tracking-wider text-muted">Data e Hora</label>
               <input
@@ -318,7 +260,6 @@ export function EditSessionPage() {
               />
             </div>
 
-            {/* Ficha / Divisão associada */}
             <div className="space-y-1">
               <label className="block text-[10px] font-black uppercase tracking-wider text-muted">Ficha / Rotina Relacionada</label>
               <div className="bg-card border border-border px-4 py-3 rounded-xl text-xs font-mono text-white">
@@ -331,7 +272,6 @@ export function EditSessionPage() {
             </div>
           </div>
 
-          {/* Exercícios da Sessão */}
           {sessionExercises.length > 0 && (
             <div className="space-y-4">
               <h2 className="text-xs font-black uppercase tracking-widest text-brand">Exercícios executados</h2>
@@ -341,7 +281,6 @@ export function EditSessionPage() {
                   key={ex.exerciseId}
                   className="bg-surface rounded-2xl border border-border overflow-hidden relative group hover:border-brand/30 transition-colors"
                 >
-                  {/* Cabeçalho do Card de Exercício */}
                   <div className="px-5 py-4 bg-card/50 border-b border-border flex justify-between items-center">
                     <div>
                       <h3 className="font-black text-base text-white">{getExerciseName(ex.exerciseId)}</h3>
@@ -362,13 +301,11 @@ export function EditSessionPage() {
                     </button>
                   </div>
 
-                  {/* Séries */}
                   <div className="p-4 space-y-3">
                     {ex.sets.length === 0 ? (
                       <p className="text-xs text-muted text-center py-2">Nenhuma série. Adicione uma série abaixo.</p>
                     ) : (
                       <div className="space-y-2">
-                        {/* Título de colunas */}
                         <div className="grid grid-cols-12 gap-2 text-[8px] font-black uppercase tracking-wider text-muted px-1">
                           <div className="col-span-1 text-center">#</div>
                           <div className="col-span-3">Planej.</div>
@@ -380,12 +317,10 @@ export function EditSessionPage() {
 
                         {ex.sets.map((set, setIdx) => (
                           <div key={setIdx} className="grid grid-cols-12 gap-2 items-center">
-                            {/* Número da Série */}
                             <div className="col-span-1 text-center text-xs font-black text-brand font-mono">
                               {setIdx + 1}
                             </div>
                             
-                            {/* Planejadas */}
                             <div className="col-span-3">
                               <input
                                 type="number"
@@ -398,7 +333,6 @@ export function EditSessionPage() {
                               />
                             </div>
                             
-                            {/* Realizadas */}
                             <div className="col-span-3">
                               <input
                                 type="number"
@@ -527,3 +461,67 @@ export function EditSessionPage() {
     </div>
   );
 }
+
+export function EditSessionPage() {
+  const { sessionId } = useParams<{ sessionId: string }>();
+  const navigate = useNavigate();
+  const { token } = useAuthStore();
+  const userId = getUserIdFromToken(token);
+
+  // Queries
+  const { data: detail, isLoading: isLoadingDetail, isError: isErrorDetail } = useQuery({
+    queryKey: ['session-detail', sessionId],
+    queryFn: () => getSessionHistoryDetail(sessionId!),
+    enabled: !!sessionId,
+  });
+
+  const { data: routines = [] } = useQuery({
+    queryKey: ['routines', userId],
+    queryFn: () => fetchRoutines(userId!),
+    enabled: !!userId,
+  });
+
+  const { data: exercises = [] } = useQuery({
+    queryKey: ['exercises'],
+    queryFn: () => searchExercises(),
+    enabled: !!userId,
+  });
+
+  if (!userId) {
+    return <p className="text-center mt-10 text-muted">Você não está autenticado. Por favor, faça login.</p>;
+  }
+
+  if (isLoadingDetail) {
+    return (
+      <div className="min-h-screen bg-[#0d0b1e] flex flex-col justify-center items-center text-white">
+        <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-bold uppercase tracking-widest text-muted">Carregando treino...</p>
+      </div>
+    );
+  }
+
+  if (isErrorDetail || !detail) {
+    return (
+      <div className="min-h-screen bg-[#0d0b1e] flex flex-col justify-center items-center text-white p-5">
+        <p className="text-sm font-black uppercase text-red-400 mb-4">Erro ao carregar os dados deste treino.</p>
+        <button
+          type="button"
+          onClick={() => navigate('/sessions/history')}
+          className="bg-brand text-dark font-black text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:brightness-110 transition"
+        >
+          Voltar ao histórico
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <EditSessionForm
+      detail={detail}
+      routines={routines}
+      exercises={exercises}
+      sessionId={sessionId!}
+    />
+  );
+}
+
