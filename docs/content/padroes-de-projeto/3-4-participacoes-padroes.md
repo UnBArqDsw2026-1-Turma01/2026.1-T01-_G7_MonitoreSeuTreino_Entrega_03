@@ -49,6 +49,14 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Giovanni Dornelas Ferreira | Implementação do Multiton `HistoryManager`, integração com `HistoryService` e `HistoryObserver`, repositório `findCompletedByUserId`, suporte aos requisitos RF26/RF27 e documentação. | Excelente | `backend/src/domain/history/history-manager.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
+### Prototype — Módulo de Rotinas
+
+**Contexto:** Implementação do método `.clone()` dentro do Agregado raiz `Routine` para duplicar fichas com cópia profunda de divisões, emitindo novos IDs e Eventos de Domínio sem delegar manipulação estrutural para o Use Case.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|---|---|---|---|
+| José Victor Gabriel Menezes da Costa | Modelagem do Prototype na entidade `Routine`, lógica de cópia profunda de divisões/exercícios, e consumo limpo no `CloneRoutineUseCase`. | Excelente | `backend/src/domain/entities/routine.entity.ts`<br>`backend/src/application/use-cases/routines/clone-routine.use-case.ts` |
+
 ## GoFs Estruturais
 
 ### Bridge + Facade — Módulo de Onboarding
@@ -99,6 +107,14 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 |---|---|---|---|
 | Eduardo Waski | Modelagem e implementação do Composite: interface `WorkoutComponent`, classe de nó `ExerciseNode` e classe de folha `TrainingSet`, e testes de cálculo recursivo. | Excelente | `backend/src/domain/entities/workout-component.ts`<br>`backend/src/domain/entities/exercise-node.ts`<br>`backend/src/domain/entities/training-set.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
+
+### Proxy — Módulo de Rotinas
+
+**Contexto:** Interceptação das chamadas de persistência da Ficha de Treino através de um `RoutineRepositoryProxy` que detém o mesmo contrato do Repositório real para permitir controle transversal estrito no fluxo de gravação.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|---|---|---|---|
+| José Victor Gabriel Menezes da Costa | Criação do Proxy protetor, mantendo o ORM do TypeORM livre de implementações lógicas na camada de infraestrutura. | Excelente | `backend/src/infrastructure/proxies/routine-repository.proxy.ts` |
 
 ## GoFs Comportamentais
 
@@ -151,6 +167,14 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | Eduardo Waski | Implementação da interface `Iterator`, do concrete iterator `TrainingSetIterator` (achatamento recursivo na construção) e testes unitários de travessia. | Excelente | `backend/src/domain/iterators/`<br>`backend/src/domain/entities/training-session.ts` |
 | [Nome] | [Contribuição] | [Mínima/Boa/Excelente] | [Comprobatório] |
 
+### Mediator — Módulo de Rotinas
+
+**Contexto:** O `ActivateRoutineUseCase` atua de forma atômica e se comunica com o mediador `DomainEventBus`, que invoca o `DeactivateOtherRoutinesHandler` em paralelo para garantir a exclusividade de Ficha Ativa sem acoplamentos nocivos.
+
+| Nome do Membro | Contribuição | Significância | Comprobatórios |
+|---|---|---|---|
+| José Victor Gabriel Menezes da Costa | Implementação do Handler reativo às ativações, além da depuração crítica no Event Bus e conversão segura de entidades instanciadas contra repositórios anêmicos para evitar crash. | Excelente | `backend/src/application/events/handlers/deactivate-other-routines.handler.ts`<br>`backend/src/application/events/domain-event-bus.ts` |
+
 ## Módulo de Usuário — RF04 e RF07
 
 **Responsável:** André Ricardo Meyer de Melo | **Branch:** `feat/modulo-usuario-4-7`
@@ -173,3 +197,4 @@ Breve relato sobre as participações/contribuições de cada membro à entrega.
 | 1.3 | 21/05/2026 | Registro de participações nos padrões GoF do módulo de exercises (Builder, Decorator, Chain of Responsibility). | Daniel Teles |
 | 1.4    | 21/05/2026 | Registro de participações nos padrões GoF do módulo de Usuário (Builder, Facade, Chain of Responsibility — RF04 e RF07).              | André Ricardo Meyer de Melo |
 | 1.5 | 21/05/2026 | Registro de participações nos padrões GoF do módulo de Sessão de Treino (Builder, Composite, Iterator). | Eduardo Waski |
+| 1.6 | 21/05/2026 | Registro de participações nos padrões Prototype, Mediator e Proxy | José Victor Gabriel Menezes da Costa |

@@ -992,7 +992,7 @@ docker compose exec api npx jest training-session --verbose
 
 ## Módulo de Usuário — Builder
 
-**Autor:** André Ricardo Meyer de Melo  
+**Autor:** André Ricardo Meyer de Melo
 **Funcionalidades:** RF04 (Recuperar Senha) e RF07 (Excluir Conta)
 
 ### Problema
@@ -1080,6 +1080,134 @@ classDiagram
 
 ---
 
+## Módulo de Rotinas
+
+**Responsável:** José Victor Gabriel Menezes da Costa <br>
+**Branch:** `feat/modulo-rotinas`
+
+### Padrão implementado — Prototype `Routine.clone()`
+
+### Problema arquitetural
+
+A funcionalidade de "Duplicar Ficha" exige copiar o agregado raiz `Routine`, juntamente com as suas `RoutineDivision` e arrays de exercícios. Fazer isso na camada de aplicação (dentro de `CloneRoutineUseCase`) exigiria que o caso de uso conhecesse a estrutura interna íntima da entidade, quebrando o encapsulamento e espalhando lógicas de construção pelo sistema.
+
+### Padrões analisados
+
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Prototype** | Clonagem profunda de rotinas | Selecionado | Permite que a própria entidade saiba como se duplicar, preservando encapsulamento e gerando novos IDs internos. |
+| Factory Method | Reconstruir rotina no Use Case | Avaliado | Obrigaria o Use Case a iterar sobre as divisões manualmente, quebrando o encapsulamento do domínio. |
+
+
+### Justificativa da escolha
+
+O padrão Prototype resolve isso ao delegar a responsabilidade da cópia para o próprio objeto a ser clonado. O método `clone()` dentro da entidade `Routine` realiza um *deep copy* (cópia profunda) de maneira segura: ele mantém as regras de negócio de treinos intactas, gera um novo identificador único (`RoutineId`), atualiza os *timestamps* para o momento da clonagem e emite o evento de domínio `RoutineClonedEvent`.
+
+### Modelagem
+
+```mermaid
+classDiagram
+    class Prototype {
+        <<interface>>
+        +clone(newName?: RoutineName) Prototype
+    }
+
+    class Routine {
+        +id: RoutineId
+        +userId: UserId
+        +name: RoutineName
+        +divisions: RoutineDivision[]
+        +isActive: boolean
+        +clone(newName?: RoutineName) Routine
+    }
+
+    class CloneRoutineUseCase {
+        -routineRepo: RoutineRepository
+        +execute(input) Promise~Routine~
+    }
+
+    Prototype <|.. Routine
+    CloneRoutineUseCase --> Routine : clone()
+```
+
+
+### Implementação (caminhos)
+
+| Elemento | Caminho |
+|---|---|
+| Entidade da Rotina | `backend/src/domain/entities/routine.entity.ts` |
+| Caso de uso | `backend/src/application/use-cases/routines/clone-routine.use-case.ts` |
+| Evento emitido | `backend/src/domain/events/routine-events.ts` |
+
+
+### Trecho Central
+
+Localizado no arquivo `backend/src/domain/entities/routine.entity.ts`.
+
+```typescript
+clone(newName?: RoutineName): Routine {
+  const now = Timestamp.now();
+  const clonedId = RoutineId.create();
+
+  const clonedDivisions = this.divisions.map((division) => ({
+    name: division.name,
+    exercises: division.exercises.map((ex) => ({ ...ex })),
+  }));
+
+  const clonedRoutine = new Routine(
+    clonedId,
+    this.userId,
+    newName ?? RoutineName.create(`${this.name.toString()} (Cópia)`),
+    clonedDivisions,
+    false,
+    now,
+    now,
+  );
+
+  clonedRoutine.pushEvent(
+    new RoutineClonedEvent(
+      this.id.toString(),
+      clonedId.toString(),
+      this.userId.toString(),
+      now.toDate(),
+    ),
+  );
+
+  return clonedRoutine;
+}
+```
+
+### Evidência de execução
+
+No GIF abaixo, podemos ver a clonagem funcionando na prática, e podemos ver onde os arquivos foram implementados:
+
+![Vídeo da demonstração do Gof Prototype](../assets/prototype.gif)
+
+### Rastreabilidade
+
+| Artefato | Relação |
+|---|---|
+| Requisito | Duplicação de Fichas de Treino **- requisito criado no meio da codificação para abarcar o Prototype** |
+| Módulo | `domain/entities/` |
+| Camada | Domínio |
+| Endpoint | `POST /v1/routines/:id/clone` |
+
+
+### Vantagens e Desvantagens
+
+#### Vantagens
+
+- **Encapsulamento preservado**: o caso de uso fica enxuto e não precisa iterar sobre matrizes ou mapear propriedades.
+- **Segurança de Identidade**: impede a persistência acidental da mesma rotina com o mesmo ID, já que a entidade garante a criação de um RoutineId fresco na cópia.
+
+#### Desvantagens
+
+- **Manutenção manual** : caso a entidade Routine ganhe novos campos no futuro, o método clone() precisa ser atualizado manualmente, sob risco de referências nulas ou vazadas.
+
+#### Alternativas consideradas
+
+- **Uso de structuredClone() nativo**: funciona para objetos literais, mas destrói os métodos e o protótipo de classes ricas, resultando em objetos anêmicos sem métodos de domínio. O Prototype nativo foi necessário.
+
 ## Histórico de versões
 
 | Versão | Data | Descrição | Autor |
@@ -1090,3 +1218,4 @@ classDiagram
 | 1.3 | 20/05/2026 | Documentação do padrão Multiton do módulo de Histórico de Sessões, referente aos requisitos RF26/RF27. | Giovanni Dornelas Ferreira |
 | 1.4    | 21/05/2026 | Documentação do padrão Builder do módulo de Usuário, referente aos RF04 e RF07.                    | André Ricardo Meyer de Melo |
 | 1.5 | 21/05/2026 | Documentação do padrão Builder do módulo de Sessão de Treino. | Eduardo Waski |
+| 1.6 | 21/05/2026 | Documentação do padrão Prototype no módulo de Rotina | José Victor Gabriel Menezes da Costa |
