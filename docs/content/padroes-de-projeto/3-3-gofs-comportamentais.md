@@ -1036,7 +1036,7 @@ docker compose exec api npx jest training-session --verbose
 
 ## Módulo de Usuário — Chain of Responsibility
 
-**Autor:** André Ricardo Meyer de Melo  
+**Autor:** André Ricardo Meyer de Melo
 **Funcionalidades:** RF04 (Recuperar Senha) e RF07 (Excluir Conta)
 
 ### Problema
@@ -1165,6 +1165,115 @@ DELETE /v1/users/me → body: { "password": "...", "confirmation": "CONFIRMAR" }
 - Dois `Handler` abstratos separados (um por cadeia) em vez de uma classe base compartilhada — escolha deliberada para evitar acoplamento entre contextos distintos, mas gera alguma duplicação estrutural
 - A cadeia é montada a cada requisição (sem reuso de instâncias) — aceitável dado o volume esperado
 
+## Módulo de Rotinas
+
+**Responsável:** José Victor Gabriel Menezes da Costa <br>
+**Branch:** `feat/modulo-rotinas`
+
+### Padrão implementado — Mediator · `DomainEventBus` + `DeactivateOtherRoutinesHandler`
+
+### Problema arquitetural
+
+O `ActivateRoutineUseCase` possui a responsabilidade estrita de carregar a entidade e promover a sua ativação. Embutir uma pesquisa por *todas as rotinas ativas* do usuário para proceder com as inativações tornaria a classe uma "God Class" acoplada.
+
+### Padrões analisados
+
+| Padrão | Possível aplicação | Status | Justificativa |
+|---|---|---|---|
+| **Mediator** | Orquestrar o evento de ativação para desativar as demais rotinas | Selecionado | Desacopla a ação principal da reação secundária de inativação através do Event Bus. |
+| Observer | Escutar ativação de rotina | Estrutural | O Mediator foi viabilizado através do mecanismo de publicação/assinatura (Observer) do Event Bus. |
+| Chain of Responsibility | Corrente de processamento de rotinas | Não selecionado | A inativação não é um filtro restritivo, mas sim uma consequência (efeito colateral) da ativação. |
+
+
+### Justificativa da escolha
+
+O Mediator atua eliminando a comunicação direta entre o caso de uso e a lógica secundária. O `ActivateRoutineUseCase` apenas informa o `DomainEventBus` (o Mediador) de que uma rotina foi ativada. O barramento, por sua vez, aciona o colega `DeactivateOtherRoutinesHandler`, que busca as demais rotinas, executa a regra de reconstituição para instâncias de domínio plenas e as desativa individualmente.
+
+### Modelagem
+
+```mermaid
+sequenceDiagram
+    participant ActivateUC as ActivateRoutineUseCase
+    participant Entity as Routine
+    participant Bus as DomainEventBus
+    participant Handler as DeactivateOtherRoutinesHandler
+    participant Repo as RoutineRepository
+
+    ActivateUC->>Entity: activate()
+    Entity->>Entity: pushEvent(RoutineActivatedEvent)
+    ActivateUC->>Bus: publish(RoutineActivatedEvent)
+    Bus->>Handler: handle(event)
+    Handler->>Repo: findByUserId()
+    loop Para cada rotina (exceto a ativada)
+        Handler->>Entity: inactivate()
+        Handler->>Repo: save()
+    end
+```
+
+### Implementação (caminhos)
+
+| Elemento | Caminho |
+|---|---|
+| Originador | `backend/src/application/use-cases/routines/activate-routine.use-case.ts` |
+| Mediador | `backend/src/application/events/domain-event-bus.ts` |
+| Receptor | `backend/src/application/events/handlers/deactivate-other-routines.handler.ts` |
+
+
+### Trecho Central
+
+Localizado no arquivo `backend/src/application/events/domain-event-bus.ts`.
+
+```typescript
+@EventsHandler(RoutineActivatedEvent)
+@Injectable()
+export class DeactivateOtherRoutinesHandler implements IEventHandler<RoutineActivatedEvent> {
+  constructor(
+    @Inject(ROUTINE_REPOSITORY_TOKEN) private readonly repo: RoutineRepository,
+  ) {}
+
+  async handle(event: RoutineActivatedEvent) {
+    const { userId, routineId } = event;
+
+    const activeRoutines = await this.repo.findByUserId(userId);
+    const others = activeRoutines.filter((r) => r.id.toString() !== routineId);
+
+    for (const routine of others) {
+      routine.inactivate();
+      await this.repo.save(routine);
+    }
+  }
+}
+
+```
+
+### Evidência de execução
+
+No GIF abaixo, podemos ver a clonagem funcionando na prática, e podemos ver onde os arquivos foram implementados:
+
+
+### Rastreabilidade
+
+| Artefato | Relação |
+|---|---|
+| Requisito | O padrão interliga a US21 — Definir rotina como ativa com a US20 — Inativar rotina não utilizada, garantindo o acionamento de uma pela outra. |
+| Módulo | `application/events/handlers/` |
+| Camada | Aplicação |
+| Padrão criacional relacionado | **Observer** — A base de implementação técnica do barramento de eventos. |
+| EndPoint | `PATCH /v1/routines/:id/activate` |
+
+
+### Vantagens e Desvantagens
+
+#### Vantagens
+
+- **Alta Coesão**: a lógica de ativação não sabe e nem precisa saber da existência de uma política de "inativar as antigas".
+
+- **Resiliência**: o barramento (DomainEventBus) foi adaptado para engolir erros de handlers (Promise.allSettled), o que impede que falhas na inativação quebrem o request HTTP final do usuário (Erro 500).
+
+#### Desvantagens
+
+- **Depuração complexa**: o encadeamento indireto dificulta o tracing. Erros comuns, como a falha do método inactivate caso o repositório devolva "objetos anêmicos", explodem silenciosamente no barramento ao invés de alertarem o desenvolvedor na hora.
+
 ---
 
 ## Histórico de versões
@@ -1177,3 +1286,4 @@ DELETE /v1/users/me → body: { "password": "...", "confirmation": "CONFIRMAR" }
 | 1.3 | 20/05/2026 | Documentação do padrão Chain of Responsibility para busca de Exercícios. | Daniel Teles |
 | 1.4    | 21/05/2026 | Documentação do padrão Chain of Responsibility do módulo de Usuário, referente aos RF04 e RF07.   | André Ricardo Meyer de Melo |
 | 1.5 | 21/05/2026 | Documentação do padrão Iterator do módulo de Sessão de Treino. | Eduardo Waski |
+| 1.6 | 21/05/2026 | Documentação do padrão Mediator do módulo de Rotinas | José Victor Gabriel Menezes da Costa |

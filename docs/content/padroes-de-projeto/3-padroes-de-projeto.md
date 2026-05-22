@@ -20,6 +20,7 @@ A tabela abaixo consolida todos os padrões implementados. Cada seção dos docu
 | **Criacional** | Multiton | Histórico | Giovanni Dornelas Ferreira | `HistoryManager.getInstance(userId)` | `GET /v1/history/sessions` |
 | **Criacional** | Builder | Usuário | André Ricardo Meyer de Melo | `PasswordResetRequestBuilder`, `AccountDeletionRequestBuilder` | `POST /v1/auth/password-reset/request`, `DELETE /v1/users/me` |
 | **Criacional** | Builder | Sessão de Treino | Eduardo Waski | `TrainingSessionBuilder` | `POST /v1/sessions` |
+| **Criacional** | Prototype | Rotinas | José Victor Gabriel Menezes da Costa | `Routine.clone()` | `POST /v1/routines/:id/clone` |
 | **Estrutural** | Bridge | Onboarding | Lucas Antunes | `OnboardingFlow` + `ProfileClassifier` | `POST /v1/onboarding` |
 | **Estrutural** | Facade | Onboarding | Lucas Antunes | `OnboardingFacade` | `GET/POST/PUT /v1/onboarding` |
 | **Estrutural** | Facade | Autenticação | Samuel Nogueira Caetano | `AuthenticationFacade` | `POST /v1/auth/login`, `POST /v1/auth/logout` |
@@ -28,6 +29,7 @@ A tabela abaixo consolida todos os padrões implementados. Cada seção dos docu
 | **Estrutural** | Proxy | Histórico | Giovanni Dornelas Ferreira | `HistoryServiceProxy` → `HistoryService` | `GET /v1/history/sessions` |
 | **Estrutural** | Facade | Usuário | André Ricardo Meyer de Melo | `PasswordResetFacade`, `AccountDeletionFacade` | `POST /v1/auth/password-reset/request`, `DELETE /v1/users/me` |
 | **Estrutural** | Composite | Sessão de Treino | Eduardo Waski | `WorkoutComponent` (Interface), `ExerciseNode` (Composite), `TrainingSet` (Leaf) | `POST /v1/sessions` |
+| **Estrutural** | Proxy | Rotinas | José Victor Gabriel Menezes da Costa | `RoutineRepositoryProxy` | Diversos repositórios |
 | **Comportamental** | Memento | Onboarding | Lucas Antunes | `TrainingProfile.createMemento()` + `OnboardingMementoVO` | `PUT /v1/onboarding` |
 | **Comportamental** | Template Method | Onboarding | Lucas Antunes | `OnboardingFlow.execute()` | `POST /v1/onboarding` |
 | **Comportamental** | Template Method | Autenticação | Samuel Nogueira Caetano | `UseCase<TInput, TOutput>.execute()` | Diversos |
@@ -36,7 +38,7 @@ A tabela abaixo consolida todos os padrões implementados. Cada seção dos docu
 | **Comportamental** | Chain of Responsibility | Exercises | Daniel Teles | `ExerciseSearchChain` | `GET /v1/exercises` |
 | **Comportamental** | Chain of Responsibility | Usuário | André Ricardo Meyer de Melo | `Handler` (RF04 / RF07) | `POST /v1/auth/password-reset/request`, `DELETE /v1/users/me` |
 | **Comportamental** | Iterator | Sessão de Treino | Eduardo Waski | `TrainingSetIterator` | `POST /v1/sessions` |
-
+| **Comportamental** | Mediator | Rotinas | José Victor Gabriel Menezes da Costa | `DomainEventBus` + `DeactivateOtherRoutinesHandler` | `PATCH /v1/routines/:id/activate` |
 ## Organização do módulo
 
 | Seção | Descrição |
@@ -79,3 +81,4 @@ Caso mais padrões precisem ser adicionados nos documentos filhos (3-1, 3-2, 3-3
 | 1.3 | 21/05/2026 | Atualização do painel de GoFs com os padrões do módulo de Exercises. | Daniel Teles |
 | 1.4 | 21/05/2026 | Inclusão dos GoFs do módulo de Usuário (Builder, Facade, Chain of Responsibility) — RF04 e RF07. | André Ricardo Meyer de Melo |
 | 1.5 | 21/05/2026 | Inclusão dos GoFs do módulo de Sessão de Treino (Builder, Composite, Iterator) e atualização consolidada. | Eduardo Waski |
+| 1.6 | 21/05/2026 | Inclusão dos Gofs do módulo de Rotinas (Prototype, Mediator e Proxy) | José Victor Gabriel Menezes da Costa |
