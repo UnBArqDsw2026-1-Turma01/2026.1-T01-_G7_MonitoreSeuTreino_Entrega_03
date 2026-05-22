@@ -22,7 +22,7 @@ export class DefaultWeeklyPeriodFactory implements WeeklyPeriodFactory {
         return new CustomPeriodStrategy(params.start, params.end);
 
       default:
-        throw new Error(`Unsupported weekly period mode: ${params.mode}`);
+        throw new Error('Unsupported weekly period mode.');
     }
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, Not, IsNull } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { CompletedSession } from '@domain/entities/completed-session.entity';
 import { WeeklyMonitoringRepository } from '@domain/repositories/weekly-monitoring.repository';
 import { DateRange } from '@domain/value-objects/date-range.vo';
@@ -12,9 +12,7 @@ export class WeeklyMonitoringRepositoryImpl
   implements WeeklyMonitoringRepository
 {
   constructor(
-    @InjectRepository(
-      WeeklyMonitoringOrmEntity,
-    )
+    @InjectRepository(WeeklyMonitoringOrmEntity)
     private readonly repository: Repository<WeeklyMonitoringOrmEntity>,
   ) {}
 
@@ -25,13 +23,9 @@ export class WeeklyMonitoringRepositoryImpl
     try {
       const rows = await this.repository.find({
         where: {
-            userId,
-            concludedAt: Between(
-            period.start,
-            period.end,
-            ),
+          userId,
+          concludedAt: Between(period.start, period.end),
         },
-
         order: {
           concludedAt: 'DESC',
         },
