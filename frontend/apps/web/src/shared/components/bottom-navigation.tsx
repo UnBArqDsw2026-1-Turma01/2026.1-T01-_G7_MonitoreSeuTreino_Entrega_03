@@ -30,12 +30,20 @@ export function BottomNavigation() {
       />
 
       {/* Botão Central Gravar */}
-      <div className="flex flex-col items-center gap-1 py-1">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#ccff00] to-[#a8d400] flex items-center justify-center shadow-[0_0_20px_rgba(204,255,0,0.35)] -mt-6">
+      <Link to="/sessions/new" className="flex flex-col items-center gap-1 py-1 -mt-6 select-none">
+        <div className={["w-12 h-12 rounded-full flex items-center justify-center transition-all", 
+          pathname === '/sessions/new' 
+            ? 'bg-white shadow-[0_0_20px_rgba(255,255,255,0.4)]' 
+            : 'bg-gradient-to-br from-[#ccff00] to-[#a8d400] shadow-[0_0_20px_rgba(204,255,0,0.35)]'
+        ].join(' ')}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22L20.5 10H14L13 2Z" fill="#0d0b1e" /></svg>
         </div>
-        <span className="text-[10px] font-bold tracking-widest uppercase text-[#ccff00]">Gravar</span>
-      </div>
+        <span className={["text-[10px] font-bold tracking-widest uppercase transition-colors", 
+          pathname === '/sessions/new' ? 'text-white' : 'text-[#ccff00]'
+        ].join(' ')}>
+          Gravar
+        </span>
+      </Link>
 
       {/* Rotina */}
       <NavItem
@@ -47,6 +55,8 @@ export function BottomNavigation() {
 
       {/* Histórico */}
       <NavItem
+        to="/sessions/history"
+        active={pathname === '/sessions/history'}
         label="Histórico"
         icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" /></svg>}
       />

@@ -38,6 +38,20 @@ export const appRouter = createBrowserRouter([
         path: '/routines',
         element: <RoutinesPage />,
       },
+      {
+        path: '/sessions/new',
+        lazy: async () => {
+          const { RecordSessionPage } = await import('../../features/session/pages/record-session-page');
+          return { Component: RecordSessionPage };
+        },
+      },
+      {
+        path: '/sessions/history',
+        lazy: async () => {
+          const { SessionHistoryPage } = await import('../../features/session/pages/session-history-page');
+          return { Component: SessionHistoryPage };
+        },
+      },
     ],
   },
   {
