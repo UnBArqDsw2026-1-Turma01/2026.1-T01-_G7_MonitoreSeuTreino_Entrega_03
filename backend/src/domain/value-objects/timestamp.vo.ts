@@ -24,4 +24,8 @@ export class Timestamp {
   toDate(): Date {
     return new Date(this.value);
   }
+
+  static reconstitute(date: Date): Timestamp {
+    return new Timestamp(date);
+  }
 }

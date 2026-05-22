@@ -1,0 +1,75 @@
+import {
+  Body,
+  Controller,
+  Post,
+  Put,
+  Patch,
+  Param,
+  Get,
+  Query,
+  Delete,
+} from '@nestjs/common';
+import { CreateRoutineUseCase } from '../../application/use-cases/routines/create-routine.use-case';
+import { CloneRoutineUseCase } from '../../application/use-cases/routines/clone-routine.use-case';
+import { UpdateRoutineUseCase } from '../../application/use-cases/routines/update-routine.use-case';
+import { ActivateRoutineUseCase } from '../../application/use-cases/routines/activate-routine.use-case';
+import { GetMyRoutinesUseCase } from '../../application/use-cases/routines/get-my-routines.use-case';
+import { DeleteRoutineUseCase } from '../../application/use-cases/routines/delete-routine.use-case';
+import { InactivateRoutineUseCase } from '../../application/use-cases/routines/inactivate-routine.use-case';
+import { CreateRoutineInput } from '../../application/use-cases/routines/create-routine.use-case';
+import { UpdateRoutineInput } from '../../application/use-cases/routines/update-routine.use-case';
+import { CloneRoutineInput } from '../../application/use-cases/routines/clone-routine.use-case';
+import { ActivateRoutineInput } from '../../application/use-cases/routines/activate-routine.use-case';
+
+// Importando o View Model
+import { RoutineViewModel } from '../view-models/routine.view-model';
+
+@Controller('routines')
+export class RoutineController {
+  constructor(
+    private readonly createRoutineUseCase: CreateRoutineUseCase,
+    private readonly cloneRoutineUseCase: CloneRoutineUseCase,
+    private readonly updateRoutineUseCase: UpdateRoutineUseCase,
+    private readonly activateRoutineUseCase: ActivateRoutineUseCase,
+    private readonly getMyRoutinesUseCase: GetMyRoutinesUseCase,
+    private readonly deleteRoutineUseCase: DeleteRoutineUseCase,
+    private readonly inactivateRoutineUseCase: InactivateRoutineUseCase,
+  ) {}
+
+  @Get()
+  async getMyRoutines(@Query('userId') userId: string) {
+    const id = userId || 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+    const routines = await this.getMyRoutinesUseCase.execute(id);
+    return routines.map((routine) => RoutineViewModel.toHTTP(routine));
+  }
+
+  @Post()
+  async create(@Body() body: CreateRoutineInput) {
+    await this.createRoutineUseCase.execute(body);
+  }
+
+  @Post(':id/clone')
+  async clone(@Param('id') id: string, @Body() body: CloneRoutineInput) {
+    await this.cloneRoutineUseCase.execute({ ...body, routineId: id });
+  }
+
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() body: UpdateRoutineInput) {
+    await this.updateRoutineUseCase.execute({ ...body, routineId: id });
+  }
+
+  @Patch(':id/activate')
+  async activate(@Param('id') id: string, @Body() body: ActivateRoutineInput) {
+    await this.activateRoutineUseCase.execute({ ...body, routineId: id });
+  }
+
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    await this.deleteRoutineUseCase.execute(id);
+  }
+
+  @Patch(':id/inactivate')
+  async inactivate(@Param('id') id: string) {
+    await this.inactivateRoutineUseCase.execute(id);
+  }
+}

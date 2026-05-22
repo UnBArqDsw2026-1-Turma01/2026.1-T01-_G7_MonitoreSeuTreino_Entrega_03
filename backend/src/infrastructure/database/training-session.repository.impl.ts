@@ -111,6 +111,16 @@ export class TrainingSessionRepositoryImpl implements ITrainingSessionRepository
     return ormSessions.map((orm) => this.mapToDomain(orm));
   }
 
+  async hasCompletedSessions(routineId: string): Promise<boolean> {
+    const count = await this.ormRepository.count({
+      where: {
+        routineId: routineId,
+        state: SessionState.COMPLETED,
+      },
+    });
+    return count > 0;
+  }
+
   private mapToDomain(ormSession: TrainingSessionOrmEntity): TrainingSession {
     const state =
       ormSession.state === 'COMPLETED'

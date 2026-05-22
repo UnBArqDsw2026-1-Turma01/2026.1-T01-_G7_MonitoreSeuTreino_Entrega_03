@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { AuthGuard } from '../../features/auth/guards/auth-guard';
+import { RoutinesPage } from '../../features/routines/pages/routines-page';
 
 export const appRouter = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ export const appRouter = createBrowserRouter([
           const { ExercisesPage } = await import('../../features/exercises/pages/exercises-page');
           return { Component: ExercisesPage };
         },
+      },
+      {
+        path: '/routines',
+        element: <RoutinesPage />,
       },
     ],
   },

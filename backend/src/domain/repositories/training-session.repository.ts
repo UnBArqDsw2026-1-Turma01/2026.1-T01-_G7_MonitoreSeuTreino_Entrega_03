@@ -13,6 +13,8 @@ export interface ITrainingSessionRepository {
     userId: string,
     filter?: SessionDateRangeFilter,
   ): Promise<TrainingSession[]>;
+
+  hasCompletedSessions(routineId: string): Promise<boolean>;
 }
 
 export const TRAINING_SESSION_REPOSITORY = Symbol('ITrainingSessionRepository');
